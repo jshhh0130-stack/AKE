@@ -51,6 +51,15 @@ export function OwnerShop() {
         {['info', 'menu', 'ops'].map((k) => <SetRow key={k} k={k} ok={done[k]} shop={shop} />)}
         <div className="sec-t"><h3>세부 설정</h3></div>
         {['look', 'notice', 'portfolio', 'form', 'share'].map((k) => <SetRow key={k} k={k} ok={done[k] ?? true} shop={shop} />)}
+        <div className="sec-t"><h3>사장님 사용 가이드</h3></div>
+        <div className="card pad small" style={{ lineHeight: 1.7 }}>
+          <div><b>1. 가격표를 한 번만 정해요</b> — 크기별 기본가·추가금을 넣으면 손님 주문서에 정확한 가격이 떠요.</div>
+          <div><b>2. 주문 링크를 걸어요</b> — 인스타 프로필·카톡 채널에 링크(또는 QR)를 걸면 손님이 바로 주문서를 열어요.</div>
+          <div><b>3. 새 요청은 두 버튼</b> — 규칙 안 주문은 자동 확정, 나머지는 ‘승인’ 또는 ‘수정 요청’만 누르세요.</div>
+          <div><b>4. 확정 후 흐름</b> — 입금 확인 → (필요하면) 시안 보내기 → 제작 시작 → 픽업 준비 완료 → 픽업 완료.</div>
+          <div><b>5. 정산</b> — 일별·주별·월별 매출과 인기 옵션을 보고, 엑셀로 받아 장부에 써요.</div>
+        </div>
+        <button className="setrow" style={{ marginTop: 10 }} onClick={() => nav('/insight')}><span className="ic"><Icon n="chart" /></span><div className="grow"><div className="t">시장 데이터 · 인사이트</div><div className="s">수원 가게 가격 분포·스타일 비교</div></div><Icon n="right" size="sm" /></button>
         <div className="sec-t"><h3>계정</h3></div>
         <div className="card" style={{ padding: '0 14px' }}>
           <button className="list-row" onClick={() => { setState({ role: 'customer' }); nav(st.seenGuide ? '/c' : '/guide', { replace: true }); }}><Icon n="swap" /><div className="grow"><div className="t">고객 모드로 바꾸기</div></div><Icon n="right" size="sm" /></button>

@@ -24,13 +24,15 @@ export function StoreThumb({ s }) {
 export function StoreCard({ r, sel, onClick, fav, onFav, picked }) {
   const { s, d, match } = r;
   const hp = headlinePrice(s);
+  const rv = getState().orders.filter((o) => o.storeId === s.id && o.review);
+  const avg = rv.length ? rv.reduce((a, o) => a + o.review.stars, 0) / rv.length : null;
   const open = canOrderInApp(s) ? nextOpenDay(s, getState().orders) : null;
   return (
     <button className={`scard ${sel ? 'sel' : ''}`} onClick={onClick} id={`card-${s.id}`}>
       <div className="th"><StoreThumb s={s} />{canOrderInApp(s) && <span className="m">⚡ 앱 주문</span>}</div>
       <div className="grow">
         <div className="nm"><span>{s.name}</span>{match != null && <span className="match">{match}%</span>}</div>
-        <div className="meta">{[s.dong || s.gu, d != null ? fmtKm(d) : null, s.geo === 'area' ? '위치 대략' : null].filter(Boolean).join(' · ')}</div>
+        <div className="meta">{avg != null && <span style={{ color: '#E0A400', fontWeight: 800 }}>★ {avg.toFixed(1)} <span className="muted">({rv.length})</span> · </span>}{[s.dong || s.gu, d != null ? fmtKm(d) : null, s.geo === 'area' ? '위치 대략' : null].filter(Boolean).join(' · ')}</div>
         <div className="tags">
           {(s.styles || []).filter((x) => x !== 'custom').slice(0, 3).map((x) => <span key={x} className="tag">{styleName(x)}</span>)}
           {s.sameDay && <span className="tag warn">당일 가능</span>}
