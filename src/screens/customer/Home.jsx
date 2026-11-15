@@ -6,7 +6,7 @@ import { Sheet, CakeView, toast, PhotoPick, Loading } from '../../components/ui.
 import { useApp, setState, getState } from '../../lib/state.js';
 import { nav } from '../../lib/router.js';
 import { getStores, rankStores, FILTERS, fmtKm, headlinePrice, kindLabel, canOrderInApp, nextOpenDay } from '../../lib/stores.js';
-import { storeLook } from '../../lib/cake.js';
+import { storeLook, cakeSVG } from '../../lib/cake.js';
 import { range } from '../../lib/util.js';
 import { estimate } from '../../lib/price.js';
 import { PLACES, STYLES, DESIGNS, CREAMS, SHAPES, styleName, optName } from '../../data/catalog.js';
@@ -318,14 +318,28 @@ export function PhotoSheet({ open, onClose, onUse }) {
       setImg({ thumb: st.photo.thumb }); setStyles(st.photo.styles || []); setDesign(st.photo.design || 'simple'); setShape(st.photo.shape || 'round'); setCream(st.photo.cream || 'white'); setAi(st.photo.ai || null);
     }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  // 예시 사진(앱이 그린 케이크 그림)으로 체험하기 — 발표·시연용
+  const SAMPLES = [
+    { label: '하트 빈티지', o: { shape: 'heart', size: 'h1', design: 'vintage', cream: 'pink', text: '사랑해', font: 'pen', textColor: 'berry', toppings: ['pearl'] } },
+    { label: '곰돌이 그림', o: { shape: 'round', size: 'h1', design: 'character', cream: 'sky', text: '생일 축하해', font: 'gaegu', textColor: 'choco', toppings: ['sprinkle'] } },
+    { label: '라벤더 꽃', o: { shape: 'round', size: 'h2', design: 'flower', cream: 'lavender', text: '감사합니다', font: 'gowun', textColor: 'navy', toppings: ['freshflower'] } },
+  ];
+  const trySample = async (smp) => {
+    const svg = cakeSVG(smp.o, { uid: 'smp', fancy: false }).replace('<svg ', '<svg width="600" height="500" ');
+    const el = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
+    await run(el, smp);
+  };
   const onPick = async (file) => {
+    try { await run(await loadImage(file)); } catch (e) { toast(e.message || '사진을 읽지 못했어요'); setBusy(false); }
+  };
+  const run = async (el, smp) => {
     setBusy(true); setAi(null); setAiErr('');
     try {
-      const el = await loadImage(file);
       const thumb = toDataURL(el, 360, 0.8, true);
       const an = analyzeImage(el);
       setImg({ thumb, an });
       setStyles(an.styles); setDesign(an.design); setCream(an.cream); setShape('round');
+      if (smp) { setShape(smp.o.shape); setDesign(smp.o.design); setCream(smp.o.cream); setStyles(['lettering', ...(smp.o.design === 'character' ? ['character'] : smp.o.design === 'flower' ? ['flower'] : [])]); }
       if (st.settings.claudeKey) {
         try {
           const big = toDataURL(el, 900, 0.85);
@@ -359,6 +373,8 @@ export function PhotoSheet({ open, onClose, onUse }) {
           <div className="note pink">원하는 케이크 사진(인스타 캡처도 좋아요)을 올리면 색·모양·스타일을 분석해서 비슷한 케이크를 만드는 주변 가게를 골라 드려요. 사진은 이 기기 안에서만 분석해요{st.settings.claudeKey ? ' (AI 연결 시 AI 분석에도 사용)' : ''}.</div>
           <PhotoPick onPick={onPick} className="btn pri block"><Icon n="image" /> 앨범에서 사진 고르기</PhotoPick>
           <PhotoPick onPick={onPick} capture className="btn line block"><Icon n="camera" /> 카메라로 찍기</PhotoPick>
+          <div className="lbl" style={{ marginTop: 12 }}>사진이 없으면 예시로 체험해 보세요</div>
+          <div className="opts c3">{SAMPLES.map((s) => <button key={s.label} className="opt" onClick={() => trySample(s)}><div className="thumb"><CakeView o={s.o} /></div><small>{s.label}</small></button>)}</div>
         </div>
       )}
       {busy && <Loading text={st.settings.claudeKey ? 'AI가 사진을 보고 있어요…' : '사진의 색과 스타일을 분석하는 중…'} />}
