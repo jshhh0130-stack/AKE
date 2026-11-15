@@ -8,7 +8,7 @@ import { shopToStore } from '../../lib/stores.js';
 import { ruleCheck, verdictOf } from '../../lib/price.js';
 import { ownerApprove, ownerChange, ownerDecline, ownerProof, ownerAdvance, ownerMarkPaid, nextStatus, ACTIVE, SALES, OWNER_NAME, ordersCSV, downloadText } from '../../lib/orders.js';
 import { loadImage, toDataURL } from '../../lib/image.js';
-import { won, range, fmtDate, relDay, ymd, today, addDays, parseYmd, DOW, ago, maskName, maskPhone, man } from '../../lib/util.js';
+import { won, range, fmtDate, relDay, ymd, today, addDays, parseYmd, DOW, ago, maskName, maskPhone, man, shareText } from '../../lib/util.js';
 import { SHAPES, FLAVORS, RICE_FLAVORS, TOPPINGS, EXTRAS, SIZES, DESIGNS, sizeOf, designOf, creamOf, fontOf, textColorOf, optName } from '../../data/catalog.js';
 import { orderView } from '../customer/Mine.jsx';
 import { readiness } from './Editors.jsx';
@@ -226,6 +226,12 @@ export function OwnerOrderDetail({ params }) {
         {['confirmed', 'proof', 'making', 'ready', 'done'].includes(o.status) && (
           <div className="card pad" style={{ marginTop: 12 }}>
             <div className="row"><span className="grow small muted">확정 금액</span><b className="pink" style={{ fontSize: 18 }}>{won(o.finalPrice)}</b></div>
+            <button className="btn sm line block" style={{ marginTop: 10 }} onClick={async () => {
+              const sh = st.shop; const dep = sh?.ops?.deposit ? Math.round((o.finalPrice * sh.ops.deposit) / 100 / 100) * 100 : 0;
+              const text = [`[${sh?.name || o.storeName}] ${o.customer?.name || ''}님, 케이크 주문이 확정됐어요! 🎂`, `· 픽업: ${fmtDate(x.date)} ${x.time}`, `· 케이크: ${sizeOf(x.size).name} ${designOf(x.design).name} / “${x.noText ? '문구 없음' : x.text}”`, `· 확정 금액: ${won(o.finalPrice)}`, dep && !o.paid ? `· 예약금 ${sh.ops.deposit}%: ${won(dep)}${sh.ops.account ? ` → ${sh.ops.account}` : ''} (입금 후 제작 시작)` : null, o.paid ? '· 예약금 입금 확인 완료' : null, sh?.addr ? `· 주소: ${sh.addr}` : null].filter(Boolean).join('\n');
+              const r = await shareText({ title: '주문 확정 안내', text });
+              toast(r === 'copied' ? '안내 문구를 복사했어요. 손님 카톡에 붙여 넣으세요' : r === 'shared' ? '손님에게 보냈어요' : '공유를 취소했어요');
+            }}><Icon n="chat" size="sm" /> 손님에게 카톡으로 확정 안내 보내기</button>
             {st.shop?.ops?.deposit ? (
               <div className="row" style={{ marginTop: 8 }}>
                 <span className="grow small">예약금 {st.shop.ops.deposit}% · <b>{won(Math.round((o.finalPrice * st.shop.ops.deposit) / 100 / 100) * 100)}</b></span>

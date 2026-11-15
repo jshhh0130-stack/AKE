@@ -223,6 +223,13 @@ export function CustomerOrder({ params }) {
         {['done', 'canceled', 'declined', 'external'].includes(s) && (
           <button className="btn sec block" style={{ marginTop: 10 }} onClick={() => { const { date, time, refPhoto, ...d } = order.o; nav(`/order/${order.storeId}?from=${encodeURIComponent(JSON.stringify(d))}`); }}><Icon n="refresh" size="sm" /> 같은 케이크 다시 주문하기</button>
         )}
+        {store && (store.insta || store.kakao) && (
+          <div className="linkrow">
+            {store.insta && <a href={mapLinks(store).insta} target="_blank" rel="noreferrer"><Icon n="insta" />인스타 문의</a>}
+            <a href={mapLinks(store).kakao} target="_blank" rel="noreferrer"><Icon n="map" />카카오맵</a>
+            <a href={mapLinks(store).route} target="_blank" rel="noreferrer"><Icon n="pin" />길찾기</a>
+          </div>
+        )}
         <button className="btn ghost block" style={{ marginTop: 10 }} onClick={() => nav(`/store/${order.storeId}`)}>가게 보기</button>
         <div style={{ height: 24 }} />
       </div>

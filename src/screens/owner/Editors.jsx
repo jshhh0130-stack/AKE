@@ -158,6 +158,7 @@ export function OpsEditor({ shop, set }) {
       <div style={{ marginTop: 8 }}><Seg value={o.slotMin} onChange={(v) => setO({ slotMin: v })} items={[[30, '30분 단위'], [60, '1시간 단위']]} /></div>
       <div className="lbl">예약금</div>
       <Seg value={o.deposit} onChange={(v) => setO({ deposit: v })} items={[[0, '없음'], [30, '30%'], [50, '50%'], [100, '전액']]} />
+      {o.deposit > 0 && <input className="inp" style={{ marginTop: 8 }} value={o.account || ''} onChange={(e) => setO({ account: e.target.value })} placeholder="입금 계좌 (예: 국민 000-00-0000 홍길동) — 확정 안내 메시지에 들어가요" maxLength={60} />}
       <div className="lbl">자동 확정</div>
       <div className="card pad">
         <div className="row"><span className="grow b small">규칙 안 주문은 자동 확정</span><Toggle on={o.autoConfirm} onChange={(v) => setO({ autoConfirm: v })} /></div>
