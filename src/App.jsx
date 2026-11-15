@@ -11,14 +11,16 @@ import { OrderDone, MyOrders, CustomerOrder, Saved, My } from './screens/custome
 import { OwnerHome, OwnerOrders, OwnerOrderDetail, Sales } from './screens/owner/Owner.jsx';
 import { OwnerShop, ShopEdit } from './screens/owner/Shop.jsx';
 import Setup from './screens/owner/Setup.jsx';
-import { Settings, About, SharedOrder } from './screens/Settings.jsx';
+import { Settings, About, SharedOrder, GiftView } from './screens/Settings.jsx';
+import Insight from './screens/Insight.jsx';
+import InstallBanner from './components/InstallBanner.jsx';
 
 const ROUTES = [
   ['/role', RoleSelect], ['/guide', Guide],
   ['/c', CustomerHome], ['/c/saved', Saved], ['/c/orders', MyOrders], ['/c/order/:id', CustomerOrder], ['/c/my', My],
   ['/store/:id', StoreDetail], ['/order/:id', OrderForm], ['/done/:id', OrderDone],
   ['/o', OwnerHome], ['/o/orders', OwnerOrders], ['/o/order/:id', OwnerOrderDetail], ['/o/shop', OwnerShop], ['/o/shop/:sec', ShopEdit], ['/o/sales', Sales], ['/o/setup', Setup],
-  ['/settings', Settings], ['/about', About], ['/s/:code', SharedOrder],
+  ['/settings', Settings], ['/about', About], ['/s/:code', SharedOrder], ['/g/:code', GiftView], ['/insight', Insight],
 ];
 
 function Router() {
@@ -62,10 +64,15 @@ export default function App() {
           <li><span className="dot">3</span><span><b>시안 미리보기</b> — 고른 그대로 케이크 시안이 그려져요</span></li>
           <li><span className="dot">4</span><span><b>사장님은 승인만</b> — 규칙 안의 주문은 자동 확정돼요</span></li>
         </ul>
+        <div className="row">
+          <button className="btn sec sm" onClick={() => nav('/insight')}>📊 시장 데이터 보기</button>
+          <a className="btn line sm" href="https://github.com/jshhh0130-stack/dear-cake" target="_blank" rel="noreferrer">GitHub</a>
+        </div>
       </aside>
       <div className="phone">
         <Router />
         <Toasts />
+        {gone && <InstallBanner />}
         {!gone && <Splash out={!splash} />}
       </div>
     </div>

@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../../components/Icon.jsx';
 import MapView, { loadKakao } from '../../components/MapView.jsx';
-import TabBar, { CUSTOMER_TABS } from '../../components/TabBar.jsx';
+import { CustomerTabBar } from '../../components/TabBar.jsx';
 import { Sheet, CakeView, toast, PhotoPick, Loading } from '../../components/ui.jsx';
 import { useApp, setState, getState } from '../../lib/state.js';
 import { nav } from '../../lib/router.js';
 import { getStores, rankStores, FILTERS, fmtKm, headlinePrice, kindLabel, canOrderInApp, nextOpenDay } from '../../lib/stores.js';
 import { storeLook } from '../../lib/cake.js';
 import { range } from '../../lib/util.js';
+import { estimate } from '../../lib/price.js';
 import { PLACES, STYLES, DESIGNS, CREAMS, SHAPES, styleName, optName } from '../../data/catalog.js';
 import { getGPS, searchPlace, reverseLabel, findNearbyOSM } from '../../lib/geo.js';
 import { loadImage, toDataURL, analyzeImage } from '../../lib/image.js';
@@ -20,7 +21,7 @@ export function StoreThumb({ s }) {
   return <CakeView o={look} />;
 }
 
-export function StoreCard({ r, sel, onClick, fav, onFav }) {
+export function StoreCard({ r, sel, onClick, fav, onFav, picked }) {
   const { s, d, match } = r;
   const hp = headlinePrice(s);
   const open = canOrderInApp(s) ? nextOpenDay(s, getState().orders) : null;
@@ -41,8 +42,39 @@ export function StoreCard({ r, sel, onClick, fav, onFav }) {
           {open && <small> · {open.diff === 0 ? '오늘' : open.diff === 1 ? '내일' : `${open.diff}일 뒤`}부터 픽업</small>}
         </div>
       </div>
-      {onFav && <span className={`fav ${fav ? 'on' : ''}`} onClick={(e) => { e.stopPropagation(); onFav(); }} role="button" aria-label="찜"><Icon n="heart" fill={fav} style={fav ? { fill: 'currentColor' } : undefined} /></span>}
+      {picked != null ? <span className={`fav ${picked ? 'on' : ''}`} aria-label="비교 선택"><Icon n={picked ? 'check' : 'plus'} style={{ width: 26, height: 26, padding: 4, borderRadius: 9, background: picked ? 'var(--p500)' : '#f3e9ed', color: picked ? '#fff' : '#b09aa4' }} /></span>
+        : onFav && <span className={`fav ${fav ? 'on' : ''}`} onClick={(e) => { e.stopPropagation(); onFav(); }} role="button" aria-label="찜"><Icon n="heart" fill={fav} style={fav ? { fill: 'currentColor' } : undefined} /></span>}
     </button>
+  );
+}
+
+// 가게 2~3곳 나란히 비교 (팀 조사: "가격·옵션·추가금·픽업시간을 나란히")
+export function CompareSheet({ open, onClose, rows }) {
+  const st = useApp();
+  if (!open) return null;
+  const est = (s, size) => { const e = estimate(s, { size, design: 'simple', shape: 'round', cream: 'white', flavor: 'vanilla', text: 'a' }); return range(e.lo, e.hi, true) + (e.basis === 'menu' ? '' : ' *'); };
+  const line = (label, fn) => <tr><th>{label}</th>{rows.map((r) => <td key={r.s.id}>{fn(r)}</td>)}</tr>;
+  return (
+    <Sheet open={open} onClose={onClose} title={`가게 ${rows.length}곳 비교`}>
+      <div style={{ overflowX: 'auto' }}>
+        <table className="cmp">
+          <thead><tr><th />{rows.map((r) => <td key={r.s.id}><div className="cth"><StoreThumb s={r.s} /></div><b>{r.s.name}</b></td>)}</tr></thead>
+          <tbody>
+            {line('거리', (r) => fmtKm(r.d))}
+            {line('주문 방법', (r) => (canOrderInApp(r.s) ? <span className="tag dark">⚡ 앱 주문</span> : r.s.kakao ? '카톡' : r.s.insta ? '인스타' : r.s.naver ? '네이버 예약' : '가게 문의'))}
+            {line('도시락', (r) => est(r.s, 'dosirak'))}
+            {line('1호', (r) => <b className="pink">{est(r.s, 'h1')}</b>)}
+            {line('2호', (r) => est(r.s, 'h2'))}
+            {line('스타일', (r) => (r.s.styles || []).filter((x) => x !== 'custom').map(styleName).join(', ') || '-')}
+            {line('가장 빠른 픽업', (r) => { const n = nextOpenDay(r.s, st.orders); return n ? (n.diff === 0 ? '오늘' : n.diff === 1 ? '내일' : `${n.diff}일 뒤`) : '-'; })}
+            {line('당일 주문', (r) => (r.s.sameDay ? '가능' : r.s.sameDay === false ? '불가' : '확인 필요'))}
+            {line('휴무', (r) => r.s.closed || (r.s.ops ? (r.s.ops.closedDays.length ? r.s.ops.closedDays.map((d) => '일월화수목금토'[d]).join('·') + '요일' : '없음') : '-'))}
+            {line('', (r) => <button className="btn xs pri" onClick={() => { onClose(); setTimeout(() => nav(`/store/${r.s.id}`), 30); }}>자세히</button>)}
+          </tbody>
+        </table>
+      </div>
+      <div className="xs muted" style={{ marginTop: 8 }}>* 표시는 공개 가격·지역 평균으로 계산한 추정이에요. 사장님이 등록한 가게는 정확한 가격이에요.</div>
+    </Sheet>
   );
 }
 
@@ -60,6 +92,9 @@ export default function CustomerHome() {
   const [fit, setFit] = useState(null);
   const [finding, setFinding] = useState(false);
   const [kakaoBad, setKakaoBad] = useState(false);
+  const [cmpMode, setCmpMode] = useState(false);
+  const [cmp, setCmp] = useState([]);
+  const [cmpOpen, setCmpOpen] = useState(false);
   const wrap = useRef(null);
   const [H, setH] = useState(600);
   useEffect(() => {
@@ -138,6 +173,7 @@ export default function CustomerHome() {
           <div className="grab" onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag}><i /></div>
           <div className="bh" onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag}>
             <h3>{st.photo ? '내 사진과 비슷한 케이크 가게' : '내 주변 커스텀 케이크'} <span className="pink">{ranked.length}</span></h3>
+            <button className={`btn xs ${cmpMode ? 'dark' : 'ghost'}`} onPointerDown={(e) => e.stopPropagation()} onClick={() => { setCmpMode(!cmpMode); setCmp([]); if (!cmpMode) toast('비교할 가게를 2~3곳 눌러 주세요'); }}>{cmpMode ? '비교 취소' : '비교'}</button>
             <select className="sortsel" value={sort} onChange={(e) => setSort(e.target.value)} onPointerDown={(e) => e.stopPropagation()}>
               <option value="rec">추천순</option><option value="near">가까운순</option><option value="price">가격순</option>
             </select>
@@ -159,7 +195,11 @@ export default function CustomerHome() {
             )}
             {rows.map((r) => (
               <StoreCard key={r.s.id} r={r} sel={sel === r.s.id} fav={st.favs.includes(r.s.id)} onFav={() => toggleFav(r.s.id)}
-                onClick={() => (sel === r.s.id ? nav(`/store/${r.s.id}`) : select(r.s.id))} />
+                picked={cmpMode ? cmp.includes(r.s.id) : undefined}
+                onClick={() => {
+                  if (cmpMode) { setCmp((a) => (a.includes(r.s.id) ? a.filter((x) => x !== r.s.id) : a.length >= 3 ? (toast('최대 3곳까지 비교할 수 있어요'), a) : [...a, r.s.id])); return; }
+                  if (sel === r.s.id) nav(`/store/${r.s.id}`); else select(r.s.id);
+                }} />
             ))}
             {sel && <div className="center xs muted" style={{ margin: '-2px 0 10px' }}>선택한 가게를 한 번 더 누르면 자세히 볼 수 있어요</div>}
             <div className="card pad" style={{ marginTop: 6 }}>
@@ -170,7 +210,13 @@ export default function CustomerHome() {
           </div>
         </div>
       </div>
-      <TabBar tabs={CUSTOMER_TABS} current="/c" />
+      {cmpMode && cmp.length > 0 && (
+        <div style={{ position: 'absolute', left: 12, right: 12, bottom: 'calc(var(--tab) + var(--sb) + 10px)', zIndex: 25 }}>
+          <button className="btn pri block" disabled={cmp.length < 2} onClick={() => setCmpOpen(true)}>{cmp.length < 2 ? '한 곳 더 골라 주세요' : `${cmp.length}곳 나란히 비교하기`}</button>
+        </div>
+      )}
+      <CustomerTabBar current="/c" />
+      <CompareSheet open={cmpOpen} onClose={() => setCmpOpen(false)} rows={cmp.map((id) => ranked.find((r) => r.s.id === id)).filter(Boolean)} />
       <LocationSheet open={locOpen} onClose={() => setLocOpen(false)} />
       <PhotoSheet open={photoOpen} onClose={() => setPhotoOpen(false)} />
     </div>

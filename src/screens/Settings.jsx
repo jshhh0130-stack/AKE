@@ -6,7 +6,7 @@ import { useApp, setState, resetAll, getState } from '../lib/state.js';
 import { nav } from '../lib/router.js';
 import { askClaude } from '../lib/ai.js';
 import { loadKakao } from '../components/MapView.jsx';
-import { decodeOrder } from '../lib/share.js';
+import { decodeOrder, decodeGift } from '../lib/share.js';
 import { getStores, SEED_STORES, SEED_UPDATED } from '../lib/stores.js';
 import { loadDemoShop } from '../lib/orders.js';
 import { range, fmtDate, won, uid } from '../lib/util.js';
@@ -86,6 +86,46 @@ export function About() {
         <div className="sec-t"><h3>사용한 공개 서비스</h3></div>
         <div className="card pad xs muted">지도: © OpenStreetMap 기여자, © CARTO · 주소 검색: Nominatim · 주변 가게 찾기: Overpass API · 글꼴: Pretendard, Google Fonts · AI(선택): Claude API, pollinations.ai(실사 이미지 베타)</div>
         <div style={{ height: 24 }} />
+      </div>
+    </div>
+  );
+}
+
+// 선물 카드 (받는 분이 여는 링크)
+export function GiftView({ params }) {
+  const st = useApp();
+  const [g, setG] = useState(null);
+  const [err, setErr] = useState('');
+  useEffect(() => { decodeGift(params.code).then(setG).catch(() => setErr('선물 카드 링크가 올바르지 않아요.')); }, [params.code]);
+  if (err) return <div className="screen"><Header title="선물" fallback="/" /><Empty icon="⚠️">{err}</Empty></div>;
+  if (!g) return <div className="screen"><Header title="선물" fallback="/" /><Loading /></div>;
+  const store = getStores(st).find((s) => s.id === g.storeId);
+  const x = g.o;
+  return (
+    <div className="screen fade" style={{ background: 'linear-gradient(180deg,#FFE3EC 0%,#FFF9FB 45%)' }}>
+      <div className="scroll pad" style={{ paddingTop: 'calc(24px + var(--st))' }}>
+        <div className="center" style={{ fontSize: 44 }}>🎁</div>
+        <h2 className="center" style={{ margin: '6px 0 4px', fontSize: 23, letterSpacing: -0.4 }}>{g.gift.to ? `${g.gift.to}님,` : ''} 케이크 선물이 도착했어요!</h2>
+        <p className="center muted small" style={{ margin: 0 }}>{g.gift.from ? `${g.gift.from}님이` : '친구가'} Dear Cake로 보낸 선물이에요</p>
+        <div className="ticket" style={{ marginTop: 16 }}>
+          <div className="stage" style={{ height: 230 }}><CakeView o={{ ...x, text: x.noText ? '' : x.text }} fancy /></div>
+          <div className="tb">
+            {g.gift.msg && <div className="msg" style={{ marginTop: 0, fontSize: 15 }}><small>{g.gift.from || '보낸 분'}의 메시지</small>{g.gift.msg}</div>}
+            <div className="kv" style={{ marginTop: 8 }}><span>받는 곳</span><b>{g.storeName}</b></div>
+            <div className="kv"><span>받는 날</span><b className="pink">{fmtDate(x.date)} {x.time}</b></div>
+            {store?.addr && <div className="kv"><span>주소</span><b>{store.addr}</b></div>}
+            <div className="kv"><span>케이크</span><b>{sizeOf(x.size).name} · {designOf(x.design).name}</b></div>
+          </div>
+        </div>
+        {store && (
+          <div className="linkrow">
+            <a href={`https://map.kakao.com/link/to/${encodeURIComponent(store.name)},${store.lat},${store.lng}`} target="_blank" rel="noreferrer">🗺️ 길찾기</a>
+            <a href={`https://map.kakao.com/?q=${encodeURIComponent(store.name)}`} target="_blank" rel="noreferrer">🔎 카카오맵</a>
+            <a href={`https://map.naver.com/p/search/${encodeURIComponent(store.name)}`} target="_blank" rel="noreferrer">🟢 네이버지도</a>
+          </div>
+        )}
+        <div className="note" style={{ marginTop: 12 }}>가게에서 받는 분 이름을 말하면 케이크를 받을 수 있어요. 그림은 참고용 시안이에요.</div>
+        <button className="btn pri block" style={{ marginTop: 14 }} onClick={() => { setState({ role: 'customer' }); nav(st.seenGuide ? '/c' : '/guide', { replace: true }); }}>나도 케이크 선물하기</button>
       </div>
     </div>
   );

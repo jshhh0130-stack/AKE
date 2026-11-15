@@ -1,5 +1,14 @@
 import Icon from './Icon.jsx';
 import { nav } from '../lib/router.js';
+import { useApp } from '../lib/state.js';
+import { unseenCount } from '../lib/orders.js';
+
+// 고객 탭바 (주문내역에 새 소식 숫자 표시)
+export function CustomerTabBar({ current }) {
+  const st = useApp();
+  const n = unseenCount(st);
+  return <TabBar tabs={CUSTOMER_TABS.map((t) => (t.path === '/c/orders' ? { ...t, badge: n } : t))} current={current} />;
+}
 
 export default function TabBar({ tabs, current }) {
   return (

@@ -1,13 +1,24 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Icon from '../../components/Icon.jsx';
-import TabBar, { CUSTOMER_TABS } from '../../components/TabBar.jsx';
+import { CustomerTabBar } from '../../components/TabBar.jsx';
 import { CakeView, Header, Empty, StatusTag, Stars, toast } from '../../components/ui.jsx';
 import { LogoBadge } from '../../components/Logo.jsx';
 import { useApp, setState } from '../../lib/state.js';
 import { nav } from '../../lib/router.js';
 import { getStores, rankStores, mapLinks, canOrderInApp } from '../../lib/stores.js';
-import { STATUS, ACTIVE, custAcceptChange, custApproveProof, custCancel, custReview, loadDemoShop } from '../../lib/orders.js';
-import { orderLink } from '../../lib/share.js';
+import { STATUS, ACTIVE, custAcceptChange, custApproveProof, custCancel, custReview, loadDemoShop, markSeen } from '../../lib/orders.js';
+import { orderLink, giftLink } from '../../lib/share.js';
+
+export function GiftButton({ order }) {
+  if (!order.gift) return null;
+  return (
+    <button className="btn sec block" onClick={async () => {
+      const url = await giftLink(order);
+      const r = await shareText({ title: '케이크 선물이 도착했어요', text: `${order.gift.to}님, ${order.gift.from || '친구'}님이 보낸 케이크 선물이 도착했어요! 🎂`, url });
+      if (r === 'copied') toast('선물 카드 링크를 복사했어요. 받는 분께 보내 주세요');
+    }}>🎁 {order.gift.to}님께 선물 카드 보내기</button>
+  );
+}
 import { range, won, fmtDate, ago, shareText, copyText, maskPhone } from '../../lib/util.js';
 import { SHAPES, FLAVORS, RICE_FLAVORS, TOPPINGS, EXTRAS, sizeOf, designOf, creamOf, fontOf, textColorOf, optName } from '../../data/catalog.js';
 import { DEMO_ID } from '../../data/demo.js';
@@ -27,6 +38,7 @@ export function orderText(order, link) {
     deco.length ? `· 장식/추가: ${deco.join(', ')}${o.plateText ? ` (판 문구: ${o.plateText})` : ''}` : null,
     o.request ? `· 요청사항: ${o.request}` : null,
     o.allergy ? `· 알레르기: ${o.allergy}` : null,
+    order.gift ? `· 선물: 받는 분 ${order.gift.to}님이 픽업해요` : null,
     `· 예상 금액: ${range(order.est?.lo, order.est?.hi)} (디어 케이크 계산)`,
     link ? `· 시안 보기: ${link}` : null,
   ].filter(Boolean).join('\n');
@@ -112,8 +124,10 @@ export function OrderDone({ params }) {
             <div className="note">가게에 보낼 때 “디어 케이크 주문서예요”라고 말해 주세요. 링크를 열면 사장님도 시안을 볼 수 있어요.</div>
           </div>
         )}
+        {ext && order.gift && <div style={{ marginTop: 10 }}><GiftButton order={order} /></div>}
         {!ext && (
           <div className="col" style={{ marginTop: 14 }}>
+            <GiftButton order={order} />
             <button className="btn pri block" onClick={() => nav(`/c/order/${order.id}`, { replace: true })}>주문 상태 보기</button>
             {canOrderInApp(store) && <button className="btn sec block" onClick={toOwner}><Icon n="swap" size="sm" /> (체험) 사장님 화면에서 받아 보기</button>}
             <button className="btn ghost block" onClick={() => nav('/c', { replace: true })}>지도로 돌아가기</button>
@@ -143,13 +157,14 @@ export function MyOrders() {
               <div className="t1"><span className="grow">{o.storeName}</span><StatusTag status={o.status} /></div>
               <div className="t2">{fmtDate(o.o.date)} {o.o.time} · {sizeOf(o.o.size).name} {designOf(o.o.design).name}</div>
               <div className="t2"><b className="pink">{o.finalPrice ? won(o.finalPrice) : range(o.est?.lo, o.est?.hi)}</b> · {ago(o.createdAt)}</div>
+              {(o.history?.length || 0) > (st.seen?.[o.id] ?? o.history?.length ?? 0) && <div className="tag dark" style={{ marginTop: 6 }}>● 새 소식</div>}
               {o.status === 'change' && <div className="tag warn" style={{ marginTop: 6 }}>사장님 수정 제안 확인하기</div>}
               {o.status === 'proof' && <div className="tag warn" style={{ marginTop: 6 }}>시안 확인하기</div>}
             </div>
           </button>
         ))}
       </div>
-      <TabBar tabs={CUSTOMER_TABS} current="/c/orders" />
+      <CustomerTabBar current="/c/orders" />
     </div>
   );
 }
@@ -159,6 +174,7 @@ export function CustomerOrder({ params }) {
   const order = st.orders.find((x) => x.id === params.id);
   const [stars, setStars] = useState(5);
   const [rv, setRv] = useState('');
+  useEffect(() => { if (order) markSeen(order); }, [order?.history?.length]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!order) return <div className="screen"><Header title="주문" fallback="/c/orders" /><Empty>주문을 찾을 수 없어요.</Empty></div>;
   const store = getStores(st).find((s) => s.id === order.storeId);
   const s = order.status;
@@ -189,7 +205,8 @@ export function CustomerOrder({ params }) {
             <div className="row" style={{ marginTop: 8 }}><button className="btn sm line" onClick={async () => { const ok = await copyText(orderText(order, await orderLink(order))); toast(ok ? '주문서를 복사했어요' : '복사 실패'); }}>주문서 복사</button>{store?.insta && <a className="btn sm line" href={mapLinks(store).insta} target="_blank" rel="noreferrer">인스타</a>}</div>
           </div>
         )}
-        {['confirmed', 'making', 'ready'].includes(s) && store?.ops?.deposit ? <div className="note pink" style={{ marginTop: 12 }}>예약금 {store.ops.deposit}%({won(Math.round(((order.finalPrice || order.est.lo) * store.ops.deposit) / 100 / 100) * 100)})를 입금하면 제작이 시작돼요. 계좌는 사장님이 안내해요.</div> : null}
+        {order.paid && ['confirmed', 'proof', 'making', 'ready', 'done'].includes(s) && <div className="note ok" style={{ marginTop: 12 }}>✓ 사장님이 예약금 입금을 확인했어요.</div>}
+        {!order.paid && ['confirmed', 'making', 'ready'].includes(s) && store?.ops?.deposit ? <div className="note pink" style={{ marginTop: 12 }}>예약금 {store.ops.deposit}%({won(Math.round(((order.finalPrice || order.est.lo) * store.ops.deposit) / 100 / 100) * 100)})를 입금하면 제작이 시작돼요. 계좌는 사장님이 안내해요.</div> : null}
         <div className="sec-t"><h3>대화 기록</h3></div>
         {msgs.map((m, i) => <div key={i} className={`msg ${m.by === 'customer' ? 'me' : m.by === 'system' ? 'sys' : ''}`}><small>{m.by === 'customer' ? '나' : m.by === 'system' ? '자동 확정' : `${order.storeName} 사장님`} · {ago(m.at)}</small>{m.msg}</div>)}
         {s === 'done' && !order.review && (
@@ -202,6 +219,7 @@ export function CustomerOrder({ params }) {
         )}
         {order.review && <div className="card pad" style={{ marginTop: 14 }}><Stars n={order.review.stars} /><div className="small" style={{ marginTop: 4 }}>{order.review.text}</div></div>}
         {s === 'requested' && <button className="btn danger block" style={{ marginTop: 16 }} onClick={() => { if (confirm('주문 요청을 취소할까요?')) { custCancel(order.id); toast('주문을 취소했어요'); } }}>주문 요청 취소</button>}
+        {order.gift && <div style={{ marginTop: 12 }}><GiftButton order={order} /></div>}
         <button className="btn ghost block" style={{ marginTop: 10 }} onClick={() => nav(`/store/${order.storeId}`)}>가게 보기</button>
         <div style={{ height: 24 }} />
       </div>
@@ -220,7 +238,7 @@ export function Saved() {
         {rows.length === 0 && <Empty icon="💗">찜한 가게가 없어요.<br />가게 카드의 하트를 눌러 모아 보세요.</Empty>}
         {rows.map((r) => <StoreCard key={r.s.id} r={r} fav onFav={() => setState((x) => ({ ...x, favs: x.favs.filter((i) => i !== r.s.id) }))} onClick={() => nav(`/store/${r.s.id}`)} />)}
       </div>
-      <TabBar tabs={CUSTOMER_TABS} current="/c/saved" />
+      <CustomerTabBar current="/c/saved" />
     </div>
   );
 }
@@ -246,10 +264,11 @@ export function My() {
           <button className="list-row" onClick={() => { setState({ role: 'owner' }); nav(st.shop ? '/o' : '/o/setup', { replace: true }); }}><Icon n="swap" /><div className="grow"><div className="t">사장님 모드로 바꾸기</div><div className="s">가게 등록·주문 관리</div></div><Icon n="right" size="sm" /></button>
           <button className="list-row" onClick={() => nav('/guide')}><Icon n="info" /><div className="grow"><div className="t">사용 가이드 다시 보기</div></div><Icon n="right" size="sm" /></button>
           <button className="list-row" onClick={() => nav('/settings')}><Icon n="sparkle" /><div className="grow"><div className="t">AI · 지도 연결</div><div className="s">{st.settings.claudeKey ? 'AI 연결됨' : 'AI 키 없음(기본 분석 사용)'} · {st.settings.kakaoKey ? '카카오 지도' : '기본 지도'}</div></div><Icon n="right" size="sm" /></button>
+          <button className="list-row" onClick={() => nav('/insight')}><Icon n="chart" /><div className="grow"><div className="t">시장 데이터 · 인사이트</div><div className="s">수원 가게 {'43'}곳 분석 · 가격 분포 · 시장 근거</div></div><Icon n="right" size="sm" /></button>
           <button className="list-row" onClick={() => nav('/about')}><Icon n="receipt" /><div className="grow"><div className="t">앱 정보 · 데이터 출처</div><div className="s">가게 정보와 가격 추정 방법</div></div><Icon n="right" size="sm" /></button>
         </div>
       </div>
-      <TabBar tabs={CUSTOMER_TABS} current="/c/my" />
+      <CustomerTabBar current="/c/my" />
     </div>
   );
 }

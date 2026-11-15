@@ -22,7 +22,7 @@ export const OWNER_NAME = { requested: '새 요청', change: '고객 답 기다�
 export const ACTIVE = ['requested', 'change', 'confirmed', 'proof', 'making', 'ready'];
 export const SALES = ['confirmed', 'proof', 'making', 'ready', 'done'];
 
-export function createOrder(store, o, customer) {
+export function createOrder(store, o, customer, gift = null) {
   const st = getState();
   const est = estimate(store, o);
   const checks = ruleCheck(store, o, { orders: st.orders });
@@ -43,12 +43,30 @@ export function createOrder(store, o, customer) {
     est,
     checks,
     finalPrice: auto ? est.lo : null,
-    history: [{ at: now, by: 'customer', type: 'request', msg: '주문 요청서를 보냈어요' }],
+    history: [{ at: now, by: 'customer', type: 'request', msg: gift ? `🎁 ${gift.to}님께 보내는 선물 주문서를 보냈어요` : '주문 요청서를 보냈어요' }],
     mine: true,
+    gift,
   };
   if (auto) order.history.push({ at: now, by: 'system', type: 'auto', msg: `사장님이 정한 규칙 안이라 바로 확정됐어요 · ${won(est.lo)}` });
-  setState((s) => ({ ...s, orders: [order, ...s.orders] }));
+  setState((s) => ({ ...s, orders: [order, ...s.orders], seen: { ...(s.seen || {}), [order.id]: order.history.length } }));
   return order;
+}
+
+// 손님이 아직 확인하지 않은 새 소식(사장님 답장·상태 변화)이 있는 주문 수
+export const unseenCount = (s) => s.orders.filter((o) => o.mine && (o.history?.length || 0) > (s.seen?.[o.id] ?? o.history?.length ?? 0)).length;
+export const markSeen = (o) => setState((s) => ((s.seen?.[o.id] ?? 0) >= (o.history?.length || 0) ? s : { ...s, seen: { ...(s.seen || {}), [o.id]: o.history?.length || 0 } }));
+
+// 엑셀(CSV) 내보내기
+export function ordersCSV(list) {
+  const head = ['주문번호', '상태', '픽업일', '픽업시간', '주문자', '연락처', '크기', '모양', '디자인', '맛', '크림색', '문구', '글씨체', '장식·추가', '판 문구', '요청사항', '알레르기', '예상가(최소)', '예상가(최대)', '확정가', '예약금 입금', '접수일시'];
+  const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const rows = list.map((o) => [o.id, STATUS[o.status]?.name || o.status, o.o.date, o.o.time, o.customer?.name, o.customer?.phone, o.o.size, o.o.shape, o.o.design, o.o.flavor, o.o.cream, o.o.noText ? '' : o.o.text, o.o.font, [...(o.o.toppings || []), ...(o.o.extras || [])].join(' '), o.o.plateText, o.o.request, o.o.allergy, o.est?.lo, o.est?.hi, o.finalPrice, o.paid ? 'O' : '', o.createdAt]);
+  return '﻿' + [head, ...rows].map((r) => r.map(q).join(',')).join('\r\n');
+}
+export function downloadText(name, text, type = 'text/csv;charset=utf-8') {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
 // 사장님 동작
@@ -60,6 +78,7 @@ const NEXT = { confirmed: 'making', proof: 'making', making: 'ready', ready: 'do
 const NEXT_MSG = { making: '제작을 시작했어요', ready: '케이크가 준비됐어요! 픽업 시간에 맞춰 오세요', done: '픽업 완료 · 맛있게 드세요!' };
 export const nextStatus = (s) => NEXT[s];
 export const ownerAdvance = (id) => updateOrder(id, (o) => { const n = NEXT[o.status]; return n ? { status: n, history: pushHistory(o, 'owner', n, NEXT_MSG[n]) } : {}; });
+export const ownerMarkPaid = (id, paid = true) => updateOrder(id, (o) => ({ paid, history: pushHistory(o, 'owner', 'paid', paid ? '예약금 입금을 확인했어요. 제작 준비할게요!' : '입금 확인을 취소했어요') }));
 // 손님 동작
 export const custAcceptChange = (id) => updateOrder(id, (o) => ({ status: 'confirmed', finalPrice: o.proposedPrice ?? o.finalPrice ?? o.est?.lo, history: pushHistory(o, 'customer', 'accept', '수정 제안을 수락했어요') }));
 export const custApproveProof = (id) => updateOrder(id, (o) => ({ status: 'making', history: pushHistory(o, 'customer', 'proof-ok', '시안을 확인하고 승인했어요') }));
@@ -96,6 +115,7 @@ export function makeDemoOrders(shop = DEMO_SHOP) {
       o, refThumb: null, customer: { name, phone: `010-0000-${String(1000 + Math.floor(r() * 9000))}` },
       est, checks: ruleCheck(store, { ...o, date: null }, {}), finalPrice: ['requested', 'change', 'declined', 'canceled'].includes(status) ? null : est.lo + (r() > 0.8 ? 2000 : 0),
       history: [{ at: created.toISOString(), by: 'customer', type: 'request', msg: '주문 요청서를 보냈어요' }], demo: true,
+      paid: ['making', 'ready', 'done'].includes(status) || (status === 'confirmed' && r() > 0.5),
     };
     if (status === 'change') order.proposedPrice = est.lo + 3000;
     if (status === 'done' && r() > 0.45) order.review = { stars: r() > 0.25 ? 5 : 4, text: pick(['미리보기랑 똑같이 나와서 놀랐어요!', '글씨가 너무 예뻐요', '가격을 미리 알 수 있어서 좋았어요', '사장님 답장이 빨라요', '친구가 엄청 좋아했어요'], r), at: d.toISOString() };

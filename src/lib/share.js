@@ -27,5 +27,21 @@ export async function decodeOrder(code) {
     est: x.e ? { lo: x.e[0], hi: x.e[1], basis: x.e[2] } : null,
   };
 }
+// 선물 카드 링크 (받는 분에게): 연락처는 넣지 않는다
+async function pack(obj) {
+  const bytes = new TextEncoder().encode(JSON.stringify(obj));
+  if (typeof CompressionStream !== 'undefined') { try { return 'z' + b64u(await pipe(bytes, new CompressionStream('deflate-raw'))); } catch { /* 아래로 */ } }
+  return 'j' + b64u(bytes);
+}
+async function unpack(code) {
+  const body = unb64u(code.slice(1));
+  const bytes = code[0] === 'z' ? await pipe(body, new DecompressionStream('deflate-raw')) : body;
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+export async function giftLink(order) {
+  const code = await pack({ v: 1, s: order.storeId, sn: order.storeName, o: { ...order.o, refPhoto: undefined }, g: { to: order.gift?.to || '', msg: order.gift?.msg || '', from: order.gift?.from || order.customer?.name || '' } });
+  return `${appBase()}#/g/${code}`;
+}
+export async function decodeGift(code) { const x = await unpack(code); return { storeId: x.s, storeName: x.sn, o: x.o, gift: x.g }; }
 export const appBase = () => location.href.split('#')[0];
 export async function orderLink(order) { return `${appBase()}#/s/${await encodeOrder(order)}`; }

@@ -6,7 +6,7 @@ import { useApp, setState, patchShop } from '../../lib/state.js';
 import { nav } from '../../lib/router.js';
 import { shopToStore } from '../../lib/stores.js';
 import { ruleCheck, verdictOf } from '../../lib/price.js';
-import { ownerApprove, ownerChange, ownerDecline, ownerProof, ownerAdvance, nextStatus, ACTIVE, SALES, OWNER_NAME } from '../../lib/orders.js';
+import { ownerApprove, ownerChange, ownerDecline, ownerProof, ownerAdvance, ownerMarkPaid, nextStatus, ACTIVE, SALES, OWNER_NAME, ordersCSV, downloadText } from '../../lib/orders.js';
 import { loadImage, toDataURL } from '../../lib/image.js';
 import { won, range, fmtDate, relDay, ymd, today, addDays, parseYmd, DOW, ago, maskName, maskPhone, man } from '../../lib/util.js';
 import { SHAPES, FLAVORS, RICE_FLAVORS, TOPPINGS, EXTRAS, SIZES, DESIGNS, sizeOf, designOf, creamOf, fontOf, textColorOf, optName } from '../../data/catalog.js';
@@ -27,14 +27,16 @@ function NoShop() {
 }
 
 export function OCard({ o, quick = true }) {
+  const st = useApp();
   const n = nextStatus(o.status);
+  const needDeposit = (st.shop?.ops?.deposit || 0) > 0 && ['confirmed', 'proof', 'making', 'ready'].includes(o.status);
   return (
     <div className="ocard" role="button" onClick={() => nav(`/o/order/${o.id}`)}>
       <div className="th"><CakeView o={orderView(o)} /></div>
       <div className="grow">
         <div className="t1"><span className="grow">{maskName(o.customer?.name)} · {sizeOf(o.o.size).name}</span><StatusTag status={o.status} owner /></div>
         <div className="t2">{relDay(o.o.date)} {fmtDate(o.o.date, true)} {o.o.time} · {designOf(o.o.design).name}</div>
-        <div className="t2">{o.o.noText ? '문구 없음' : `“${o.o.text}”`} · <b style={{ color: 'var(--ink)' }}>{o.finalPrice ? won(o.finalPrice) : range(o.est?.lo, o.est?.hi, true)}</b></div>
+        <div className="t2">{o.o.noText ? '문구 없음' : `“${o.o.text}”`} · <b style={{ color: 'var(--ink)' }}>{o.finalPrice ? won(o.finalPrice) : range(o.est?.lo, o.est?.hi, true)}</b>{needDeposit && <> · <span className={`tag ${o.paid ? 'ok' : 'warn'}`}>{o.paid ? '입금 완료' : '입금 확인 전'}</span></>}</div>
         {quick && o.status === 'requested' && (
           <div className="acts" onClick={(e) => e.stopPropagation()}>
             <button className="btn xs ok" onClick={() => { ownerApprove(o.id, o.est.lo); toast(`승인했어요 · ${won(o.est.lo)}`); }}>승인 {man(o.est.lo)}원</button>
@@ -128,7 +130,9 @@ export function OwnerOrders() {
   const dayList = list.filter((o) => o.o.date === selDay && !['declined', 'canceled'].includes(o.status)).sort((a, b) => a.o.time.localeCompare(b.o.time));
   return (
     <div className="screen fade">
-      <div className="hdr"><h1 style={{ paddingLeft: 10 }}>주문</h1><div style={{ width: 150, marginRight: 8 }}><Seg value={view} onChange={setView} items={[['list', '목록'], ['cal', '달력']]} /></div></div>
+      <div className="hdr"><h1 style={{ paddingLeft: 10 }}>주문</h1>
+        <button className="ib" aria-label="엑셀로 받기" title="엑셀(CSV)로 받기" onClick={() => { downloadText(`${shop.name}_주문목록_${ymd(today())}.csv`, ordersCSV(list)); toast('주문 목록을 엑셀(CSV) 파일로 저장했어요'); }}><Icon n="receipt" /></button>
+        <div style={{ width: 140, marginRight: 8 }}><Seg value={view} onChange={setView} items={[['list', '목록'], ['cal', '달력']]} /></div></div>
       {view === 'list' ? (<>
         <div className="pad" style={{ paddingBottom: 6 }}><div className="seg">{[['new', `새 요청 ${groups.new.length}`], ['doing', `진행 중 ${groups.doing.length}`], ['done', '완료·취소']].map(([k, l]) => <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}</div></div>
         <div className="scroll pad with-tab" style={{ paddingTop: 6 }}>
@@ -203,6 +207,7 @@ export function OwnerOrderDetail({ params }) {
           {x.plateText && <div className="kv"><span>판 문구</span><b>{x.plateText}</b></div>}
           {x.request && <div className="kv"><span>요청</span><b>{x.request}</b></div>}
           {x.allergy && <div className="kv"><span>알레르기</span><b style={{ color: 'var(--danger)' }}>{x.allergy}</b></div>}
+          {o.gift && <div className="kv"><span>🎁 선물</span><b>받는 분 {o.gift.to}님이 픽업해요</b></div>}
         </div>
         <ul className="rules">{checks.map((c, i) => <li key={i} className={c.ok ? 'k' : 'w'}><i>{c.ok ? '✓' : '!'}</i><span>{c.t}</span></li>)}</ul>
         <div className={`verdict ${v.ok ? 'ok' : 'w'}`}>{v.ok ? '✓ 가게 규칙 안 — 승인만 누르면 돼요' : `! 확인할 항목 ${v.warn}개 — 금액·메시지를 정해 승인하거나 수정 요청하세요`}</div>
@@ -218,7 +223,17 @@ export function OwnerOrderDetail({ params }) {
         )}
         {o.status === 'change' && <div className="note warn" style={{ marginTop: 12 }}>손님에게 수정 제안({won(o.proposedPrice)})을 보냈어요. 손님이 수락하면 확정돼요.</div>}
         {o.status === 'proof' && <div className="note warn" style={{ marginTop: 12 }}>손님이 시안을 확인하고 있어요.</div>}
-        {['confirmed', 'making', 'ready', 'done'].includes(o.status) && <div className="note ok" style={{ marginTop: 12 }}>확정 금액 <b>{won(o.finalPrice)}</b>{st.shop?.ops?.deposit ? ` · 예약금 ${st.shop.ops.deposit}%` : ''}</div>}
+        {['confirmed', 'proof', 'making', 'ready', 'done'].includes(o.status) && (
+          <div className="card pad" style={{ marginTop: 12 }}>
+            <div className="row"><span className="grow small muted">확정 금액</span><b className="pink" style={{ fontSize: 18 }}>{won(o.finalPrice)}</b></div>
+            {st.shop?.ops?.deposit ? (
+              <div className="row" style={{ marginTop: 8 }}>
+                <span className="grow small">예약금 {st.shop.ops.deposit}% · <b>{won(Math.round((o.finalPrice * st.shop.ops.deposit) / 100 / 100) * 100)}</b></span>
+                <button className={`btn xs ${o.paid ? 'line' : 'ok'}`} onClick={() => { ownerMarkPaid(o.id, !o.paid); toast(o.paid ? '입금 확인을 취소했어요' : '입금 확인! 손님에게 알렸어요'); }}>{o.paid ? '✓ 입금 완료' : '입금 확인'}</button>
+              </div>
+            ) : null}
+          </div>
+        )}
         {o.review && <div className="card pad" style={{ marginTop: 12 }}><div className="b small">손님 후기</div><Stars n={o.review.stars} /><div className="small">{o.review.text}</div></div>}
         <div className="sec-t"><h3>기록</h3></div>
         {(o.history || []).map((h, i) => <div key={i} className={`msg ${h.by === 'owner' ? 'me' : h.by === 'system' ? 'sys' : ''}`}><small>{h.by === 'owner' ? '나(사장님)' : h.by === 'system' ? '자동' : '손님'} · {ago(h.at)}</small>{h.msg}</div>)}
@@ -301,7 +316,7 @@ export function Sales() {
             <div className="small">디자인: {pop('design', DESIGNS, (k) => designOf(k).name).join(' · ')}</div>
           </div>
         )}
-        <div className="sec-t"><h3>{selBar ? selBar.title : '기간'} 주문 {focus.length}건</h3></div>
+        <div className="sec-t"><h3>{selBar ? selBar.title : '기간'} 주문 {focus.length}건</h3>{focus.length > 0 && <button className="more" onClick={() => { downloadText(`${shop.name}_정산_${selBar ? selBar.key : mode}.csv`, ordersCSV(focus)); toast('엑셀(CSV)로 저장했어요'); }}>엑셀로 받기 ›</button>}</div>
         {focus.slice().sort((a, b) => b.o.date.localeCompare(a.o.date)).slice(0, 30).map((o) => (
           <button key={o.id} className="list-row" onClick={() => nav(`/o/order/${o.id}`)}><span className="tag mute">{fmtDate(o.o.date, false)}</span><div className="grow"><div className="t small">{sizeOf(o.o.size).name} {designOf(o.o.design).name}</div><div className="s">{maskName(o.customer?.name)}</div></div><b>{won(amount(o))}</b></button>
         ))}

@@ -104,6 +104,7 @@ export const FILTERS = [
   { id: 'flower', name: '플라워', f: (s) => s.styles?.includes('flower') },
   { id: 'rice', name: '떡케이크', f: (s) => s.styles?.includes('rice') },
   { id: 'sameDay', name: '당일 가능', f: (s) => s.sameDay === true },
+  { id: 'soon', name: '⏰ 내일까지 픽업', f: (s) => { const n = nextOpenDay(s, []); return !!n && n.diff <= 1 && (s.kind !== 'public' || s.sameDay === true); } },
   { id: 'price', name: '가격 공개', f: (s) => !!(s.menu || s.price) },
 ];
 

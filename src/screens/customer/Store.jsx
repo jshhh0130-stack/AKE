@@ -7,9 +7,62 @@ import { nav, back } from '../../lib/router.js';
 import { getStores, distKm, fmtKm, kindLabel, canOrderInApp, closedDaysOf, leadDaysOf, nextOpenDay, mapLinks, SEED_UPDATED } from '../../lib/stores.js';
 import { estimate, basisText } from '../../lib/price.js';
 import { storeLook } from '../../lib/cake.js';
-import { range, DOW, shareText, hash, rng } from '../../lib/util.js';
+import { range, DOW, shareText, hash, rng, won } from '../../lib/util.js';
+import { askClaude } from '../../lib/ai.js';
 import { SIZES, styleName } from '../../data/catalog.js';
 import { StoreThumb } from './Home.jsx';
+
+// ── 가게에 물어보기: 가게 정보만 근거로 답한다 (키 없으면 규칙 기반) ──
+function ruleAnswer(s, q) {
+  const t = q.replace(/\s/g, '');
+  const closed = closedDaysOf(s);
+  const has = (re) => [s.note, s.priceNote, s.lead, s.hours, ...(s.notices || [])].filter(Boolean).find((x) => re.test(x));
+  const faq = (s.faq || []).find((f) => f.q.replace(/\s/g, '').split('').filter((c) => t.includes(c)).length >= Math.min(4, f.q.length - 1));
+  if (faq) return faq.a;
+  if (/당일|오늘|급하/.test(t)) return s.ops ? (s.ops.sameDay ? `네! 당일 주문은 ${s.ops.cutoff}까지 받아요.` : `당일 주문은 어려워요. 픽업 ${s.ops.leadDays}일 전까지 주문해 주세요.`) : s.sameDay ? `공개 정보로는 당일 케이크도 판매해요(${s.lead || '디자인이 정해져 있을 수 있어요'}). 정확한 건 가게에 확인해 주세요.` : '공개 정보에는 당일 주문 내용이 없어요. 보통 2~3일 전 예약이 필요해요.';
+  if (/휴무|쉬는|쉬어|영업|몇시|시간|오픈|마감/.test(t)) return `${s.ops ? `픽업 시간: ${s.ops.pickupStart}~${s.ops.pickupEnd}` : s.hours ? `영업 시간: ${s.hours}` : '영업 시간 정보는 없어요'} · 휴무: ${closed.length ? closed.map((d) => DOW[d]).join('·') + '요일' : s.closed || (s.ops ? '없음' : '정보 없음')}`;
+  if (/가격|얼마|비싸|원$|만원/.test(t)) { const r = SIZES.map((z) => ({ z, e: estimate(s, { size: z.id, design: 'simple', shape: 'round', cream: 'white', flavor: 'vanilla', text: 'a' }) })).filter(({ z }) => !s.menu || s.menu.sizes?.[z.id] != null); return `기본 레터링 기준 ${r.map(({ z, e }) => `${z.name} ${range(e.lo, e.hi, true)}`).join(', ')}이에요${s.menu ? '.' : ' (추정).'} 장식·맛을 고르면 주문서에서 바로 계산돼요.`; }
+  if (/주차/.test(t)) { const x = has(/주차/); return x ? `가게 정보: ${x}` : '주차 정보는 없어요. 가게에 문의해 주세요.'; }
+  if (/캐릭터|그림|저작권/.test(t)) return s.styles?.includes('character') ? '그림·캐릭터 케이크를 만들어요. 저작권이 있는 캐릭터는 사장님이 가능 여부를 확인해요.' : '이 가게 목록에는 그림·캐릭터 케이크가 없어요. 주문서에 요청하면 사장님이 확인해 드려요.';
+  if (/도시락|미니/.test(t)) return s.styles?.includes('dosirak') ? '도시락(미니) 케이크를 만들어요. 1~2인용으로 10cm 안팎이에요.' : '도시락 케이크 정보는 없어요.';
+  if (/떡|쌀|앙금/.test(t)) return s.styles?.includes('rice') ? '떡케이크(설기·앙금 장식)를 만들어요.' : '떡케이크 정보는 없어요.';
+  if (/사진|포토/.test(t)) return s.styles?.includes('photo') ? '포토 케이크를 만들어요. 주문서에서 사진을 첨부하면 돼요.' : '포토 케이크 정보는 없어요. 요청사항에 적으면 사장님이 확인해요.';
+  if (/보냉|포장|멀리/.test(t)) { const x = has(/보냉/); return x ? `가게 정보: ${x}` : s.menu?.extras?.icebag != null ? `보냉백은 ${won(s.menu.extras.icebag)}이에요.` : '30분 넘게 이동하면 보냉백을 요청해 보세요.'; }
+  if (/예약금|입금|결제|계좌/.test(t)) return s.ops?.deposit ? `확정 뒤 예약금 ${s.ops.deposit}%를 입금하면 제작을 시작해요. 계좌는 사장님이 안내해요.` : '결제 방법은 주문 확정 뒤 가게에서 안내해요.';
+  if (/변경|취소|환불/.test(t)) { const x = has(/변경|취소/); return x ? `가게 안내: ${x}` : '변경·취소 규정은 가게마다 달라요. 주문 전 안내사항을 확인해 주세요.'; }
+  if (/픽업|언제|빠른/.test(t)) { const n = nextOpenDay(s, []); return n ? `가장 빠른 픽업은 ${n.diff === 0 ? '오늘' : n.diff === 1 ? '내일' : `${n.diff}일 뒤`}이에요.` : '가까운 날짜에는 픽업이 어려워요.'; }
+  return '가게 정보에 없는 질문이에요. 주문서 요청사항에 적거나 가게 SNS로 문의해 주세요.';
+}
+function AskBox({ s }) {
+  const st = useApp();
+  const [q, setQ] = useState('');
+  const [log, setLog] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const ask = async (question) => {
+    const qq = (question ?? q).trim();
+    if (!qq) return;
+    setQ('');
+    setBusy(true);
+    let a = ruleAnswer(s, qq), ai = false;
+    if (st.settings.claudeKey) {
+      try {
+        const info = { 이름: s.name, 주소: s.addr, 스타일: (s.styles || []).map(styleName), 영업: s.hours, 휴무: s.closed || closedDaysOf(s).map((d) => DOW[d]), 당일: s.sameDay, 주문마감: s.lead, 가격표: s.menu?.sizes || s.price || '공개 가격 없음(평균 추정)', 가격메모: s.priceNote, 메모: s.note, 안내사항: s.notices, 자주묻는질문: s.faq, 예약금: s.ops?.deposit };
+        a = await askClaude({ key: st.settings.claudeKey, system: '너는 케이크 가게 정보를 바탕으로 손님 질문에 답하는 도우미야. 주어진 가게 정보에 있는 내용만 근거로 2~3문장 존댓말로 답해. 정보에 없으면 모른다고 말하고 가게에 문의하거나 주문서 요청사항에 적으라고 안내해. 공개 가격·평균 가격은 추정이라고 밝혀.', content: [{ type: 'text', text: `가게 정보: ${JSON.stringify(info)}\n\n손님 질문: ${qq}` }] });
+        ai = true;
+      } catch { /* 규칙 답 사용 */ }
+    }
+    setLog((l) => [...l, { q: qq, a, ai }]);
+    setBusy(false);
+  };
+  return (
+    <div className="card pad">
+      <div className="chips">{['당일 주문 돼요?', '1호 가격은?', '휴무일은?', '캐릭터 그림 돼요?', '주차 돼요?', '예약금은?'].map((x) => <button key={x} className="chip sm" onClick={() => ask(x)}>{x}</button>)}</div>
+      {log.map((m, i) => <div key={i}><div className="msg me" style={{ marginTop: 10 }}>{m.q}</div><div className="msg"><small>{m.ai ? '✨ AI 도우미 · 가게 정보 기준' : '도우미 · 가게 정보 기준'}</small>{m.a}</div></div>)}
+      {busy && <div className="small muted" style={{ marginTop: 8 }}>답을 찾는 중…</div>}
+      <div className="row" style={{ marginTop: 10 }}><input className="inp grow" value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && ask()} placeholder="궁금한 걸 물어보세요" /><button className="btn dark sm" style={{ minHeight: 48 }} onClick={() => ask()}>질문</button></div>
+    </div>
+  );
+}
 
 export function heroBg(s) {
   const c = s.theme?.color || ['#FF8FB3', '#FFB38A', '#B79CF0', '#7FCBB0', '#8EB8F0', '#F7A8C2'][hash(s.id) % 6];
@@ -121,6 +174,9 @@ export default function StoreDetail({ params }) {
               <div className="card pad">{s.faq.map((f, i) => <div key={i} style={{ padding: '6px 0' }}><div className="b small">Q. {f.q}</div><div className="small muted">A. {f.a}</div></div>)}</div>
             </>
           )}
+
+          <div className="sec-t"><h3>가게에 물어보기</h3><span className="more">{st.settings.claudeKey ? '✨ AI' : '가게 정보로 바로 답해요'}</span></div>
+          <AskBox s={s} />
 
           <div className="sec-t"><h3>위치</h3><span className="more">{s.geo === 'exact' ? '' : '지도 위치는 대략이에요'}</span></div>
           <div className="minimap"><MapView center={s} zoom={15} pins={[{ s, label: s.name }]} selected={s.id} interactive={false} kakaoKey={st.settings.kakaoKey} /></div>

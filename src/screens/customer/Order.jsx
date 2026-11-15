@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../../components/Icon.jsx';
-import { CakeView, Header, Sheet, toast, PhotoPick, Empty } from '../../components/ui.jsx';
+import { CakeView, Header, Sheet, toast, PhotoPick, Empty, Toggle } from '../../components/ui.jsx';
 import { useApp, setState } from '../../lib/state.js';
 import { nav, queryOf } from '../../lib/router.js';
 import { getStores, dayStatus, slotsOf, canOrderInApp } from '../../lib/stores.js';
@@ -349,14 +349,18 @@ function ConfirmSheet({ open, onClose, store, o, view, est, checks, v, inApp }) 
   const [okNotice, setOkNotice] = useState(false);
   const [name, setName] = useState(st.me?.name || '');
   const [phone, setPhone] = useState(st.me?.phone || '');
+  const [gift, setGift] = useState(false);
+  const [to, setTo] = useState('');
+  const [gmsg, setGmsg] = useState('');
   const needNotice = (store.notices || []).length > 0;
   const textOK = o.noText || okText;
   const nameOK = name.trim().length >= 1;
   const phoneOK = !inApp || /^01\d-?\d{3,4}-?\d{4}$/.test(phone.replace(/\s/g, ''));
-  const can = textOK && (!needNotice || okNotice) && nameOK && phoneOK;
+  const giftOK = !gift || to.trim().length >= 1;
+  const can = textOK && (!needNotice || okNotice) && nameOK && phoneOK && giftOK;
   const send = () => {
     setState({ me: { name: name.trim(), phone: phone.trim() } });
-    const order = createOrder(store, o, { name: name.trim(), phone: phone.trim() });
+    const order = createOrder(store, o, { name: name.trim(), phone: phone.trim() }, gift ? { to: to.trim(), msg: gmsg.trim(), from: name.trim() } : null);
     onClose();
     setTimeout(() => nav(`/done/${order.id}`, { replace: true }), 30);
   };
@@ -404,6 +408,15 @@ function ConfirmSheet({ open, onClose, store, o, view, est, checks, v, inApp }) 
       <div className="lbl" style={{ marginTop: 16 }}>주문하는 분</div>
       <div className="row"><input className="inp" style={{ flex: 1 }} value={name} onChange={(e) => setName(e.target.value)} placeholder="이름" maxLength={20} /><input className="inp" style={{ flex: 1.4 }} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={inApp ? '010-0000-0000' : '연락처(선택)'} inputMode="tel" maxLength={13} /></div>
       <div className="xs muted" style={{ marginTop: 6 }}>{inApp ? '사장님이 확정·픽업 안내에만 써요. 이 기기와 해당 가게 주문함에만 저장돼요.' : '주문서에 함께 적어 드려요. 서버로 보내지 않아요.'}</div>
+      <div className="card pad" style={{ marginTop: 12 }}>
+        <div className="row"><span className="grow"><b className="small">🎁 선물로 보내기</b><div className="xs muted">받는 분이 직접 픽업하고, 선물 카드 링크를 보낼 수 있어요</div></span><Toggle on={gift} onChange={setGift} label="선물" /></div>
+        {gift && (
+          <div style={{ marginTop: 10 }}>
+            <input className="inp" value={to} onChange={(e) => setTo(e.target.value)} placeholder="받는 분 이름" maxLength={20} />
+            <textarea className="inp" style={{ marginTop: 6, minHeight: 60 }} value={gmsg} onChange={(e) => setGmsg(e.target.value)} placeholder="선물 카드 메시지 (예: 생일 축하해! 맛있게 먹어)" maxLength={80} />
+          </div>
+        )}
+      </div>
     </Sheet>
   );
 }
