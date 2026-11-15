@@ -29,9 +29,14 @@ function load() {
 let state = load();
 const subs = new Set();
 let saveT = null;
+// 앱을 닫거나 다른 앱으로 넘어갈 때 저장 대기 중인 내용을 바로 저장
+const flush = () => { if (saveT) { clearTimeout(saveT); saveT = null; try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* 무시 */ } } };
+window.addEventListener('pagehide', flush);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
 function save() {
   clearTimeout(saveT);
   saveT = setTimeout(() => {
+    saveT = null;
     try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {
       // 저장 공간 부족 → 사진 썸네일부터 줄인다
       try {

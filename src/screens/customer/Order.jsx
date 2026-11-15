@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../../components/Icon.jsx';
 import { CakeView, Header, Sheet, toast, PhotoPick, Empty, Toggle } from '../../components/ui.jsx';
 import { useApp, setState } from '../../lib/state.js';
-import { nav, queryOf } from '../../lib/router.js';
+import { nav, queryOf, navAfterSheet } from '../../lib/router.js';
 import { getStores, dayStatus, slotsOf, canOrderInApp } from '../../lib/stores.js';
 import { estimate, ruleCheck, verdictOf, basisText } from '../../lib/price.js';
 import { createOrder } from '../../lib/orders.js';
@@ -362,7 +362,7 @@ function ConfirmSheet({ open, onClose, store, o, view, est, checks, v, inApp }) 
     setState({ me: { name: name.trim(), phone: phone.trim() } });
     const order = createOrder(store, o, { name: name.trim(), phone: phone.trim() }, gift ? { to: to.trim(), msg: gmsg.trim(), from: name.trim() } : null);
     onClose();
-    setTimeout(() => nav(`/done/${order.id}`, { replace: true }), 30);
+    navAfterSheet(`/done/${order.id}`);
   };
   const deco = [...o.toppings.map((t) => optName(TOPPINGS, t)), ...o.extras.map((t) => optName(EXTRAS, t))];
   return (

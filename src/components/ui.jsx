@@ -70,7 +70,11 @@ export function Sheet({ open, onClose, title, children, footer, height }) {
     // 뒤로가기로 '이 창'의 기록이 빠졌을 때만 닫는다 (창이 겹쳐 열려도 위에 있는 것부터 닫힘)
     const onPop = () => { if (!closing.current && (history.state?.sheet || 0) < hid.current) { closing.current = true; onClose?.(); } };
     window.addEventListener('popstate', onPop);
-    return () => { window.removeEventListener('popstate', onPop); };
+    return () => {
+      window.removeEventListener('popstate', onPop);
+      // 바깥에서 닫았을 때(버튼으로 고르고 닫힘 등) 남은 기록을 정리해 '헛도는 뒤로가기'를 없앤다
+      if (!closing.current && history.state?.sheet === hid.current) { closing.current = true; history.back(); }
+    };
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!open) return null;
   const close = () => { if (closing.current) return; closing.current = true; closeSheetHistory(hid.current); onClose?.(); };

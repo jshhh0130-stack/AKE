@@ -31,6 +31,14 @@ export function match(path, pattern) {
 }
 export const queryOf = (path) => new URLSearchParams(path.split('?')[1] || '');
 
+// 시트를 닫은 '뒤로가기'가 끝난 다음에 이동 (느린 폰에서 이동이 되돌려지는 문제 방지)
+export function navAfterSheet(path, opts = { replace: true }) {
+  let done = false;
+  const go = () => { if (done) return; done = true; window.removeEventListener('popstate', go); nav(path, opts); };
+  window.addEventListener('popstate', () => setTimeout(go, 0), { once: true });
+  setTimeout(go, 450);
+}
+
 // 시트(아래에서 올라오는 창)를 뒤로가기로 닫기
 let sheetSeq = 0;
 export function openSheetHistory() {

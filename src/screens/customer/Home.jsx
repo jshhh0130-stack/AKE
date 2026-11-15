@@ -4,7 +4,7 @@ import MapView, { loadKakao } from '../../components/MapView.jsx';
 import { CustomerTabBar } from '../../components/TabBar.jsx';
 import { Sheet, CakeView, toast, PhotoPick, Loading } from '../../components/ui.jsx';
 import { useApp, setState, getState } from '../../lib/state.js';
-import { nav } from '../../lib/router.js';
+import { nav, navAfterSheet } from '../../lib/router.js';
 import { getStores, rankStores, FILTERS, fmtKm, headlinePrice, kindLabel, canOrderInApp, nextOpenDay } from '../../lib/stores.js';
 import { storeLook, cakeSVG } from '../../lib/cake.js';
 import { range } from '../../lib/util.js';
@@ -71,7 +71,7 @@ export function CompareSheet({ open, onClose, rows }) {
             {line('가장 빠른 픽업', (r) => { const n = nextOpenDay(r.s, st.orders); return n ? (n.diff === 0 ? '오늘' : n.diff === 1 ? '내일' : `${n.diff}일 뒤`) : '-'; })}
             {line('당일 주문', (r) => (r.s.sameDay ? '가능' : r.s.sameDay === false ? '불가' : '확인 필요'))}
             {line('휴무', (r) => r.s.closed || (r.s.ops ? (r.s.ops.closedDays.length ? r.s.ops.closedDays.map((d) => '일월화수목금토'[d]).join('·') + '요일' : '없음') : '-'))}
-            {line('', (r) => <button className="btn xs pri" onClick={() => { onClose(); setTimeout(() => nav(`/store/${r.s.id}`), 30); }}>자세히</button>)}
+            {line('', (r) => <button className="btn xs pri" onClick={() => { onClose(); navAfterSheet(`/store/${r.s.id}`, {}); }}>자세히</button>)}
           </tbody>
         </table>
       </div>
