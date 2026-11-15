@@ -458,6 +458,8 @@ textarea.inp { resize: none; min-height: 76px; line-height: 1.45; }
 .cmp thead td { border-bottom: 0; }
 .cmp .cth { width: 90px; height: 74px; border-radius: 12px; overflow: hidden; background: var(--p50); margin-bottom: 6px; }
 .cmp .cth img { width: 100%; height: 100%; object-fit: cover; }
+/* 아이폰은 16px보다 작은 입력칸을 누르면 화면을 확대해 버려서, 핸드폰에서는 16px로 맞춘다 */
+@media (max-width: 759px) { input, textarea, select { font-size: 16px !important; } }
 .cakev { height: 100%; }
 .cakev svg { width: 100%; height: 100%; }
 .mapbox.far .pin:not(.sel) .nm { display: none; }
