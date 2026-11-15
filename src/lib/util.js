@@ -87,7 +87,7 @@ export function parseClosed(text) {
   const re = /([일월화수목금토])(?=요일|·|,|\s*,)/g;
   let m;
   while ((m = re.exec(text))) {
-    if (text.slice(Math.max(0, m.index - 2), m.index).includes('격주')) continue;
+    if (text.slice(Math.max(0, m.index - 4), m.index).includes('격주')) continue;
     out.add(map[m[1]]);
   }
   return [...out];

@@ -101,7 +101,8 @@ export function ruleCheck(store, o, { orders = [] } = {}) {
     out.push({ ok, t: ok ? `${sizeOf(size).name} — 가게에서 만드는 사이즈예요` : `${sizeOf(size).name} — 가격표에 없는 사이즈라 사장님 확인이 필요해요` });
   }
   const d = designOf(o.design);
-  if (d.style && !st.includes(d.style)) out.push({ ok: false, t: `${d.name} — 이 가게 목록에 ${styleName(d.style)}이(가) 없어 가능 여부 확인이 필요해요` });
+  if (store?.menu && d.id !== 'simple' && store.menu.designs?.[d.id] === null) out.push({ ok: false, t: `${d.name} — 사장님이 받지 않는 디자인으로 설정해 두어 확인이 필요해요` });
+  else if (d.style && !st.includes(d.style)) out.push({ ok: false, t: `${d.name} — 이 가게 목록에 ${styleName(d.style)}이(가) 없어 가능 여부 확인이 필요해요` });
   else if (d.check) out.push({ ok: false, t: `${d.name} — ${d.check}` });
   else out.push({ ok: true, t: `${d.name} — 가게에서 하는 디자인이에요` });
   if (d.needPhoto && !o.refPhoto) out.push({ ok: false, t: '포토 케이크 — 인쇄할 사진을 첨부해 주세요' });

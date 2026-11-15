@@ -81,7 +81,9 @@ export function cakeSVG(o = {}, opt = {}) {
   const baseY = box ? 200 : 210;
   const topY = baseY - H - maxY * K;
   const groundY = topY + H;
-  const cream = o.creamHex || creamOf(o.cream).hex;
+  // 링크로 들어온 값도 안전하게: 색은 #RRGGBB만, 사진은 data:image 만 허용
+  const cream = /^#[0-9a-fA-F]{6}$/.test(o.creamHex || '') ? o.creamHex : creamOf(o.cream).hex;
+  const photoSrc = typeof o.photo === 'string' && /^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(o.photo) ? o.photo : null;
   const design = o.design || 'simple';
   const v = (o.variant || 0) % 3;
   const r = rng(hash([o.text, design, cream, v, shape, (o.toppings || []).join()].join('|')));
@@ -208,7 +210,7 @@ export function cakeSVG(o = {}, opt = {}) {
   if (design === 'photo') {
     const pr = R * (hasText ? 0.42 : 0.56), py = hasText ? -R * 0.22 : 0;
     flat += `<clipPath id="${id}ph"><circle cx="0" cy="${f1(py)}" r="${f1(pr)}"/></clipPath>`;
-    if (o.photo) flat += `<image href="${o.photo}" x="${f1(-pr)}" y="${f1(py - pr)}" width="${f1(pr * 2)}" height="${f1(pr * 2)}" preserveAspectRatio="xMidYMid slice" clip-path="url(#${id}ph)"/>`;
+    if (photoSrc) flat += `<image href="${photoSrc}" x="${f1(-pr)}" y="${f1(py - pr)}" width="${f1(pr * 2)}" height="${f1(pr * 2)}" preserveAspectRatio="xMidYMid slice" clip-path="url(#${id}ph)"/>`;
     else flat += `<circle cx="0" cy="${f1(py)}" r="${f1(pr)}" fill="#EFE6F7"/><g transform="translate(0 ${f1(py)}) scale(${f1(pr / 30)})" opacity=".55"><rect x="-14" y="-9" width="28" height="20" rx="4" fill="none" stroke="#8E6BBE" stroke-width="3"/><circle r="6" fill="none" stroke="#8E6BBE" stroke-width="3" cy="1"/></g>`;
     flat += `<circle cx="0" cy="${f1(py)}" r="${f1(pr)}" fill="none" stroke="${pipeS}" stroke-width="3" stroke-dasharray="0 6" stroke-linecap="round"/>`;
     if (hasText) { textY = R * 0.5; textW = R * 1.25; }
