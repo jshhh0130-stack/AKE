@@ -1,0 +1,13 @@
+{
+  "appId": "com.dearcake.app",
+  "appName": "Dear Cake",
+  "webDir": "dist",
+  "server": {
+    "url": "https://jshhh0130-stack.github.io/dear-cake/",
+    "androidScheme": "https",
+    "errorPath": "offline.html"
+  },
+  "android": {
+    "backgroundColor": "#F75C8D"
+  }
+}

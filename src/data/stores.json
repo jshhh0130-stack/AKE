@@ -1,0 +1,1044 @@
+{
+ "updated": "2026-11-16",
+ "about": "수원시 커스텀·레터링 케이크 가게 공개 정보 (2026-11 조사). level=detail 은 가격·운영 정보까지 출처에서 확인, level=listing 은 지역 목록 사이트 기준(영업 여부 확인 필요). 가격 배열은 [최소, 최대], 최대를 모르면 null. 전화번호는 일부러 넣지 않음.",
+ "stores": [
+  {
+   "id": "ann-cakery",
+   "name": "앤케이커리",
+   "gu": "영통구",
+   "dong": "이의동",
+   "addr": "수원시 영통구 대학1로8번길 16-2",
+   "road": "수원시 영통구 대학1로8번길 16-2",
+   "styles": [
+    "lettering",
+    "dosirak"
+   ],
+   "price": {
+    "dosirak": [
+     20000,
+     null
+    ],
+    "mini": [
+     33000,
+     null
+    ],
+    "h1": [
+     43000,
+     null
+    ]
+   },
+   "priceNote": "도시락 20,000원~ · 미니 33,000원~ · 1호 43,000원(흰 배경 간단 레터링 기준, 디자인별 상이)",
+   "sameDay": null,
+   "lead": null,
+   "hours": null,
+   "closed": "일요일",
+   "insta": "ann.cakery",
+   "kakao": null,
+   "naver": false,
+   "note": "레터링 케이크, 머랭쿠키 답례품, 단체 주문",
+   "level": "detail",
+   "src": [
+    "https://daangn.com/kr/local-profile/%EC%95%A4%EC%BC%80%EC%9D%B4%EC%BB%A4%EB%A6%AC-v8rfnc63gcmd/"
+   ],
+   "lat": 37.297506,
+   "lng": 127.043627,
+   "geo": "exact"
+  },
+  {
+   "id": "midori-cake",
+   "name": "미도리케이크",
+   "gu": "권선구",
+   "dong": "세류동",
+   "addr": "수원시 권선구 세권로 60 1층",
+   "road": "수원시 권선구 세권로 60",
+   "styles": [
+    "lettering",
+    "dosirak"
+   ],
+   "price": {
+    "dosirak": [
+     22000,
+     null
+    ],
+    "mini": [
+     39000,
+     null
+    ],
+    "h1": [
+     50000,
+     null
+    ],
+    "h2": [
+     67000,
+     null
+    ],
+    "h3": [
+     85000,
+     null
+    ]
+   },
+   "priceNote": "도시락(10cm) 22,000원 · 미니(12cm) 39,000원 · 1호 50,000원 · 2호 67,000원 · 3호 85,000원 (흰 바탕 레터링 기준, 옵션 추가금 별도 — 방문 후기 인용)",
+   "sameDay": true,
+   "lead": "당일 제작 가능했다는 후기 있음",
+   "hours": "11:00~18:00 (브레이크 14~16시, 후기마다 다름)",
+   "closed": "월요일(확인 필요)",
+   "insta": "midori_cake",
+   "kakao": "미도리케이크",
+   "naver": false,
+   "note": "24시간 무인 픽업 · 주차 어려움",
+   "level": "detail",
+   "src": [
+    "https://www.diningcode.com/profile.php?rid=hkNxk1IKuhEY"
+   ],
+   "lat": 37.25889,
+   "lng": 127.010898,
+   "geo": "exact"
+  },
+  {
+   "id": "odor-cake",
+   "name": "오도르케이크",
+   "gu": "권선구",
+   "dong": "구운동",
+   "addr": "수원시 권선구 일월천로4번길 74 상가동 205호",
+   "road": "수원시 권선구 일월천로4번길 74",
+   "styles": [
+    "lettering",
+    "dosirak",
+    "3d",
+    "tiered"
+   ],
+   "price": {
+    "dosirak": [
+     15000,
+     null
+    ],
+    "mini": [
+     26000,
+     null
+    ],
+    "h1": [
+     38000,
+     null
+    ],
+    "h2": [
+     45000,
+     null
+    ]
+   },
+   "priceNote": "도시락 15,000원+α · 미니 26,000원+α · 1호 38,000원+α · 2호 45,000원+α · 하트 +1,000원 · 사각 +1,500원 · 2단·피규어는 상담",
+   "addon": {
+    "heart": 1000,
+    "square": 1500
+   },
+   "sameDay": null,
+   "lead": "사전 예약 필수 (3일 전 예약 후기)",
+   "hours": "화~금 12~19시 · 토 10~19시 · 일 10~15시 (후기 기준)",
+   "closed": "월요일",
+   "insta": "odor_cake",
+   "kakao": "odor cake",
+   "naver": false,
+   "note": "무인 픽업 · 2단·피규어·티아라 케이크는 상담 후 가격",
+   "level": "detail",
+   "src": [
+    "https://www.diningcode.com/profile.php?rid=8OMMxQlWDtbL"
+   ],
+   "lat": 37.28277,
+   "lng": 126.973367,
+   "geo": "street"
+  },
+  {
+   "id": "holiday-cake",
+   "name": "홀리데이케이크",
+   "gu": "팔달구",
+   "dong": "행궁동",
+   "addr": "수원시 팔달구 정조로 848-1 1층 (블로그에는 정조로 872로도 표기)",
+   "road": "수원시 팔달구 정조로 848-1",
+   "styles": [
+    "lettering",
+    "dosirak"
+   ],
+   "price": {
+    "dosirak": [
+     21000,
+     28000
+    ],
+    "h1": [
+     45000,
+     55000
+    ],
+    "h2": [
+     60000,
+     65000
+    ]
+   },
+   "priceNote": "도시락(미니 약 10cm) 2.1~2.8만원 · 1호 4.5~5.5만원 · 2호 6.0~6.5만원 (디자인별 상이)",
+   "sameDay": true,
+   "lead": "당일 가능 케이크 따로 판매",
+   "hours": "12:00~19:00",
+   "closed": "월요일",
+   "insta": null,
+   "kakao": "카카오톡 주문서",
+   "naver": false,
+   "note": "카페 안에서 30분 단위 픽업 · 주차 불가 · 보냉팩 유료",
+   "level": "detail",
+   "src": [
+    "https://www.diningcode.com/profile.php?rid=LJrjvLfciDal"
+   ],
+   "lat": 37.282208,
+   "lng": 127.010094,
+   "geo": "area"
+  },
+  {
+   "id": "chou-cake-house",
+   "name": "슈케익하우스 수원본점",
+   "gu": "팔달구",
+   "dong": "매산로2가",
+   "addr": "수원시 팔달구 향교로 36 1층 (수원역 근처)",
+   "road": "수원시 팔달구 향교로 36",
+   "styles": [
+    "lettering",
+    "dosirak",
+    "tiered",
+    "character"
+   ],
+   "price": {
+    "dosirak": [
+     18000,
+     null
+    ],
+    "mini": [
+     25000,
+     null
+    ],
+    "h1": [
+     35000,
+     43000
+    ],
+    "tier": [
+     65000,
+     120000
+    ]
+   },
+   "priceNote": "도시락 레터링 18,000원~ · 미니 25,000원~ · 1호 35,000원~(주문제작 후기 43,000원) · 2단 65,000/85,000/120,000원 · 당일 랜덤 레터링 미니 20,000원·1호 27,000원",
+   "sameDay": true,
+   "lead": "주문제작 레터링은 늦어도 3일 전(후기)",
+   "hours": "08:00~22:30",
+   "closed": "연중무휴",
+   "insta": null,
+   "kakao": null,
+   "naver": true,
+   "note": "네이버 예약·톡톡 · 2단 케이크 딸기·동물성 크림은 추가금 · 전용 주차장 없음",
+   "level": "detail",
+   "src": [
+    "https://www.diningcode.com/profile.php?rid=LOAzxHUA20ev",
+    "https://www.daangn.com/kr/local-profile/%EC%8A%88%EC%BC%80%EC%9D%B5%ED%95%98%EC%9A%B0%EC%8A%A4-%EC%88%98%EC%9B%90%EB%B3%B8%EC%A0%90-knsw7opo6327/"
+   ],
+   "lat": 37.271492,
+   "lng": 127.01184,
+   "geo": "street"
+  },
+  {
+   "id": "kkekko",
+   "name": "께꼬 KKEKKO CAKE",
+   "gu": "팔달구",
+   "dong": "매산로2가",
+   "addr": "수원시 팔달구 권선로 477 정문상가 2층 210호",
+   "road": "수원시 팔달구 권선로 477",
+   "styles": [
+    "lettering",
+    "dosirak"
+   ],
+   "price": {
+    "dosirak": [
+     33000,
+     null
+    ],
+    "h1": [
+     60000,
+     69000
+    ]
+   },
+   "priceNote": "미니 도시락 33,000원(2026 후기) · 1호 하프 디자인 6만 원대 · 홀케이크 커스텀 레터링 80,000원(2025 후기)",
+   "sameDay": null,
+   "lead": "예약 필수",
+   "hours": "상담 10~21시 · 픽업 13~19시",
+   "closed": null,
+   "insta": null,
+   "kakao": "께꼬(kkekko)",
+   "naver": false,
+   "note": "무인 픽업 · 미니 문구 10자 제한 · 보냉백은 주문 때 요청",
+   "level": "detail",
+   "src": [
+    "https://www.diningcode.com/profile.php?rid=yBMssFy290ul"
+   ],
+   "lat": 37.262778,
+   "lng": 126.998499,
+   "geo": "street"
+  },
+  {
+   "id": "sader-cake",
+   "name": "세이더케이크",
+   "gu": "팔달구",
+   "dong": "우만동",
+   "addr": "수원시 팔달구 중부대로223번길 20-7 1층",
+   "road": "수원시 팔달구 중부대로223번길 20-7",
+   "styles": [
+    "lettering",
+    "dosirak"
+   ],
+   "price": null,
+   "priceNote": "가격 미공개 (사이즈: 도시락 7~8cm · 미니 10~11cm · 2호 20~22cm)",
+   "sameDay": true,
+   "lead": "도시락 케이크는 당일 선착순 판매",
+   "hours": "11:00~20:00 (출처마다 다름)",
+   "closed": null,
+   "insta": null,
+   "kakao": "카카오톡 문의",
+   "naver": false,
+   "note": "24시간 무인 픽업 · 문구 최대 10자(후기)",
+   "level": "detail",
+   "src": [
+    "https://www.diningcode.com/profile.php?rid=JxUcC5A0lBkj"
+   ],
+   "lat": 37.27863,
+   "lng": 127.040601,
+   "geo": "street"
+  },
+  {
+   "id": "kcoodang",
+   "name": "케이쿠당",
+   "gu": "팔달구",
+   "dong": "인계동",
+   "addr": "수원시 팔달구 장다리로233번길 21 1층",
+   "road": "수원시 팔달구 장다리로233번길 21",
+   "styles": [
+    "rice",
+    "custom"
+   ],
+   "price": null,
+   "priceNote": "가격 미공개 · 쌀 베이스 케이크 예약 제작",
+   "sameDay": null,
+   "lead": "예약제",
+   "hours": "10:00~20:00 (예약에 따라 변동)",
+   "closed": null,
+   "insta": "kcoodang_cake",
+   "kakao": null,
+   "naver": false,
+   "note": "쌀 디저트·케이크 예약 제작 공방",
+   "level": "detail",
+   "src": [
+    "https://daangn.com/kr/local-profile/%EC%BC%80%EC%9D%B4%EC%BF%A0%EB%8B%B9-gv9cf8j5bpxz/"
+   ],
+   "lat": 37.270788,
+   "lng": 127.025137,
+   "geo": "exact"
+  },
+  {
+   "id": "pure-cake",
+   "name": "퓨어케이크",
+   "gu": "장안구",
+   "dong": "정자동",
+   "addr": "수원시 장안구 장안로89번길 10",
+   "road": "수원시 장안구 장안로89번길 10",
+   "styles": [
+    "lettering",
+    "flower",
+    "character"
+   ],
+   "price": null,
+   "priceNote": "가격 미공개",
+   "sameDay": null,
+   "lead": null,
+   "hours": "11:00~20:00",
+   "closed": null,
+   "insta": "pure.cake_",
+   "kakao": "카카오톡 채널",
+   "naver": false,
+   "note": "생화 디자인 케이크 · 레터링·그림 지정 케이크 · 케이크 느낌 꽃다발",
+   "level": "detail",
+   "src": [
+    "https://www.daangn.com/kr/local-profile/%ED%93%A8%EC%96%B4%EC%BC%80%EC%9D%B4%ED%81%AC-jz5rpbbn5qhp/"
+   ],
+   "lat": 37.291313,
+   "lng": 127.001671,
+   "geo": "street"
+  },
+  {
+   "id": "jdelling",
+   "name": "제이델링 수원점",
+   "gu": "영통구",
+   "dong": "원천동",
+   "addr": "수원시 영통구 원천동 616-3",
+   "styles": [
+    "lettering",
+    "photo"
+   ],
+   "hours": "매일 11:00~22:00",
+   "note": "레터링·반전·포토·숫자 케이크",
+   "level": "listing",
+   "src": [
+    "https://www.diningcode.com/profile.php?rid=4CJmmaWGnQk2"
+   ],
+   "lat": 37.272537,
+   "lng": 127.059944,
+   "geo": "area"
+  },
+  {
+   "id": "again-cake",
+   "name": "어게인케이크",
+   "gu": "영통구",
+   "dong": "원천동",
+   "addr": "수원시 영통구 원천동 589 중흥S클래스 어뮤즈스퀘어 B2 191호",
+   "styles": [
+    "lettering"
+   ],
+   "note": "주문제작·레터링",
+   "level": "listing",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ],
+   "lat": 37.284836,
+   "lng": 127.05642,
+   "geo": "street"
+  },
+  {
+   "id": "nina-cakery",
+   "name": "니나케이커리",
+   "gu": "영통구",
+   "dong": "신동",
+   "addr": "수원시 영통구 신동 938-1 1층",
+   "styles": [
+    "lettering"
+   ],
+   "note": "주문제작·레터링",
+   "level": "listing",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ],
+   "lat": 37.249868,
+   "lng": 127.044887,
+   "geo": "area"
+  },
+  {
+   "id": "osarang",
+   "name": "오사랑케이크",
+   "gu": "영통구",
+   "dong": "신동",
+   "addr": "수원시 영통구 신동 920-5",
+   "styles": [
+    "flower"
+   ],
+   "hours": "평일·토 11~20시 · 일 11~18시",
+   "closed": "월요일",
+   "note": "생크림·플라워 케이크",
+   "level": "listing",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ],
+   "lat": 37.247454,
+   "lng": 127.044332,
+   "geo": "area"
+  },
+  {
+   "id": "yone-cake",
+   "name": "요네케이크",
+   "gu": "영통구",
+   "dong": "신동",
+   "addr": "수원시 영통구 신동 338 117호",
+   "styles": [
+    "lettering"
+   ],
+   "closed": "일요일",
+   "note": "일부 요일 락커 픽업",
+   "level": "listing",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ],
+   "lat": 37.248275,
+   "lng": 127.045375,
+   "geo": "area"
+  },
+  {
+   "id": "bunny-cakery",
+   "name": "버니케이커리",
+   "gu": "영통구",
+   "dong": "매탄동",
+   "addr": "수원시 영통구 매탄동 1211 상가동 101호",
+   "styles": [
+    "lettering",
+    "dosirak"
+   ],
+   "note": "레터링·도시락 케이크",
+   "level": "listing",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ],
+   "lat": 37.264647,
+   "lng": 127.045888,
+   "geo": "area"
+  },
+  {
+   "id": "roenne-cake",
+   "name": "로엔느케이크",
+   "gu": "영통구",
+   "dong": "망포동",
+   "addr": "수원시 영통구 망포동 13-2 1층",
+   "styles": [
+    "flower",
+    "rice"
+   ],
+   "insta": "roenne_cake",
+   "note": "앙금플라워 떡케이크(미니·1호·2호) · 숫자 케이크 · 클래스",
+   "level": "listing",
+   "src": [
+    "https://www.threads.com/@roenne_cake"
+   ],
+   "lat": 37.23786,
+   "lng": 127.049331,
+   "geo": "area"
+  },
+  {
+   "id": "sorong-flower",
+   "name": "소롱플라워케이크",
+   "gu": "영통구",
+   "dong": "망포동",
+   "addr": "수원시 영통구 망포동 693",
+   "styles": [
+    "flower",
+    "character"
+   ],
+   "note": "플라워·캐릭터 케이크",
+   "level": "listing",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ],
+   "lat": 37.238801,
+   "lng": 127.051774,
+   "geo": "street"
+  },
+  {
+   "id": "rani-tteok",
+   "name": "라니꽃떡",
+   "gu": "영통구",
+   "dong": "망포동",
+   "addr": "수원시 영통구 망포동 488",
+   "styles": [
+    "rice",
+    "flower"
+   ],
+   "closed": "불규칙",
+   "note": "꽃 떡케이크",
+   "level": "listing",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ],
+   "lat": 37.239393,
+   "lng": 127.051471,
+   "geo": "street"
+  },
+  {
+   "id": "guuum",
+   "name": "구우움",
+   "gu": "영통구",
+   "dong": "이의동",
+   "addr": "수원시 영통구 이의동 1258 A동 112호",
+   "styles": [
+    "dosirak"
+   ],
+   "hours": "평일 11~20시 · 토 12~18시(격주)",
+   "closed": "일요일",
+   "note": "마카롱·도시락 케이크",
+   "level": "listing",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ],
+   "lat": 37.299348,
+   "lng": 127.049081,
+   "geo": "street"
+  },
+  {
+   "id": "lu-bake",
+   "name": "루베이크",
+   "gu": "영통구",
+   "dong": "하동",
+   "addr": "수원시 영통구 하동 987",
+   "styles": [
+    "lettering"
+   ],
+   "hours": "10:00~20:00(예약 시간)",
+   "note": "레터링·디저트",
+   "level": "listing",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ],
+   "lat": 37.286177,
+   "lng": 127.072447,
+   "geo": "street"
+  },
+  {
+   "id": "yourowncake",
+   "name": "yourowncake",
+   "gu": "영통구",
+   "dong": "영통동",
+   "addr": "수원시 영통구 영통동 (영통역 근처 2층, 상세 주소 확인 필요)",
+   "styles": [
+    "photo"
+   ],
+   "note": "한입·포토 케이크",
+   "level": "listing",
+   "src": [
+    "https://www.diningcode.com/profile.php?rid=8DxnqhpSB77d"
+   ],
+   "lat": 37.254292,
+   "lng": 127.071348,
+   "geo": "street"
+  },
+  {
+   "id": "rolly-polly",
+   "name": "롤리앤폴리",
+   "gu": "권선구",
+   "dong": "금곡동",
+   "addr": "수원시 권선구 금곡동 530",
+   "styles": [
+    "flower",
+    "rice"
+   ],
+   "note": "플라워·떡케이크",
+   "level": "listing",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ],
+   "lat": 37.273105,
+   "lng": 126.952855,
+   "geo": "street"
+  },
+  {
+   "id": "august-rabbit",
+   "name": "8월의토끼",
+   "gu": "권선구",
+   "dong": "금곡동",
+   "addr": "수원시 권선구 금곡동 1125-3 세종헤르메스오피스텔 105호",
+   "styles": [
+    "lettering"
+   ],
+   "hours": "12:00~19:00",
+   "closed": "월요일",
+   "note": "레터링 케이크",
+   "level": "listing",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ],
+   "lat": 37.273712,
+   "lng": 126.951576,
+   "geo": "street"
+  },
+  {
+   "id": "saengil-party",
+   "name": "생일파티 케이크",
+   "gu": "권선구",
+   "dong": "금곡동",
+   "addr": "수원시 권선구 금곡로118번길 10 1층",
+   "road": "수원시 권선구 금곡로118번길 10",
+   "styles": [
+    "lettering",
+    "dosirak",
+    "character",
+    "flower"
+   ],
+   "price": null,
+   "priceNote": "정형 케이크는 네이버 예약 상품가, 커스텀은 카톡 상담",
+   "sameDay": null,
+   "lead": null,
+   "hours": "11:30~20:00",
+   "closed": "인스타 공지",
+   "insta": "saengilpati",
+   "kakao": "카카오톡 상담",
+   "naver": true,
+   "note": "정형 디자인은 네이버 예약, 커스텀은 카톡 상담 (꽃다발 케이크·랜덤 캐릭터·도시락 등)",
+   "level": "detail",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ],
+   "lat": 37.272134,
+   "lng": 126.942157,
+   "geo": "street"
+  },
+  {
+   "id": "hipd-cake",
+   "name": "힙드케이크",
+   "gu": "영통구",
+   "dong": "매탄동",
+   "addr": "수원시 영통구 중부대로 274 1층 (번지 재확인 필요)",
+   "road": "수원시 영통구 중부대로 274",
+   "styles": [
+    "lettering",
+    "dosirak"
+   ],
+   "price": null,
+   "priceNote": "사이즈: 도시락 10~11cm · 미니 13~14cm · 1호 16~17cm · 2호 19~20cm. 추가금: 초코 시트 +3,000 · 하트 +3,000 · 겉크림 색 변경 2,000~5,000 · 속크림 맛 변경 +2,000~5,000 · 크림데코·스프링클 각 +1,000 · 색상 4가지 초과 1가지당 +500",
+   "addon": {
+    "heart": 3000
+   },
+   "sameDay": null,
+   "lead": null,
+   "hours": "유인 픽업 11~19시 · 무인 픽업 24시간",
+   "closed": null,
+   "insta": null,
+   "kakao": "카카오톡 채널",
+   "naver": false,
+   "note": "카톡 자동응답으로 메뉴·가격 안내 후 주문서 양식 작성",
+   "level": "detail",
+   "src": [
+    "팀 리서치 리포트(2026.11.13 직접 주문 체험)"
+   ],
+   "lat": 37.269334,
+   "lng": 127.062612,
+   "geo": "street"
+  },
+  {
+   "id": "iroke",
+   "name": "이로케",
+   "gu": "권선구",
+   "dong": "금곡동",
+   "addr": "수원시 권선구 금곡동 1124 광일프라자 204호",
+   "styles": [
+    "custom"
+   ],
+   "hours": "평일 11~19시 · 토 11~18시",
+   "note": "수제 주문 케이크",
+   "level": "listing",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ],
+   "lat": 37.272362,
+   "lng": 126.951027,
+   "geo": "street"
+  },
+  {
+   "id": "ecru-cake",
+   "name": "에크루케이크",
+   "gu": "권선구",
+   "dong": "호매실동",
+   "addr": "수원시 권선구 호매실동 1342-4 1층 102호",
+   "styles": [
+    "photo"
+   ],
+   "hours": "11:00~19:00",
+   "closed": "인스타 공지",
+   "note": "포토 케이크",
+   "level": "listing",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ],
+   "lat": 37.266145,
+   "lng": 126.958205,
+   "geo": "street"
+  },
+  {
+   "id": "verygood-dessert",
+   "name": "베리굿디저트",
+   "gu": "권선구",
+   "dong": "호매실동",
+   "addr": "수원시 권선구 호매실동 78-6 1층",
+   "styles": [
+    "custom"
+   ],
+   "hours": "12:00~18:00",
+   "closed": "일·월요일",
+   "note": "주문제작 케이크(목록 사이트 기준)",
+   "level": "listing",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ],
+   "lat": 37.26639,
+   "lng": 126.957194,
+   "geo": "street"
+  },
+  {
+   "id": "eat-flower",
+   "name": "잇트플라워",
+   "gu": "권선구",
+   "dong": "권선동",
+   "addr": "수원시 권선구 권선동 1268-1",
+   "styles": [
+    "flower"
+   ],
+   "closed": "공휴일",
+   "note": "플라워 케이크·클래스",
+   "level": "listing",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ],
+   "lat": 37.251032,
+   "lng": 127.0308,
+   "geo": "street"
+  },
+  {
+   "id": "woozoo-cake",
+   "name": "우주케이크",
+   "gu": "권선구",
+   "dong": "권선동",
+   "addr": "수원시 권선구 권선동 999-19",
+   "styles": [
+    "custom"
+   ],
+   "hours": "11:00~21:00",
+   "closed": "일요일",
+   "note": "마카롱·주문 케이크",
+   "level": "listing",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ],
+   "lat": 37.252722,
+   "lng": 127.03329,
+   "geo": "area"
+  },
+  {
+   "id": "briante",
+   "name": "브리앙뜨과자점",
+   "gu": "권선구",
+   "dong": "세류동",
+   "addr": "수원시 권선구 세류동 1089-19",
+   "styles": [
+    "custom"
+   ],
+   "note": "빵집 · 주문 케이크",
+   "level": "listing",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ],
+   "lat": 37.257072,
+   "lng": 127.012378,
+   "geo": "street"
+  },
+  {
+   "id": "hallodani",
+   "name": "할로다니",
+   "gu": "팔달구",
+   "dong": "우만동",
+   "addr": "수원시 팔달구 우만동 552-3",
+   "styles": [
+    "lettering"
+   ],
+   "note": "주문제작·레터링",
+   "level": "listing",
+   "src": [
+    "http://soonwidot.co.kr/rank/list.php?id=25533"
+   ],
+   "lat": 37.28448,
+   "lng": 127.033975,
+   "geo": "area"
+  },
+  {
+   "id": "dazzling-cake",
+   "name": "다즐링케이크",
+   "gu": "팔달구",
+   "dong": "영동",
+   "addr": "수원시 팔달구 영동 8",
+   "styles": [
+    "lettering",
+    "rice"
+   ],
+   "note": "떡케이크·주문제작·레터링 (예약제)",
+   "level": "listing",
+   "src": [
+    "http://soonwidot.co.kr/rank/list.php?id=25533"
+   ],
+   "lat": 37.276914,
+   "lng": 127.018092,
+   "geo": "street"
+  },
+  {
+   "id": "unar",
+   "name": "우나르",
+   "gu": "팔달구",
+   "dong": "화서동",
+   "addr": "수원시 팔달구 화서동 686-1",
+   "styles": [
+    "custom"
+   ],
+   "note": "주문제작 · 빈티지·커스텀 디자인",
+   "level": "listing",
+   "src": [
+    "http://soonwidot.co.kr/rank/list.php?id=25533"
+   ],
+   "lat": 37.281244,
+   "lng": 126.99985,
+   "geo": "area"
+  },
+  {
+   "id": "levely-cake",
+   "name": "레벨리케이크",
+   "gu": "팔달구",
+   "dong": "인계동",
+   "addr": "수원시 팔달구 인계동 1170 인계한양수자인 101동 110호",
+   "styles": [
+    "lettering"
+   ],
+   "note": "주문제작·레터링 · 케이크 클래스",
+   "level": "listing",
+   "src": [
+    "http://soonwidot.co.kr/rank/list.php?id=25533"
+   ],
+   "lat": 37.268575,
+   "lng": 127.028551,
+   "geo": "street"
+  },
+  {
+   "id": "cafe-onemore",
+   "name": "카페원모어",
+   "gu": "팔달구",
+   "dong": "장안동",
+   "addr": "수원시 팔달구 장안동 322-17",
+   "styles": [
+    "lettering"
+   ],
+   "hours": "매일 12:00~21:00",
+   "closed": "수요일·격주 목요일",
+   "note": "카페 · 레터링 케이크",
+   "level": "listing",
+   "src": [
+    "http://soonwidot.co.kr/rank/list.php?id=25533"
+   ],
+   "lat": 37.285628,
+   "lng": 127.012866,
+   "geo": "area"
+  },
+  {
+   "id": "yodel-cake",
+   "name": "요를레이케이크",
+   "gu": "팔달구",
+   "dong": "인계동",
+   "addr": "수원시 팔달구 인계동 1134-4 1층",
+   "styles": [
+    "lettering"
+   ],
+   "hours": "월~금 12~19시 · 토 12~18시",
+   "closed": "일요일",
+   "note": "주문제작·레터링",
+   "level": "listing",
+   "src": [
+    "http://soonwidot.co.kr/rank/list.php?id=25533"
+   ],
+   "lat": 37.268556,
+   "lng": 127.029957,
+   "geo": "street"
+  },
+  {
+   "id": "cakejip",
+   "name": "케잌집",
+   "gu": "팔달구",
+   "dong": "인계동",
+   "addr": "수원시 팔달구 인계동 1011-6 1층",
+   "styles": [
+    "lettering"
+   ],
+   "hours": "매일 11~20시 (일 11~14시)",
+   "closed": "인스타 공지",
+   "note": "레터링·주문제작",
+   "level": "listing",
+   "src": [
+    "http://soonwidot.co.kr/rank/list.php?id=25533"
+   ],
+   "lat": 37.26889,
+   "lng": 127.029291,
+   "geo": "street"
+  },
+  {
+   "id": "jeonssaem-cake",
+   "name": "달달한전쌤cake",
+   "gu": "장안구",
+   "dong": "조원동",
+   "addr": "수원시 장안구 조원동 757-1",
+   "styles": [
+    "lettering"
+   ],
+   "hours": "월~토 10~19시",
+   "closed": "일요일",
+   "note": "수제케이크·주문제작·레터링",
+   "level": "listing",
+   "src": [
+    "http://soonwidot.co.kr/rank/list.php?id=25533"
+   ],
+   "lat": 37.303852,
+   "lng": 127.012345,
+   "geo": "area"
+  },
+  {
+   "id": "smile-cake",
+   "name": "스마일케이크",
+   "gu": "장안구",
+   "dong": "조원동",
+   "addr": "수원시 장안구 조원1동 729-18",
+   "styles": [
+    "lettering",
+    "rice"
+   ],
+   "note": "떡·수제케이크·주문제작·레터링",
+   "level": "listing",
+   "src": [
+    "http://soonwidot.co.kr/rank/list.php?id=25533"
+   ],
+   "lat": 37.303405,
+   "lng": 127.012275,
+   "geo": "area"
+  },
+  {
+   "id": "sweety-memory",
+   "name": "스위티메모리",
+   "gu": "장안구",
+   "dong": "율전동",
+   "addr": "수원시 장안구 화산로233번길 12 1층 (성균관대 근처)",
+   "road": "수원시 장안구 화산로233번길 12",
+   "styles": [
+    "lettering"
+   ],
+   "note": "레터링 케이크",
+   "level": "listing",
+   "src": [
+    "https://www.diningcode.com/profile.php?rid=fZvwY7UY8ufG"
+   ],
+   "lat": 37.298052,
+   "lng": 126.970294,
+   "geo": "street"
+  },
+  {
+   "id": "ludia-cake",
+   "name": "루디아케이크",
+   "gu": "장안구",
+   "dong": "정자동",
+   "addr": "수원시 장안구 정자동 백설마을 동양성지아파트 상가 (상세 주소 확인 필요)",
+   "styles": [
+    "lettering"
+   ],
+   "hours": "10:00~19:00",
+   "note": "레터링 케이크",
+   "level": "listing",
+   "src": [
+    "https://www.diningcode.com/profile.php?rid=exczSeOotXeF"
+   ],
+   "lat": 37.296991,
+   "lng": 126.991268,
+   "geo": "area"
+  },
+  {
+   "id": "cakey-ingye",
+   "name": "케이키케이키 인계점",
+   "gu": "팔달구",
+   "dong": "인계동",
+   "addr": "수원시 팔달구 효원로249번길 46-12 1층 101호",
+   "road": "수원시 팔달구 효원로249번길 46-12",
+   "styles": [
+    "lettering"
+   ],
+   "note": "티아라·크림치즈·생크림 케이크 · 주문제작",
+   "level": "listing",
+   "src": [
+    "https://www.diningcode.com/profile.php?rid=aIApNGQNfk7m"
+   ],
+   "lat": 37.263269,
+   "lng": 127.029469,
+   "geo": "street"
+  }
+ ]
+}
