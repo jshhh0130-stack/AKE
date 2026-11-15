@@ -94,6 +94,8 @@ export default function CustomerHome() {
   const [fit, setFit] = useState(null);
   const [finding, setFinding] = useState(false);
   const [kakaoBad, setKakaoBad] = useState(false);
+  const [q, setQ] = useState('');
+  const [qOpen, setQOpen] = useState(false);
   const [cmpMode, setCmpMode] = useState(false);
   const [cmp, setCmp] = useState([]);
   const [cmpOpen, setCmpOpen] = useState(false);
@@ -107,7 +109,7 @@ export default function CustomerHome() {
 
   const stores = useMemo(() => getStores(st), [st.shop, st.found]); // eslint-disable-line react-hooks/exhaustive-deps
   const want = st.photo?.styles || [];
-  const ranked = useMemo(() => rankStores(stores, { loc: st.loc, radius: st.radius, want, filter, sort }), [stores, st.loc, st.radius, want.join(), filter, sort]); // eslint-disable-line react-hooks/exhaustive-deps
+  const ranked = useMemo(() => rankStores(stores, { loc: st.loc, radius: q.trim() ? 9999 : st.radius, want, filter, sort, q }), [stores, st.loc, st.radius, want.join(), filter, sort, q]); // eslint-disable-line react-hooks/exhaustive-deps
   const pins = useMemo(() => ranked.map((r) => ({ s: r.s, label: r.s.name.length > 9 ? r.s.name.slice(0, 8) + '…' : r.s.name })), [ranked]);
   useEffect(() => { if (st.photo?.at) setFit(ranked.slice(0, 6).map((r) => r.s).concat([st.loc])); }, [st.photo?.at]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -163,8 +165,15 @@ export default function CustomerHome() {
             </button>
           </div>
           <div className="chips">
+            <button className={`chip sm ${qOpen || q ? 'on' : ''}`} onClick={() => { setQOpen(!qOpen); if (qOpen) setQ(''); }} aria-label="가게 이름 검색"><Icon n="search" size="sm" />{q ? `“${q}”` : ''}</button>
             {FILTERS.map((f) => <button key={f.id} className={`chip sm ${filter === f.id ? 'on' : ''}`} onClick={() => setFilter(f.id)}>{f.name}</button>)}
           </div>
+          {qOpen && (
+            <div className="row" style={{ marginTop: 8 }}>
+              <input className="inp grow" autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="가게 이름·동네로 찾기 (예: 미도리, 인계동)" style={{ padding: '10px 12px', fontSize: 15 }} />
+              <button className="btn ghost sm" style={{ minHeight: 44 }} onClick={() => { setQ(''); setQOpen(false); }}>닫기</button>
+            </div>
+          )}
         </div>
         <button className="fab" style={{ bottom: `calc(var(--tab) + var(--sb) + ${height + 12}px)` }} onClick={async () => {
           try { toast('현재 위치를 찾는 중…', 1500); const p = await getGPS(); const label = (await reverseLabel(p.lat, p.lng)) || '현재 위치'; setState({ loc: { lat: p.lat, lng: p.lng, label, src: 'gps' } }); } catch (e) { toast(e.message); }
