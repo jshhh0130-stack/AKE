@@ -118,6 +118,13 @@ export function makeDemoOrders(shop = DEMO_SHOP) {
       paid: ['making', 'ready', 'done'].includes(status) || (status === 'confirmed' && r() > 0.5),
     };
     if (status === 'change') order.proposedPrice = est.lo + 3000;
+    if (!['requested', 'canceled'].includes(status)) {
+      const auto = status !== 'change' && r() < 0.45;
+      const at = new Date(created.getTime() + (auto ? 1 : 8 + Math.floor(r() * 170)) * 60000).toISOString();
+      order.history.push(auto ? { at, by: 'system', type: 'auto', msg: '사장님이 정한 규칙 안이라 바로 확정됐어요' }
+        : status === 'change' ? { at, by: 'owner', type: 'change', msg: '캐릭터는 비슷한 느낌으로 바꿔 그려 드려요. 3,000원 추가돼요' }
+        : { at, by: 'owner', type: 'approve', msg: '주문 잘 받았어요! 미리보기 그대로 만들어 드릴게요 :)' });
+    }
     if (status === 'done' && r() > 0.45) order.review = { stars: r() > 0.25 ? 5 : 4, text: pick(['미리보기랑 똑같이 나와서 놀랐어요!', '글씨가 너무 예뻐요', '가격을 미리 알 수 있어서 좋았어요', '사장님 답장이 빨라요', '친구가 엄청 좋아했어요'], r), at: d.toISOString() };
     out.push(order);
   };

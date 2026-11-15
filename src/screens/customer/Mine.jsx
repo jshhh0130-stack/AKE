@@ -220,6 +220,9 @@ export function CustomerOrder({ params }) {
         {order.review && <div className="card pad" style={{ marginTop: 14 }}><Stars n={order.review.stars} /><div className="small" style={{ marginTop: 4 }}>{order.review.text}</div></div>}
         {s === 'requested' && <button className="btn danger block" style={{ marginTop: 16 }} onClick={() => { if (confirm('주문 요청을 취소할까요?')) { custCancel(order.id); toast('주문을 취소했어요'); } }}>주문 요청 취소</button>}
         {order.gift && <div style={{ marginTop: 12 }}><GiftButton order={order} /></div>}
+        {['done', 'canceled', 'declined', 'external'].includes(s) && (
+          <button className="btn sec block" style={{ marginTop: 10 }} onClick={() => { const { date, time, refPhoto, ...d } = order.o; nav(`/order/${order.storeId}?from=${encodeURIComponent(JSON.stringify(d))}`); }}><Icon n="refresh" size="sm" /> 같은 케이크 다시 주문하기</button>
+        )}
         <button className="btn ghost block" style={{ marginTop: 10 }} onClick={() => nav(`/store/${order.storeId}`)}>가게 보기</button>
         <div style={{ height: 24 }} />
       </div>

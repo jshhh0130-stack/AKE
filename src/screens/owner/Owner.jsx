@@ -235,6 +235,11 @@ export function OwnerOrderDetail({ params }) {
           </div>
         )}
         {o.review && <div className="card pad" style={{ marginTop: 12 }}><div className="b small">손님 후기</div><Stars n={o.review.stars} /><div className="small">{o.review.text}</div></div>}
+        {['done', 'ready', 'making'].includes(o.status) && st.shop && (
+          st.shop.portfolio.some((p) => p.fromOrder === o.id)
+            ? <div className="note ok" style={{ marginTop: 12 }}>✓ 이 케이크는 가게 작품에 들어가 있어요</div>
+            : <button className="btn sec block" style={{ marginTop: 12 }} onClick={() => { const { date, time, refPhoto, request, allergy, ...d } = x; patchShop((s) => ({ portfolio: [{ id: 'p' + Date.now(), fromOrder: o.id, design: d, caption: `${sizeOf(x.size).name} ${designOf(x.design).name}`, src: o.proofPhoto || undefined }, ...s.portfolio].slice(0, 12) })); toast('가게 작품에 추가했어요. 손님이 같은 디자인으로 주문할 수 있어요'); }}><Icon n="image" size="sm" /> 이 케이크를 가게 작품에 추가</button>
+        )}
         <div className="sec-t"><h3>기록</h3></div>
         {(o.history || []).map((h, i) => <div key={i} className={`msg ${h.by === 'owner' ? 'me' : h.by === 'system' ? 'sys' : ''}`}><small>{h.by === 'owner' ? '나(사장님)' : h.by === 'system' ? '자동' : '손님'} · {ago(h.at)}</small>{h.msg}</div>)}
       </div>
@@ -309,6 +314,23 @@ export function Sales() {
           <div><small>건수</small><b style={{ fontSize: 16 }}>{focus.length}건</b></div>
           <div><small>평균 단가</small><b style={{ fontSize: 16 }}>{focus.length ? man(Math.round(total / focus.length / 100) * 100) + '원' : '-'}</b></div>
         </div>
+        {(() => {
+          const decided = list.map((o) => { const h = o.history || []; const req = h.find((x) => x.type === 'request'); const first = h.find((x) => ['approve', 'auto', 'change', 'decline'].includes(x.type)); return req && first ? { mins: (new Date(first.at) - new Date(req.at)) / 60000, auto: first.type === 'auto' } : null; }).filter(Boolean);
+          if (!decided.length) return null;
+          const avg = decided.reduce((a, d) => a + d.mins, 0) / decided.length;
+          const autoPct = Math.round((decided.filter((d) => d.auto).length / decided.length) * 100);
+          return (
+            <div className="card pad" style={{ marginTop: 12 }}>
+              <div className="b small">응대 지표 <span className="xs muted">(전체 {decided.length}건)</span></div>
+              <div className="kpis light" style={{ marginTop: 8 }}>
+                <div><small>평균 첫 응답</small><b style={{ fontSize: 16 }}>{avg < 60 ? `${Math.round(avg)}분` : `${(avg / 60).toFixed(1)}시간`}</b></div>
+                <div><small>자동 확정</small><b style={{ fontSize: 16 }}>{autoPct}%</b></div>
+                <div><small>상담 줄인 시간</small><b style={{ fontSize: 16 }}>~{Math.round(decided.length * 12 / 60)}시간</b></div>
+              </div>
+              <div className="xs muted" style={{ marginTop: 6 }}>‘상담 줄인 시간’은 카톡 상담 1건에 평균 12분이 든다고 가정한 추정이에요.</div>
+            </div>
+          );
+        })()}
         {focus.length > 0 && (
           <div className="card pad" style={{ marginTop: 12 }}>
             <div className="b small">많이 나간 옵션</div>
