@@ -1,8 +1,17 @@
 // Dear Cake 서비스워커: 새 버전은 인터넷에서 먼저 받고(자동 업데이트), 인터넷이 없으면 저장본으로 열기
-const CACHE = 'dearcake-v1';
+const CACHE = 'dearcake-v2';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
+});
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const link = e.notification.data?.link;
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((cs) => {
+    const c = cs[0];
+    if (c) { c.focus(); if (link) c.navigate(c.url.split('#')[0] + '#' + link); return null; }
+    return self.clients.openWindow('./' + (link ? '#' + link : ''));
+  }));
 });
 self.addEventListener('fetch', (e) => {
   const req = e.request;

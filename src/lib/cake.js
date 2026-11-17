@@ -363,7 +363,7 @@ export function storeLook(store, k = 0) {
   const shapes = ['round', 'round', 'heart', 'square'];
   return {
     shape: shapes[Math.floor(r() * shapes.length)],
-    size: st.includes('dosirak') && k % 2 === 0 ? 'dosirak' : 'h1',
+    size: k % 3 === 2 ? 'mini' : 'h1',
     design: designs[Math.floor(r() * designs.length)],
     cream: creams[Math.floor(r() * creams.length)],
     text: texts[Math.floor(r() * texts.length)],

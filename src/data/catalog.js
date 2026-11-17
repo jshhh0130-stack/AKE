@@ -3,7 +3,6 @@
 
 export const STYLES = [
   { id: 'lettering', name: '레터링', emoji: '✍️', desc: '케이크 위에 문구를 쓰는 기본 커스텀' },
-  { id: 'dosirak', name: '도시락', emoji: '🍱', desc: '10cm 안팎, 1~2인용 작은 케이크' },
   { id: 'photo', name: '포토', emoji: '📷', desc: '사진을 먹는 종이에 인쇄해 올려요' },
   { id: 'character', name: '그림·캐릭터', emoji: '🐻', desc: '크림으로 그림을 그려요' },
   { id: 'flower', name: '플라워', emoji: '🌸', desc: '크림·앙금·생화 꽃 장식' },
@@ -16,20 +15,18 @@ export const styleName = (id) => STYLES.find((s) => s.id === id)?.name || id;
 
 // limit: 사이즈별 권장 문구 글자 수(공백 제외). 배민 도시락 8자, 미니 10자 제한 가게 사례, 1호 15자(팀 화면 예시)
 export const SIZES = [
-  { id: 'dosirak', name: '도시락', cm: 10, serves: '1~2인', limit: 8, R: 66, H: 44 },
-  { id: 'mini', name: '미니', cm: 12, serves: '1~2인', limit: 10, R: 78, H: 48 },
+  { id: 'mini', name: '미니', cm: 12, serves: '1~2인', limit: 10, R: 74, H: 46 },
   { id: 'h1', name: '1호', cm: 15, serves: '2~4인', limit: 15, R: 92, H: 54 },
   { id: 'h2', name: '2호', cm: 18, serves: '4~6인', limit: 18, R: 102, H: 58 },
   { id: 'h3', name: '3호', cm: 21, serves: '6~8인', limit: 22, R: 110, H: 62 },
 ];
-export const sizeOf = (id) => SIZES.find((s) => s.id === id) || SIZES[2];
+export const sizeOf = (id) => SIZES.find((s) => s.id === id) || (id === 'dosirak' ? SIZES[0] : SIZES[1]);
 // 크기에 따라 커지는 추가금 배율 (사월 레터링 케이크 가격표: 도시락·1호·2호 추가금이 대략 1 : 2 : 3)
-export const SIZE_MULT = { dosirak: 0.6, mini: 0.8, h1: 1, h2: 1.3, h3: 1.6 };
+export const SIZE_MULT = { mini: 0.7, h1: 1, h2: 1.3, h3: 1.6 };
 
 // 수원 공개 가격 기반 기본가 범위 (흰 바탕 기본 레터링 기준)
 export const BENCH = {
-  dosirak: [18000, 25000],
-  mini: [26000, 36000],
+  mini: [20000, 33000],
   h1: [38000, 50000],
   h2: [50000, 65000],
   h3: [62000, 85000],

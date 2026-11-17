@@ -84,7 +84,7 @@ export default function Insight() {
         <div className="card pad"><HBars data={byGu} title="구별 커스텀 케이크 가게 수" /><div className="xs muted">영통구(아주대·광교·망포)에 가장 많이 모여 있어요 → 첫 시범 지역으로 적합</div></div>
 
         <div className="sec-t"><h3>만드는 케이크 종류</h3><span className="more">가게 수 · 중복 포함</span></div>
-        <div className="card pad"><HBars data={byStyle} title="스타일별 가게 수" /><div className="xs muted">레터링이 기본이고, 도시락·플라워·떡케이크가 뒤따라요</div></div>
+        <div className="card pad"><HBars data={byStyle} title="스타일별 가게 수" /><div className="xs muted">레터링이 기본이고, 플라워·떡케이크·그림 케이크가 뒤따라요</div></div>
 
         <div className="sec-t"><h3>크기별 공개 기본가</h3><span className="more">점 = 가게 · 띠 = 평균 범위</span></div>
         <div className="card pad">

@@ -1,14 +1,7 @@
 import Icon from './Icon.jsx';
 import { nav } from '../lib/router.js';
 import { useApp } from '../lib/state.js';
-import { unseenCount } from '../lib/orders.js';
-
-// 고객 탭바 (주문내역에 새 소식 숫자 표시)
-export function CustomerTabBar({ current }) {
-  const st = useApp();
-  const n = unseenCount(st);
-  return <TabBar tabs={CUSTOMER_TABS.map((t) => (t.path === '/c/orders' ? { ...t, badge: n } : t))} current={current} />;
-}
+import { unreadTotal } from '../lib/orders.js';
 
 export default function TabBar({ tabs, current }) {
   return (
@@ -24,14 +17,25 @@ export default function TabBar({ tabs, current }) {
   );
 }
 export const CUSTOMER_TABS = [
-  { path: '/c', icon: 'map', label: '지도' },
+  { path: '/c', icon: 'map', label: '찾기' },
+  { path: '/c/orders', icon: 'chat', label: '주문·대화' },
   { path: '/c/saved', icon: 'heart', label: '찜' },
-  { path: '/c/orders', icon: 'receipt', label: '주문내역' },
   { path: '/c/my', icon: 'user', label: '마이' },
 ];
 export const OWNER_TABS = [
   { path: '/o', icon: 'home', label: '오늘' },
-  { path: '/o/orders', icon: 'calendar', label: '주문' },
+  { path: '/o/orders', icon: 'chat', label: '주문·대화' },
+  { path: '/o/sales', icon: 'chart', label: '매출·장부' },
   { path: '/o/shop', icon: 'store', label: '내 가게' },
-  { path: '/o/sales', icon: 'won', label: '정산' },
 ];
+// 탭바 (새 소식이 있는 주문 수를 숫자로 표시)
+export function CustomerTabBar({ current }) {
+  const st = useApp();
+  const n = unreadTotal(st, 'c');
+  return <TabBar tabs={CUSTOMER_TABS.map((t) => (t.path === '/c/orders' ? { ...t, badge: n } : t))} current={current} />;
+}
+export function OwnerTabBar({ current }) {
+  const st = useApp();
+  const n = unreadTotal(st, 'o');
+  return <TabBar tabs={OWNER_TABS.map((t) => (t.path === '/o/orders' ? { ...t, badge: n } : t))} current={current} />;
+}

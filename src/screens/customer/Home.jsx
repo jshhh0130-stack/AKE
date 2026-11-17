@@ -2,42 +2,49 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../../components/Icon.jsx';
 import MapView, { loadKakao } from '../../components/MapView.jsx';
 import { CustomerTabBar } from '../../components/TabBar.jsx';
-import { Sheet, CakeView, toast, PhotoPick, Loading } from '../../components/ui.jsx';
+import { Sheet, CakeView, toast, PhotoPick, Loading, Toggle } from '../../components/ui.jsx';
+import { NotiBell } from '../../components/Noti.jsx';
 import { useApp, setState, getState } from '../../lib/state.js';
 import { nav, navAfterSheet } from '../../lib/router.js';
-import { getStores, rankStores, FILTERS, fmtKm, headlinePrice, kindLabel, canOrderInApp, nextOpenDay } from '../../lib/stores.js';
+import { getStores, rankStores, FILTERS, GUS, BUDGETS, findCount, parseFindText, fmtKm, headlinePrice, pinPrice, canOrderInApp, nextOpenDay } from '../../lib/stores.js';
 import { storeLook, cakeSVG } from '../../lib/cake.js';
 import { range } from '../../lib/util.js';
 import { estimate } from '../../lib/price.js';
-import { PLACES, STYLES, DESIGNS, CREAMS, SHAPES, styleName, optName } from '../../data/catalog.js';
+import { PLACES, STYLES, DESIGNS, CREAMS, SHAPES, styleName, optName, creamOf } from '../../data/catalog.js';
 import { getGPS, searchPlace, reverseLabel, findNearbyOSM } from '../../lib/geo.js';
 import { loadImage, toDataURL, analyzeImage } from '../../lib/image.js';
-import { aiAnalyzePhoto } from '../../lib/ai.js';
+import { aiAnalyzePhoto, aiParseFind } from '../../lib/ai.js';
+import { enrich, googleFind, onPlaces } from '../../lib/gplaces.js';
 
+const lookOf = (s) => s.hero || s.portfolio?.[0]?.design || storeLook(s);
 export function StoreThumb({ s }) {
-  const photo = s.portfolio?.find((p) => p.src)?.src;
-  if (photo) return <img src={photo} alt="" />;
-  const look = s.hero || s.portfolio?.[0]?.design || storeLook(s);
-  return <CakeView o={look} />;
+  const photo = s.g?.photos?.[0]?.src || s.portfolio?.find((p) => p.src)?.src;
+  if (photo) return <img src={photo} alt="" referrerPolicy="no-referrer" />;
+  return <CakeView o={lookOf(s)} />;
 }
+// 구글 장소 정보가 바뀌면 다시 그리기
+export function usePlaces() { const [n, set] = useState(0); useEffect(() => onPlaces(() => set((x) => x + 1)), []); return n; }
 
 export function StoreCard({ r, sel, onClick, fav, onFav, picked }) {
   const { s, d, match } = r;
   const hp = headlinePrice(s);
+  const open = canOrderInApp(s) ? nextOpenDay(s, getState().orders) : null;
   const rv = getState().orders.filter((o) => o.storeId === s.id && o.review);
   const avg = rv.length ? rv.reduce((a, o) => a + o.review.stars, 0) / rv.length : null;
-  const open = canOrderInApp(s) ? nextOpenDay(s, getState().orders) : null;
   return (
     <button className={`scard ${sel ? 'sel' : ''}`} onClick={onClick} id={`card-${s.id}`}>
       <div className="th"><StoreThumb s={s} />{canOrderInApp(s) && <span className="m">⚡ 앱 주문</span>}</div>
       <div className="grow">
         <div className="nm"><span>{s.name}</span>{match != null && <span className="match">{match}%</span>}</div>
-        <div className="meta">{avg != null && <span style={{ color: '#E0A400', fontWeight: 800 }}>★ {avg.toFixed(1)} <span className="muted">({rv.length})</span> · </span>}{[s.dong || s.gu, d != null ? fmtKm(d) : null, s.geo === 'area' ? '위치 대략' : null].filter(Boolean).join(' · ')}</div>
+        <div className="meta">
+          {s.g?.rating ? <span style={{ color: '#E0A400', fontWeight: 800 }}>★ {s.g.rating.toFixed(1)} <span className="muted">({s.g.n})</span> · </span> : avg != null ? <span style={{ color: '#E0A400', fontWeight: 800 }}>★ {avg.toFixed(1)} <span className="muted">({rv.length})</span> · </span> : null}
+          {[s.dong || s.gu, d != null ? fmtKm(d) : null, s.geo === 'area' ? '위치 대략' : null].filter(Boolean).join(' · ')}
+        </div>
         <div className="tags">
-          {(s.styles || []).filter((x) => x !== 'custom').slice(0, 3).map((x) => <span key={x} className="tag">{styleName(x)}</span>)}
+          {(s.styles || []).slice(0, 3).map((x) => <span key={x} className="tag">{styleName(x)}</span>)}
           {s.sameDay && <span className="tag warn">당일 가능</span>}
-          {s.kind === 'public' && s.level !== 'detail' && <span className="tag mute">확인 필요</span>}
-          {(s.kind === 'osm' || s.kind === 'kakao') && <span className="tag blue">공개 지도</span>}
+          {s.kind === 'public' && (s.verified ? <span className="tag ok">영업 확인</span> : !s.price && <span className="tag mute">확인 필요</span>)}
+          {s.kind !== 'public' && s.kind !== 'partner' && <span className="tag blue">지도 검색</span>}
         </div>
         <div className="pr">
           {hp ? <>{hp.label} {range(hp.lo, hp.hi, true)}{!hp.exact && <small> {hp.bench ? '· 평균 추정' : '· 공개가'}</small>}</> : <small>가격 정보 없음</small>}
@@ -50,11 +57,11 @@ export function StoreCard({ r, sel, onClick, fav, onFav, picked }) {
   );
 }
 
-// 가게 2~3곳 나란히 비교 (팀 조사: "가격·옵션·추가금·픽업시간을 나란히")
+// 가게 2~3곳 나란히 비교
 export function CompareSheet({ open, onClose, rows }) {
   const st = useApp();
   if (!open) return null;
-  const est = (s, size) => { const e = estimate(s, { size, design: 'simple', shape: 'round', cream: 'white', flavor: 'vanilla', text: 'a' }); return range(e.lo, e.hi, true) + (e.basis === 'menu' ? '' : ' *'); };
+  const est = (s, size) => { if (s.menu && s.menu.sizes?.[size] == null) return '-'; const e = estimate(s, { size, design: 'simple', shape: 'round', cream: 'white', flavor: 'vanilla', text: 'a' }); return range(e.lo, e.hi, true) + (e.basis === 'menu' ? '' : ' *'); };
   const line = (label, fn) => <tr><th>{label}</th>{rows.map((r) => <td key={r.s.id}>{fn(r)}</td>)}</tr>;
   return (
     <Sheet open={open} onClose={onClose} title={`가게 ${rows.length}곳 비교`}>
@@ -64,10 +71,10 @@ export function CompareSheet({ open, onClose, rows }) {
           <tbody>
             {line('거리', (r) => fmtKm(r.d))}
             {line('주문 방법', (r) => (canOrderInApp(r.s) ? <span className="tag dark">⚡ 앱 주문</span> : r.s.kakao ? '카톡' : r.s.insta ? '인스타' : r.s.naver ? '네이버 예약' : '가게 문의'))}
-            {line('도시락', (r) => est(r.s, 'dosirak'))}
+            {line('미니', (r) => est(r.s, 'mini'))}
             {line('1호', (r) => <b className="pink">{est(r.s, 'h1')}</b>)}
             {line('2호', (r) => est(r.s, 'h2'))}
-            {line('스타일', (r) => (r.s.styles || []).filter((x) => x !== 'custom').map(styleName).join(', ') || '-')}
+            {line('스타일', (r) => (r.s.styles || []).map(styleName).join(', ') || '-')}
             {line('가장 빠른 픽업', (r) => { const n = nextOpenDay(r.s, st.orders); return n ? (n.diff === 0 ? '오늘' : n.diff === 1 ? '내일' : `${n.diff}일 뒤`) : '-'; })}
             {line('당일 주문', (r) => (r.s.sameDay ? '가능' : r.s.sameDay === false ? '불가' : '확인 필요'))}
             {line('휴무', (r) => r.s.closed || (r.s.ops ? (r.s.ops.closedDays.length ? r.s.ops.closedDays.map((d) => '일월화수목금토'[d]).join('·') + '요일' : '없음') : '-'))}
@@ -80,22 +87,21 @@ export function CompareSheet({ open, onClose, rows }) {
   );
 }
 
-const SNAP = { mini: 0.2, half: 0.5, full: 0.9 };
+const SNAP = { mini: 0.2, half: 0.48, full: 0.9 };
 
 export default function CustomerHome() {
   const st = useApp();
+  const pv = usePlaces();
   const [sel, setSel] = useState(null);
   const [filter, setFilter] = useState('all');
   const [sort, setSort] = useState('rec');
   const [snap, setSnap] = useState('half');
   const [drag, setDrag] = useState(null);
   const [locOpen, setLocOpen] = useState(false);
-  const [photoOpen, setPhotoOpen] = useState(false);
+  const [findOpen, setFindOpen] = useState(false);
   const [fit, setFit] = useState(null);
   const [finding, setFinding] = useState(false);
-  const [kakaoBad, setKakaoBad] = useState(false);
-  const [q, setQ] = useState('');
-  const [qOpen, setQOpen] = useState(false);
+  const [mapBad, setMapBad] = useState('');
   const [cmpMode, setCmpMode] = useState(false);
   const [cmp, setCmp] = useState([]);
   const [cmpOpen, setCmpOpen] = useState(false);
@@ -106,14 +112,22 @@ export default function CustomerHome() {
     ro.observe(wrap.current);
     return () => ro.disconnect();
   }, []);
+  const gKey = mapBad === 'google' ? '' : st.settings.googleKey;
+  const kKey = mapBad === 'kakao' ? '' : st.settings.kakaoKey;
 
-  const stores = useMemo(() => getStores(st), [st.shop, st.found]); // eslint-disable-line react-hooks/exhaustive-deps
-  const want = st.photo?.styles || [];
-  const ranked = useMemo(() => rankStores(stores, { loc: st.loc, radius: q.trim() ? 9999 : st.radius, want, filter, sort, q }), [stores, st.loc, st.radius, want.join(), filter, sort, q]); // eslint-disable-line react-hooks/exhaustive-deps
-  const pins = useMemo(() => ranked.map((r) => ({ s: r.s, label: r.s.name.length > 9 ? r.s.name.slice(0, 8) + '…' : r.s.name })), [ranked]);
-  useEffect(() => { if (st.photo?.at) setFit(ranked.slice(0, 6).map((r) => r.s).concat([st.loc])); }, [st.photo?.at]); // eslint-disable-line react-hooks/exhaustive-deps
+  const stores = getStores(st);
+  const find = st.find;
+  const ranked = useMemo(() => rankStores(stores, { loc: st.loc, radius: st.radius, find, filter, sort }), [stores.length, st.loc, st.radius, find, filter, sort, st.partners, st.shop, pv]); // eslint-disable-line react-hooks/exhaustive-deps
+  const pins = useMemo(() => ranked.map((r) => ({
+    s: r.s, name: r.s.name.length > 10 ? r.s.name.slice(0, 9) + '…' : r.s.name, price: pinPrice(r.s), match: find && findCount(find) && r.match != null ? r.match : null,
+    img: r.s.g?.photos?.[0]?.src || r.s.portfolio?.find((p) => p.src)?.src || null, color: creamOf(lookOf(r.s).cream).hex,
+  })), [ranked, find]);
+  useEffect(() => { if (find?.at) setFit(ranked.slice(0, 8).map((r) => r.s).concat(find.gu ? [] : [st.loc])); }, [find?.at]); // eslint-disable-line react-hooks/exhaustive-deps
+  // 구글 키가 있으면 위쪽 가게들의 실제 사진·별점을 받아 온다 (사용량 아끼려고 앞의 5곳만)
+  useEffect(() => { if (gKey) ranked.slice(0, 5).forEach((r) => enrich(gKey, r.s)); }, [gKey, ranked.slice(0, 5).map((r) => r.s.id).join()]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (gKey && sel) { const r = ranked.find((x) => x.s.id === sel); if (r) enrich(gKey, r.s); } }, [gKey, sel]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const avail = H - 62; // 탭바 빼고
+  const avail = H - 62;
   const height = drag?.h ?? Math.round(avail * SNAP[snap]);
   const startDrag = (e) => { e.currentTarget.setPointerCapture?.(e.pointerId); setDrag({ y: e.clientY, h0: height, h: height }); };
   const moveDrag = (e) => { if (drag) setDrag({ ...drag, h: Math.max(90, Math.min(avail * 0.94, drag.h0 - (e.clientY - drag.y))) }); };
@@ -133,20 +147,23 @@ export default function CustomerHome() {
   const toggleFav = (id) => setState((s) => ({ ...s, favs: s.favs.includes(id) ? s.favs.filter((x) => x !== id) : [...s.favs, id] }));
   const selRow = sel ? ranked.find((r) => r.s.id === sel) : null;
   const rows = selRow ? [selRow, ...ranked.filter((r) => r !== selRow)] : ranked;
+  const exactN = ranked.filter((r) => !r.partial).length;
+  const firstPartial = rows.find((r) => r.partial && r !== selRow);
+  const nFind = findCount(find);
+  const clearFind = (patch) => { const next = patch ? { ...find, ...patch, at: Date.now() } : null; setState({ find: next && findCount(next) ? next : null }); if (!patch) setFit(null); };
 
   const findMore = async () => {
     setFinding(true);
     try {
       let found = [];
-      if (st.settings.kakaoKey && !kakaoBad) {
-        try { found = await kakaoFind(st.settings.kakaoKey, st.loc, st.radius); } catch (e) { console.warn(e); }
-      }
+      if (gKey) { try { found = await googleFind(gKey, st.loc, Math.min(st.radius, 10)); } catch (e) { console.warn(e); } }
+      if (!found.length && kKey) { try { found = await kakaoFind(kKey, st.loc, st.radius); } catch (e) { console.warn(e); } }
       if (!found.length) found = await findNearbyOSM(st.loc, Math.min(st.radius, 6));
       const ids = new Set(stores.map((s) => s.id));
       const names = new Set(stores.map((s) => s.name.replace(/\s/g, '')));
       const fresh = found.filter((x) => !ids.has(x.id) && !names.has(x.name.replace(/\s/g, '')));
       setState((s) => ({ ...s, found: [...(s.found || []), ...fresh].slice(-120) }));
-      toast(fresh.length ? `주변 케이크 가게 ${fresh.length}곳을 더 찾았어요` : '새로 찾은 가게가 없어요. 반경을 넓혀 보세요');
+      toast(fresh.length ? `주변 케이크 가게 ${fresh.length}곳을 더 찾았어요` : '새로 찾은 가게가 없어요. 범위를 넓혀 보세요');
     } catch (e) { toast(e.message || '가게를 더 찾지 못했어요'); }
     setFinding(false);
   };
@@ -154,68 +171,53 @@ export default function CustomerHome() {
   return (
     <div className="screen fade" ref={wrap}>
       <div className="maphome">
-        <MapView center={st.loc} zoom={st.radius > 6 ? 12 : 14} pins={pins} selected={sel} onSelect={select} me={st.loc} radiusKm={st.radius} fit={fit}
-          kakaoKey={kakaoBad ? '' : st.settings.kakaoKey} onKakaoFail={() => { setKakaoBad(true); toast('카카오 지도 키를 확인해 주세요. 기본 지도로 보여 드려요'); }} />
+        <MapView center={st.loc} zoom={st.radius > 6 ? 12 : 14} pins={pins} selected={sel} onSelect={select} me={st.loc} radiusKm={find?.gu ? 0 : st.radius} fit={fit} padBottom={Math.min(Math.round(avail * 0.5), Math.round(avail * SNAP[snap]))}
+          googleKey={gKey} kakaoKey={kKey} onMapFail={(w) => { setMapBad(w); toast(`${w === 'google' ? '구글' : '카카오'} 지도 키를 확인해 주세요. 기본 지도로 보여 드려요`, 3500); }} />
         <div className="maptop">
           <div className="bar">
-            <button className="locbtn" onClick={() => setLocOpen(true)}><Icon n="pin" /><span>{st.loc.label}</span><Icon n="down" size="sm" /></button>
-            <button className={`photobtn ${st.photo ? 'has' : ''}`} onClick={() => setPhotoOpen(true)}>
-              {st.photo?.thumb ? <img src={st.photo.thumb} alt="내 사진" /> : <Icon n="camera" />}
-              {st.photo ? '사진 찾기' : '사진으로 찾기'}
-            </button>
+            <button className="locbtn" onClick={() => setLocOpen(true)}><Icon n="pin" /><span>{find?.gu ? `수원 ${find.gu}` : st.loc.label}</span><Icon n="down" size="sm" /></button>
+            <NotiBell role="c" />
           </div>
+          <button className={`findbar ${nFind ? 'on' : ''}`} onClick={() => setFindOpen(true)}>
+            {find?.photo?.thumb ? <img src={find.photo.thumb} alt="" /> : <span className="fi"><Icon n="sparkle" /></span>}
+            <span className="grow">{nFind ? <><b>조건 {nFind}개로 찾는 중</b><small>{[find.text, ...(find.styles || []).map(styleName), find.budget && BUDGETS.find((b) => b.r[0] === find.budget[0] && b.r[1] === find.budget[1])?.name, find.sameDay && '당일'].filter(Boolean).slice(0, 3).join(' · ') || '눌러서 조건 바꾸기'}</small></> : <><b>어떤 케이크를 찾으세요?</b><small>사진을 올리거나 말로 찾아보세요</small></>}</span>
+            {nFind ? <span className="fx" role="button" aria-label="조건 지우기" onClick={(e) => { e.stopPropagation(); clearFind(); toast('찾기 조건을 지웠어요'); }}><Icon n="close" size="sm" /></span> : <span className="fc"><Icon n="camera" /></span>}
+          </button>
           <div className="chips">
-            <button className={`chip sm ${qOpen || q ? 'on' : ''}`} onClick={() => { setQOpen(!qOpen); if (qOpen) setQ(''); }} aria-label="가게 이름 검색"><Icon n="search" size="sm" />{q ? `“${q}”` : ''}</button>
             {FILTERS.map((f) => <button key={f.id} className={`chip sm ${filter === f.id ? 'on' : ''}`} onClick={() => setFilter(f.id)}>{f.name}</button>)}
           </div>
-          {qOpen && (
-            <div className="row" style={{ marginTop: 8 }}>
-              <input className="inp grow" autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="가게 이름·동네로 찾기 (예: 미도리, 인계동)" style={{ padding: '10px 12px', fontSize: 15 }} />
-              <button className="btn ghost sm" style={{ minHeight: 44 }} onClick={() => { setQ(''); setQOpen(false); }}>닫기</button>
-            </div>
-          )}
         </div>
         <button className="fab" style={{ bottom: `calc(var(--tab) + var(--sb) + ${height + 12}px)` }} onClick={async () => {
-          try { toast('현재 위치를 찾는 중…', 1500); const p = await getGPS(); const label = (await reverseLabel(p.lat, p.lng)) || '현재 위치'; setState({ loc: { lat: p.lat, lng: p.lng, label, src: 'gps' } }); } catch (e) { toast(e.message); }
+          try { toast('현재 위치를 찾는 중…', 1500); const p = await getGPS(); const label = (await reverseLabel(p.lat, p.lng)) || '현재 위치'; setState((s) => ({ ...s, loc: { lat: p.lat, lng: p.lng, label, src: 'gps' }, find: s.find?.gu ? { ...s.find, gu: null } : s.find })); } catch (e) { toast(e.message); }
         }} aria-label="현재 위치"><Icon n="gps" /></button>
-        <div className="mapnote" style={{ bottom: `calc(var(--tab) + var(--sb) + ${height + 8}px)` }}>가게 정보는 공개 자료 기준 · 가격은 추정 포함</div>
+        <div className="legend" style={{ bottom: `calc(var(--tab) + var(--sb) + ${height + 8}px)` }}><i className="l1" />앱 주문<i className="l2" />가격 공개<i className="l3" />확인 필요</div>
 
         <div className={`bsheet ${drag ? 'dragging' : ''}`} style={{ height }}>
           <div className="grab" onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag}><i /></div>
           <div className="bh" onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag}>
-            <h3>{st.photo ? '내 사진과 비슷한 케이크 가게' : '내 주변 커스텀 케이크'} <span className="pink">{ranked.length}</span></h3>
+            <h3>{nFind ? '조건에 맞는 가게' : '내 주변 커스텀 케이크'} <span className="pink">{nFind ? exactN : ranked.length}</span></h3>
             <button className={`btn xs ${cmpMode ? 'dark' : 'ghost'}`} onPointerDown={(e) => e.stopPropagation()} onClick={() => { setCmpMode(!cmpMode); setCmp([]); if (!cmpMode) toast('비교할 가게를 2~3곳 눌러 주세요'); }}>{cmpMode ? '비교 취소' : '비교'}</button>
-            <select className="sortsel" value={sort} onChange={(e) => setSort(e.target.value)} onPointerDown={(e) => e.stopPropagation()}>
+            <select className="sortsel" value={sort} onChange={(e) => setSort(e.target.value)} onPointerDown={(e) => e.stopPropagation()} aria-label="정렬">
               <option value="rec">추천순</option><option value="near">가까운순</option><option value="price">가격순</option>
             </select>
           </div>
           <div className="bl">
-            {st.photo && (
-              <div className="photo-q">
-                {st.photo.thumb && <img src={st.photo.thumb} alt="" />}
-                <div className="grow">
-                  <div className="b small">사진 분석 결과로 추천 중</div>
-                  <div className="tags" style={{ marginTop: 4 }}>{(st.photo.styles || []).map((x) => <span key={x} className="tag">{styleName(x)}</span>)}{st.photo.cream && <span className="tag mute">{optName(CREAMS, st.photo.cream)}</span>}</div>
-                </div>
-                <button className="btn xs ghost" onClick={() => { setState({ photo: null }); setFit(null); }}>지우기</button>
-              </div>
-            )}
             {rows.length === 0 && (
-              <div className="empty"><div className="big">🔎</div>이 조건에 맞는 가게가 없어요.<br />필터를 바꾸거나 반경을 넓혀 보세요.
-                <div style={{ marginTop: 12 }}><button className="btn sec sm" onClick={() => setLocOpen(true)}>반경 넓히기</button></div></div>
+              <div className="empty"><div className="big">🔎</div>이 조건에 맞는 가게가 없어요.<br />조건을 줄이거나 범위를 넓혀 보세요.
+                <div className="row" style={{ marginTop: 12, justifyContent: 'center' }}>{nFind > 0 && <button className="btn sec sm" onClick={() => clearFind()}>조건 지우기</button>}<button className="btn line sm" onClick={() => setLocOpen(true)}>범위 넓히기</button></div></div>
             )}
-            {rows.map((r) => (
-              <StoreCard key={r.s.id} r={r} sel={sel === r.s.id} fav={st.favs.includes(r.s.id)} onFav={() => toggleFav(r.s.id)}
+            {rows.map((r) => (<div key={r.s.id}>
+              {r === firstPartial && <div className="sec-t" style={{ margin: '14px 4px 8px' }}><h3 style={{ fontSize: 14 }}>{exactN ? '조건과 조금 다른 가게' : '딱 맞는 곳은 없어요 · 비슷한 가게'}</h3><span className="more">{ranked.length - exactN}곳</span></div>}
+              <StoreCard r={r} sel={sel === r.s.id} fav={st.favs.includes(r.s.id)} onFav={() => toggleFav(r.s.id)}
                 picked={cmpMode ? cmp.includes(r.s.id) : undefined}
                 onClick={() => {
                   if (cmpMode) { setCmp((a) => (a.includes(r.s.id) ? a.filter((x) => x !== r.s.id) : a.length >= 3 ? (toast('최대 3곳까지 비교할 수 있어요'), a) : [...a, r.s.id])); return; }
-                  if (sel === r.s.id) nav(`/store/${r.s.id}`); else select(r.s.id);
+                  nav(`/store/${r.s.id}`);
                 }} />
-            ))}
-            {sel && <div className="center xs muted" style={{ margin: '-2px 0 10px' }}>선택한 가게를 한 번 더 누르면 자세히 볼 수 있어요</div>}
+            </div>))}
             <div className="card pad" style={{ marginTop: 6 }}>
               <div className="b">다른 지역도 찾을 수 있어요</div>
-              <div className="small muted" style={{ margin: '4px 0 10px' }}>수원 가게는 직접 조사한 정보가 들어 있어요. 다른 지역은 {st.settings.kakaoKey && !kakaoBad ? '카카오 장소 검색' : '공개 지도 데이터(OpenStreetMap)'}에서 주변 케이크 가게를 찾아요.</div>
+              <div className="small muted" style={{ margin: '4px 0 10px' }}>수원은 직접 조사한 실제 가게 {stores.filter((s) => s.kind === 'public' || s.kind === 'partner').length}곳이 들어 있어요. 다른 지역은 {gKey ? '구글 지도 검색' : kKey ? '카카오 장소 검색' : '공개 지도 데이터'}로 주변 케이크 가게를 찾아요.</div>
               <button className="btn line block sm" onClick={findMore} disabled={finding}>{finding ? '찾는 중…' : <><Icon n="search" size="sm" /> 이 근처 케이크 가게 더 찾기</>}</button>
             </div>
           </div>
@@ -229,7 +231,7 @@ export default function CustomerHome() {
       <CustomerTabBar current="/c" />
       <CompareSheet open={cmpOpen} onClose={() => setCmpOpen(false)} rows={cmp.map((id) => ranked.find((r) => r.s.id === id)).filter(Boolean)} />
       <LocationSheet open={locOpen} onClose={() => setLocOpen(false)} />
-      <PhotoSheet open={photoOpen} onClose={() => setPhotoOpen(false)} />
+      <FindSheet open={findOpen} onClose={() => setFindOpen(false)} stores={stores} />
     </div>
   );
 }
@@ -237,18 +239,12 @@ export default function CustomerHome() {
 async function kakaoFind(key, loc, radiusKm) {
   const k = await loadKakao(key);
   const ps = new k.maps.services.Places();
-  const kw = ['레터링케이크', '주문제작케이크', '커스텀케이크', '도시락케이크'];
   const out = [];
-  for (const q of kw) {
+  for (const q of ['레터링케이크', '주문제작케이크', '커스텀케이크']) {
     const res = await new Promise((resolve) => ps.keywordSearch(q, (data, status) => resolve(status === k.maps.services.Status.OK ? data : []), { location: new k.maps.LatLng(loc.lat, loc.lng), radius: Math.min(20000, radiusKm * 1000), sort: k.maps.services.SortBy.DISTANCE }));
     for (const p of res) {
       if (out.some((x) => x.id === 'kakao-' + p.id)) continue;
-      out.push({
-        id: 'kakao-' + p.id, kind: 'kakao', level: 'kakao', name: p.place_name, lat: +p.y, lng: +p.x, geo: 'exact',
-        addr: p.road_address_name || p.address_name, dong: (p.address_name || '').split(' ').slice(-2, -1)[0] || '', gu: '',
-        styles: q.includes('도시락') ? ['dosirak', 'lettering'] : q.includes('레터링') ? ['lettering'] : ['custom'],
-        note: `카카오 장소 검색 "${q}" 결과예요. ${p.category_name || ''}`, src: [p.place_url],
-      });
+      out.push({ id: 'kakao-' + p.id, kind: 'kakao', level: 'kakao', name: p.place_name, lat: +p.y, lng: +p.x, geo: 'exact', addr: p.road_address_name || p.address_name, dong: (p.address_name || '').split(' ').slice(-2, -1)[0] || '', gu: '', styles: ['lettering'], note: `카카오 장소 검색 “${q}” 결과예요.`, src: [p.place_url] });
     }
   }
   return out;
@@ -259,7 +255,7 @@ export function LocationSheet({ open, onClose }) {
   const [q, setQ] = useState('');
   const [res, setRes] = useState(null);
   const [busy, setBusy] = useState(false);
-  const pick = (p) => { setState({ loc: { lat: p.lat, lng: p.lng, label: p.label, src: 'pick' } }); toast(`${p.label} 기준으로 찾을게요`); onClose(); };
+  const pick = (p) => { setState((s) => ({ ...s, loc: { lat: p.lat, lng: p.lng, label: p.label, src: 'pick' }, find: s.find?.gu ? { ...s.find, gu: null, at: Date.now() } : s.find })); toast(`${p.label} 기준으로 찾을게요`); onClose(); };
   const search = async () => {
     if (!q.trim()) return;
     setBusy(true);
@@ -303,106 +299,121 @@ export function LocationSheet({ open, onClose }) {
   );
 }
 
-export function PhotoSheet({ open, onClose, onUse }) {
+const SAMPLES = [
+  { label: '하트 빈티지', o: { shape: 'heart', size: 'h1', design: 'vintage', cream: 'pink', text: '사랑해', font: 'pen', textColor: 'berry', toppings: ['pearl'] } },
+  { label: '곰돌이 그림', o: { shape: 'round', size: 'h1', design: 'character', cream: 'sky', text: '생일 축하해', font: 'gaegu', textColor: 'choco', toppings: ['sprinkle'] } },
+  { label: '라벤더 꽃', o: { shape: 'round', size: 'h2', design: 'flower', cream: 'lavender', text: '감사합니다', font: 'gowun', textColor: 'navy', toppings: ['freshflower'] } },
+];
+const EXAMPLES = ['영통 근처 4만원대 캐릭터 케이크', '인계동 당일 가능한 레터링', '5만원 이하 꽃 케이크', '팔달구 사진 케이크'];
+const designStyles = (d) => (d === 'character' ? ['character'] : d === 'flower' ? ['flower'] : d === 'photo' ? ['photo'] : ['lettering']);
+
+// 찾기: 사진 · 말 · 조건으로 원하는 케이크를 만드는 가게 찾기
+export function FindSheet({ open, onClose, stores }) {
   const st = useApp();
-  const [img, setImg] = useState(null); // { thumb, an }
-  const [busy, setBusy] = useState(false);
-  const [ai, setAi] = useState(null);
-  const [aiErr, setAiErr] = useState('');
-  const [styles, setStyles] = useState([]);
-  const [design, setDesign] = useState('simple');
-  const [shape, setShape] = useState('round');
-  const [cream, setCream] = useState('white');
-  useEffect(() => {
-    if (open && st.photo) {
-      setImg({ thumb: st.photo.thumb }); setStyles(st.photo.styles || []); setDesign(st.photo.design || 'simple'); setShape(st.photo.shape || 'round'); setCream(st.photo.cream || 'white'); setAi(st.photo.ai || null);
-    }
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
-  // 예시 사진(앱이 그린 케이크 그림)으로 체험하기 — 발표·시연용
-  const SAMPLES = [
-    { label: '하트 빈티지', o: { shape: 'heart', size: 'h1', design: 'vintage', cream: 'pink', text: '사랑해', font: 'pen', textColor: 'berry', toppings: ['pearl'] } },
-    { label: '곰돌이 그림', o: { shape: 'round', size: 'h1', design: 'character', cream: 'sky', text: '생일 축하해', font: 'gaegu', textColor: 'choco', toppings: ['sprinkle'] } },
-    { label: '라벤더 꽃', o: { shape: 'round', size: 'h2', design: 'flower', cream: 'lavender', text: '감사합니다', font: 'gowun', textColor: 'navy', toppings: ['freshflower'] } },
-  ];
-  const trySample = async (smp) => {
-    const svg = cakeSVG(smp.o, { uid: 'smp', fancy: false }).replace('<svg ', '<svg width="600" height="500" ');
-    const el = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
-    await run(el, smp);
+  const [f, setF] = useState({ text: '', styles: [], budget: null, gu: null, sameDay: false, appOnly: false, photo: null });
+  const [place, setPlace] = useState(null);
+  const [busy, setBusy] = useState('');
+  const [aiNote, setAiNote] = useState('');
+  useEffect(() => { if (open) { setF({ text: '', styles: [], budget: null, gu: null, sameDay: false, appOnly: false, photo: null, ...(st.find || {}) }); setPlace(null); setAiNote(''); } }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  const set = (p) => setF((x) => ({ ...x, ...p }));
+  const toggleStyle = (id) => set({ styles: f.styles.includes(id) ? f.styles.filter((x) => x !== id) : [...f.styles, id] });
+  const loc = place || st.loc;
+  const [count, near] = useMemo(() => { const r = rankStores(stores, { loc, radius: place ? 3 : st.radius, find: f }); return [r.filter((x) => !x.partial).length, r.length]; }, [stores.length, f, loc.lat, loc.lng, st.radius]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 글을 쓰면 바로 조건으로 바꿔 보여 준다
+  const onText = (text) => {
+    const p = parseFindText(text);
+    set({ text, ...(p.styles.length ? { styles: p.styles } : {}), ...(p.budget ? { budget: p.budget } : {}), ...(p.gu ? { gu: p.gu } : {}), ...(p.sameDay ? { sameDay: true } : {}) });
+    setPlace(p.place);
   };
-  const onPick = async (file) => {
-    try { await run(await loadImage(file)); } catch (e) { toast(e.message || '사진을 읽지 못했어요'); setBusy(false); }
+  const askAI = async () => {
+    if (!f.text.trim()) { toast('찾고 싶은 케이크를 적어 주세요'); return; }
+    setBusy('ai');
+    try {
+      const r = await aiParseFind(st.settings.claudeKey, f.text);
+      const patch = {};
+      if (r.styles?.length) patch.styles = r.styles;
+      if (r.budget_max > 0) patch.budget = [r.budget_min || 0, r.budget_max];
+      if (GUS.includes(r.gu)) patch.gu = r.gu;
+      if (r.same_day) patch.sameDay = true;
+      set(patch);
+      if (r.place && !patch.gu) { const p = parseFindText(r.place).place; if (p) setPlace(p); }
+      setAiNote(r.summary_ko || 'AI가 조건을 채웠어요');
+    } catch (e) { toast(e.message); }
+    setBusy('');
   };
-  const run = async (el, smp) => {
-    setBusy(true); setAi(null); setAiErr('');
+  const runPhoto = async (el, smp) => {
+    setBusy('photo');
     try {
       const thumb = toDataURL(el, 360, 0.8, true);
       const an = analyzeImage(el);
-      setImg({ thumb, an });
-      setStyles(an.styles); setDesign(an.design); setCream(an.cream); setShape('round');
-      if (smp) { setShape(smp.o.shape); setDesign(smp.o.design); setCream(smp.o.cream); setStyles(['lettering', ...(smp.o.design === 'character' ? ['character'] : smp.o.design === 'flower' ? ['flower'] : [])]); }
-      if (st.settings.claudeKey) {
+      let photo = { thumb, design: smp?.o.design || an.design, shape: smp?.o.shape || 'round', cream: smp?.o.cream || an.cream, palette: an.palette };
+      let styles = smp ? designStyles(smp.o.design) : an.styles.filter((x) => x !== 'lettering').length ? an.styles.filter((x) => x !== 'lettering') : ['lettering'];
+      if (st.settings.claudeKey && !smp) {
         try {
-          const big = toDataURL(el, 900, 0.85);
-          const r = await aiAnalyzePhoto(st.settings.claudeKey, big);
-          setAi(r);
-          if (r.is_cake) {
-            if (r.styles?.length) setStyles(r.styles);
-            if (r.design) setDesign(r.design);
-            if (r.shape && r.shape !== 'unknown') setShape(r.shape);
-            if (r.cream_colors?.[0]) setCream(r.cream_colors[0]);
-          }
-        } catch (e) { setAiErr(e.message); }
+          const r = await aiAnalyzePhoto(st.settings.claudeKey, toDataURL(el, 900, 0.85));
+          if (r.is_cake) { photo = { ...photo, ai: r, design: r.design || photo.design, shape: r.shape !== 'unknown' ? r.shape : photo.shape, cream: r.cream_colors?.[0] || photo.cream }; if (r.styles?.length) styles = r.styles.filter((x) => STYLES.some((s) => s.id === x)); setAiNote(r.summary_ko || ''); }
+          else setAiNote('케이크 사진이 아닌 것 같아요. 색만 참고했어요.');
+        } catch (e) { toast(e.message); }
       }
+      set({ photo, styles: styles.length ? styles : ['lettering'] });
     } catch (e) { toast(e.message || '사진을 읽지 못했어요'); }
-    setBusy(false);
+    setBusy('');
   };
-  const toggle = (id) => setStyles((a) => (a.includes(id) ? a.filter((x) => x !== id) : [...a, id]));
+  const onPick = async (file) => { try { await runPhoto(await loadImage(file)); } catch (e) { toast(e.message || '사진을 읽지 못했어요'); setBusy(''); } };
+  const trySample = async (smp) => {
+    const svg = cakeSVG(smp.o, { uid: 'smp' }).replace('<svg ', '<svg width="600" height="500" ');
+    const el = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
+    await runPhoto(el, smp);
+  };
   const apply = () => {
-    const photo = { thumb: img.thumb, styles: styles.length ? styles : ['lettering'], design, shape, cream, ai, palette: img.an?.palette || st.photo?.palette, at: Date.now() };
-    setState({ photo });
+    const next = { ...f, text: f.text.trim(), at: Date.now() };
+    setState((s) => ({ ...s, find: findCount(next) || next.text ? next : null, ...(place ? { loc: { ...place, src: 'find' }, radius: Math.min(s.radius, 3) } : {}) }));
     onClose();
-    onUse?.(photo);
-    if (!onUse) toast('사진과 비슷한 케이크를 만드는 가게 순서로 보여 드려요');
+    toast(count ? `조건에 맞는 가게 ${count}곳을 찾았어요` : near ? `딱 맞는 곳은 없지만 비슷한 가게 ${near}곳을 보여 드려요` : '맞는 가게가 없어요. 조건을 줄여 보세요');
   };
-  const pal = img?.an?.palette || st.photo?.palette;
+  const reset = () => { setF({ text: '', styles: [], budget: null, gu: null, sameDay: false, appOnly: false, photo: null }); setPlace(null); setAiNote(''); };
+  const ph = f.photo;
   return (
-    <Sheet open={open} onClose={onClose} title="사진으로 비슷한 케이크 찾기"
-      footer={img && !busy ? <div className="btns"><PhotoPick onPick={onPick} className="btn line">다른 사진</PhotoPick><button className="btn pri" style={{ flex: 2 }} onClick={apply}>비슷한 케이크 가게 보기</button></div> : null}>
-      {!img && !busy && (
-        <div className="col" style={{ alignItems: 'stretch', gap: 10 }}>
-          <div className="note pink">원하는 케이크 사진(인스타 캡처도 좋아요)을 올리면 색·모양·스타일을 분석해서 비슷한 케이크를 만드는 주변 가게를 골라 드려요. 사진은 이 기기 안에서만 분석해요{st.settings.claudeKey ? ' (AI 연결 시 AI 분석에도 사용)' : ''}.</div>
-          <PhotoPick onPick={onPick} className="btn pri block"><Icon n="image" /> 앨범에서 사진 고르기</PhotoPick>
-          <PhotoPick onPick={onPick} capture className="btn line block"><Icon n="camera" /> 카메라로 찍기</PhotoPick>
-          <div className="lbl" style={{ marginTop: 12 }}>사진이 없으면 예시로 체험해 보세요</div>
-          <div className="opts c3">{SAMPLES.map((s) => <button key={s.label} className="opt" onClick={() => trySample(s)}><div className="thumb"><CakeView o={s.o} /></div><small>{s.label}</small></button>)}</div>
-        </div>
-      )}
-      {busy && <Loading text={st.settings.claudeKey ? 'AI가 사진을 보고 있어요…' : '사진의 색과 스타일을 분석하는 중…'} />}
-      {img && !busy && (
-        <div className="fadeup">
-          <div className="row" style={{ alignItems: 'flex-start', gap: 12 }}>
-            <img src={img.thumb} alt="" style={{ width: 104, height: 104, borderRadius: 16, objectFit: 'cover', flex: 'none' }} />
-            <div className="grow">
-              <span className={`tag ${ai ? 'dark' : 'blue'}`}>{ai ? '✨ AI 분석' : '기기 안 자동 분석'}</span>
-              {ai?.summary_ko && <div className="small" style={{ marginTop: 6 }}>{ai.summary_ko}</div>}
-              {ai && !ai.is_cake && <div className="small" style={{ marginTop: 6, color: 'var(--warn)' }}>케이크 사진이 아닌 것 같아요. 색만 참고할게요.</div>}
-              {!ai && <div className="xs muted" style={{ marginTop: 6 }}>색으로 스타일을 추측했어요. 맞지 않으면 아래에서 눌러 고쳐 주세요.{aiErr && <><br /><span style={{ color: 'var(--warn)' }}>AI 분석 실패: {aiErr}</span></>}</div>}
-              {ai?.lettering_text && <div className="small" style={{ marginTop: 6 }}>읽은 문구: <b>“{ai.lettering_text}”</b></div>}
-            </div>
+    <Sheet open={open} onClose={onClose} title="케이크 가게 찾기" height="92%"
+      footer={<div className="btns"><button className="btn line" style={{ flex: 0.6 }} onClick={reset}>초기화</button><button className="btn pri" style={{ flex: 2 }} onClick={apply}>{count ? `가게 ${count}곳 보기` : near ? `비슷한 가게 ${near}곳 보기` : '맞는 가게가 없어요'}</button></div>}>
+      <div className="lbl">말로 찾기 {st.settings.claudeKey ? <span className="tag dark">AI</span> : <span className="tag mute">자동 해석</span>}</div>
+      <div className="row" style={{ alignItems: 'stretch' }}>
+        <input className="inp grow" value={f.text} onChange={(e) => onText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (st.settings.claudeKey ? askAI() : apply())} placeholder="예) 영통 근처 4만원대 캐릭터 케이크" />
+        {st.settings.claudeKey && <button className="btn dark sm" style={{ minHeight: 48 }} onClick={askAI} disabled={busy === 'ai'}>{busy === 'ai' ? '…' : 'AI 해석'}</button>}
+      </div>
+      <div className="chips" style={{ marginTop: 8 }}>{EXAMPLES.map((e) => <button key={e} className="chip sm" onClick={() => onText(e)}>{e}</button>)}</div>
+      {(place || aiNote) && <div className="note pink" style={{ marginTop: 8 }}>{place && <>📍 <b>{place.label}</b> 근처 3km에서 찾을게요. </>}{aiNote}</div>}
+
+      <div className="lbl" style={{ marginTop: 18 }}>사진으로 찾기</div>
+      {busy === 'photo' ? <Loading text={st.settings.claudeKey ? 'AI가 사진을 보고 있어요…' : '사진의 색과 스타일을 분석하는 중…'} /> : ph ? (
+        <div className="photo-q">
+          <img src={ph.thumb} alt="" />
+          <div className="grow">
+            <div className="b small">{ph.ai ? '✨ AI가 분석했어요' : '사진을 분석했어요'} <span className="xs muted">아래 조건이 채워졌어요</span></div>
+            <div className="row" style={{ marginTop: 4, gap: 4 }}>{(ph.palette || []).slice(0, 4).map((p, i) => <i key={i} title={p.name} style={{ width: 18, height: 18, borderRadius: 6, background: p.hex, border: '1px solid #0001' }} />)}<span className="xs muted">{optName(DESIGNS, ph.design)} · {optName(SHAPES, ph.shape)}</span></div>
           </div>
-          {pal && <><div className="lbl">사진 속 색</div><div className="row">{pal.map((p, i) => <div key={i} className="col" style={{ alignItems: 'center', gap: 2, width: 64 }}><i style={{ width: 36, height: 36, borderRadius: 12, background: p.hex, border: '2px solid rgba(0,0,0,.06)' }} /><span className="xs muted">{p.name} {p.pct}%</span></div>)}</div></>}
-          <div className="lbl">어떤 스타일인가요? <span className="xs muted">여러 개 골라도 돼요</span></div>
-          <div className="chips wrap">{STYLES.filter((s) => s.id !== 'custom').map((s) => <button key={s.id} className={`chip ${styles.includes(s.id) ? 'on' : ''}`} onClick={() => toggle(s.id)}>{s.emoji} {s.name}</button>)}</div>
-          <div className="lbl">비슷한 디자인</div>
-          <div className="chips wrap">{DESIGNS.map((d) => <button key={d.id} className={`chip soft ${design === d.id ? 'on' : ''}`} onClick={() => setDesign(d.id)}>{d.name}</button>)}</div>
-          <div className="lbl">모양 · 크림 색</div>
-          <div className="chips wrap">{SHAPES.map((s) => <button key={s.id} className={`chip soft ${shape === s.id ? 'on' : ''}`} onClick={() => setShape(s.id)}>{s.name}</button>)}
-            {CREAMS.slice(0, 8).map((c) => <button key={c.id} className={`chip soft ${cream === c.id ? 'on' : ''}`} onClick={() => setCream(c.id)}><i style={{ width: 12, height: 12, borderRadius: 6, background: c.hex, border: '1px solid #0001' }} />{c.name}</button>)}</div>
-          <div className="lbl">이렇게 주문하면 이런 느낌이에요</div>
-          <div style={{ borderRadius: 16, overflow: 'hidden', background: 'var(--p50)' }}><CakeView o={{ shape, size: 'h1', design, cream, text: ai?.lettering_text || '생일 축하해', font: 'jua', textColor: 'berry', toppings: ai?.toppings?.filter((x) => ['cherry', 'strawberry', 'sprinkle', 'pearl', 'ribbon', 'freshflower', 'macaron'].includes(x)) || [], photo: design === 'photo' ? img.thumb : undefined }} style={{ height: 170 }} /></div>
-          {ai?.needs_owner_check?.length > 0 && <div className="note warn" style={{ marginTop: 10 }}>사장님 확인이 필요할 수 있어요: {ai.needs_owner_check.join(' · ')}</div>}
+          <button className="btn xs ghost" onClick={() => set({ photo: null })}>빼기</button>
         </div>
+      ) : (
+        <>
+          <div className="btns"><PhotoPick onPick={onPick} className="btn sec"><Icon n="image" size="sm" /> 앨범에서 고르기</PhotoPick><PhotoPick onPick={onPick} capture className="btn line"><Icon n="camera" size="sm" /> 사진 찍기</PhotoPick></div>
+          <div className="xs muted" style={{ margin: '10px 0 6px' }}>사진이 없으면 예시로 해 보세요</div>
+          <div className="opts c3">{SAMPLES.map((s) => <button key={s.label} className="opt" onClick={() => trySample(s)}><div className="thumb"><CakeView o={s.o} /></div><small>{s.label}</small></button>)}</div>
+        </>
       )}
+
+      <div className="lbl" style={{ marginTop: 18 }}>케이크 종류 <span className="xs muted">여러 개 가능</span></div>
+      <div className="chips wrap">{STYLES.filter((s) => s.id !== 'custom').map((s) => <button key={s.id} className={`chip ${f.styles.includes(s.id) ? 'on' : ''}`} onClick={() => toggleStyle(s.id)}>{s.emoji} {s.name}</button>)}</div>
+      <div className="lbl" style={{ marginTop: 16 }}>예산 <span className="xs muted">1호(2~4인) 기준</span></div>
+      <div className="chips wrap">{BUDGETS.map((b) => { const on = f.budget && f.budget[0] === b.r[0] && f.budget[1] === b.r[1]; return <button key={b.id} className={`chip ${on ? 'on' : ''}`} onClick={() => set({ budget: on ? null : b.r })}>{b.name}</button>; })}
+        {f.budget && !BUDGETS.some((b) => b.r[0] === f.budget[0] && b.r[1] === f.budget[1]) && <button className="chip on" onClick={() => set({ budget: null })}>{range(f.budget[0] || 0, f.budget[1] > 900000 ? null : f.budget[1], true)} ✕</button>}</div>
+      <div className="lbl" style={{ marginTop: 16 }}>지역</div>
+      <div className="chips wrap"><button className={`chip ${!f.gu ? 'on' : ''}`} onClick={() => set({ gu: null })}>내 주변 ({(place || st.loc).label})</button>{GUS.map((g) => <button key={g} className={`chip ${f.gu === g ? 'on' : ''}`} onClick={() => { set({ gu: g }); setPlace(null); }}>{g}</button>)}</div>
+      <div className="card" style={{ padding: '0 14px', marginTop: 16 }}>
+        <div className="list-row"><div className="grow"><div className="t">당일 주문 되는 곳만</div></div><Toggle on={f.sameDay} onChange={(v) => set({ sameDay: v })} label="당일" /></div>
+        <div className="list-row"><div className="grow"><div className="t">앱으로 바로 주문되는 곳만</div><div className="s">디어 케이크 입점 가게</div></div><Toggle on={f.appOnly} onChange={(v) => set({ appOnly: v })} label="앱 주문" /></div>
+      </div>
     </Sheet>
   );
 }

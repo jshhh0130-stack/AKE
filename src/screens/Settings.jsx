@@ -6,25 +6,52 @@ import { useApp, setState, resetAll, getState } from '../lib/state.js';
 import { nav } from '../lib/router.js';
 import { askClaude } from '../lib/ai.js';
 import { loadKakao } from '../components/MapView.jsx';
+import { loadGoogle, googleFailed } from '../lib/gplaces.js';
 import { decodeOrder, decodeGift } from '../lib/share.js';
-import { getStores, SEED_STORES, SEED_UPDATED } from '../lib/stores.js';
-import { loadDemoShop } from '../lib/orders.js';
-import { range, fmtDate, won, uid } from '../lib/util.js';
-import { BENCH, BENCH_NOTE, SIZES, SHAPES, FLAVORS, RICE_FLAVORS, TOPPINGS, EXTRAS, sizeOf, designOf, creamOf, optName } from '../data/catalog.js';
+import { joinPartner, refreshPartner, refresh as liveRefresh } from '../lib/live.js';
+import { getStores, SEED_STORES, SEED_UPDATED, shopToStore } from '../lib/stores.js';
+import { applyEvent, mkEvent } from '../lib/orders.js';
+import { estimate, ruleCheck } from '../lib/price.js';
+import { range, fmtDate, uid } from '../lib/util.js';
+import { decoList, flavorName } from '../lib/ordertext.js';
+import { BENCH, BENCH_NOTE, SIZES, SHAPES, sizeOf, designOf, creamOf, optName } from '../data/catalog.js';
 
 export function Settings() {
   const st = useApp();
+  const [gk, setGk] = useState(st.settings.googleKey);
   const [key, setKey] = useState(st.settings.claudeKey);
   const [kk, setKk] = useState(st.settings.kakaoKey);
   const [busy, setBusy] = useState('');
   const save = (patch) => setState((s) => ({ ...s, settings: { ...s.settings, ...patch } }));
   return (
     <div className="screen">
-      <Header title="AI · 지도 연결" fallback={st.role === 'owner' ? '/o/shop' : '/c/my'} />
+      <Header title="지도 · AI 연결" fallback={st.role === 'owner' ? '/o/shop' : '/c/my'} />
       <div className="scroll pad">
         <div className="card pad">
+          <div className="row"><Icon n="map" /><b className="grow">구글 지도 연결</b>{st.settings.googleKey ? <span className="tag ok">사용 중</span> : <span className="tag mute">기본 지도</span>}</div>
+          <div className="small muted" style={{ margin: '6px 0 10px' }}>Google Maps API 키를 넣으면 <b>구글 지도</b>로 바뀌고, 가게의 <b>실제 사진·별점·영업시간·정확한 위치</b>를 구글에서 받아 와요. 전국 케이크 가게 검색도 구글로 해요.</div>
+          <input className="inp" value={gk} onChange={(e) => setGk(e.target.value.trim())} placeholder="Google Maps API 키 (AIza…)" autoComplete="off" />
+          <div className="btns" style={{ marginTop: 8 }}>
+            <button className="btn line sm" onClick={() => { setGk(''); save({ googleKey: '' }); toast('기본 지도로 바꿨어요'); }}>지우기</button>
+            <button className="btn dark sm" disabled={!gk || busy === 'g'} onClick={async () => {
+              setBusy('g');
+              try { await loadGoogle(gk); await new Promise((r) => setTimeout(r, 1500)); if (googleFailed()) throw new Error('auth'); save({ googleKey: gk }); toast('구글 지도 연결 성공! 지도 화면에서 확인해 보세요'); } catch { toast('연결 실패: 키, 사용 설정한 API, 허용 주소를 확인해 주세요', 4500); }
+              setBusy('');
+            }}>{busy === 'g' ? '확인 중…' : '저장하고 확인'}</button>
+          </div>
+          <details className="xs muted" style={{ marginTop: 10, lineHeight: 1.7 }}>
+            <summary style={{ cursor: 'pointer', fontWeight: 700 }}>키 받는 방법 (5분)</summary>
+            1. console.cloud.google.com 에 구글 계정으로 로그인 → 프로젝트 만들기<br />
+            2. 결제 계정 등록(카드 필요 · 매달 무료 사용량 안에서는 청구되지 않아요)<br />
+            3. ‘API 및 서비스 › 라이브러리’에서 <b>Maps JavaScript API</b>와 <b>Places API (New)</b> 사용 설정<br />
+            4. ‘사용자 인증 정보 › API 키 만들기’ → 키 복사<br />
+            5. 키 제한: 웹사이트에 <b>https://jshhh0130-stack.github.io/*</b> 추가 (다른 사람이 못 쓰게)<br />
+            6. 여기에 붙여 넣고 ‘저장하고 확인’
+          </details>
+        </div>
+        <div className="card pad" style={{ marginTop: 12 }}>
           <div className="row"><Icon n="sparkle" /><b className="grow">Claude AI 연결 (선택)</b>{st.settings.claudeKey ? <span className="tag ok">연결됨</span> : <span className="tag mute">꺼짐</span>}</div>
-          <div className="small muted" style={{ margin: '6px 0 10px' }}>키를 넣으면 진짜 AI가 동작해요: 케이크 사진 분석(문구·장식까지), 한 줄 주문 채우기, 가격표 사진 읽기, 가게 소개글 쓰기. 키가 없으면 기기 안의 기본 분석으로 동작해요.</div>
+          <div className="small muted" style={{ margin: '6px 0 10px' }}>키를 넣으면 진짜 AI가 동작해요: 말로 찾기 해석, 케이크 사진 분석(문구·장식까지), 한 줄 주문 채우기, 가격표 사진 읽기, 소개글 쓰기. 키가 없으면 기기 안의 기본 분석으로 동작해요.</div>
           <input className="inp" type="password" value={key} onChange={(e) => setKey(e.target.value.trim())} placeholder="sk-ant-… (Anthropic 콘솔에서 발급)" autoComplete="off" />
           <div className="btns" style={{ marginTop: 8 }}>
             <button className="btn line sm" onClick={() => { setKey(''); save({ claudeKey: '' }); toast('AI 키를 지웠어요'); }}>지우기</button>
@@ -34,20 +61,19 @@ export function Settings() {
               setBusy('');
             }}>{busy === 'ai' ? '확인 중…' : '저장하고 연결 확인'}</button>
           </div>
-          <div className="xs muted" style={{ marginTop: 8 }}>· 키는 이 기기(브라우저) 안에만 저장되고 깃허브·다른 곳에 올라가지 않아요.<br />· 사용료는 키 주인 계정에 청구돼요(사진 분석 1번에 수십 원 수준). 발표·시연용 기기에만 넣어 주세요.<br />· 모델: Claude Opus 5.5</div>
+          <div className="xs muted" style={{ marginTop: 8 }}>키는 이 기기 안에만 저장돼요. 사용료는 키 주인 계정에 청구돼요. 모델: Claude Opus 5.5</div>
         </div>
         <div className="card pad" style={{ marginTop: 12 }}>
-          <div className="row"><Icon n="map" /><b className="grow">카카오 지도 (선택)</b>{st.settings.kakaoKey ? <span className="tag ok">사용 중</span> : <span className="tag mute">기본 지도</span>}</div>
-          <div className="small muted" style={{ margin: '6px 0 10px' }}>카카오 개발자 사이트에서 받은 <b>JavaScript 키</b>를 넣으면 카카오 지도와 카카오 장소 검색(전국 케이크 가게 찾기)을 써요. 사이트 도메인에 이 앱 주소를 등록해야 해요.</div>
+          <div className="row"><Icon n="map" /><b className="grow">카카오 지도 (선택)</b>{st.settings.kakaoKey ? <span className="tag ok">{st.settings.googleKey ? '검색에 사용' : '사용 중'}</span> : <span className="tag mute">꺼짐</span>}</div>
+          <div className="small muted" style={{ margin: '6px 0 10px' }}>구글 키가 없을 때 카카오 <b>JavaScript 키</b>를 넣으면 카카오 지도와 장소 검색을 써요.</div>
           <input className="inp" value={kk} onChange={(e) => setKk(e.target.value.trim())} placeholder="카카오 JavaScript 키" autoComplete="off" />
           <div className="btns" style={{ marginTop: 8 }}>
-            <button className="btn line sm" onClick={() => { setKk(''); save({ kakaoKey: '' }); toast('기본 지도로 바꿨어요'); }}>지우기</button>
-            <button className="btn dark sm" disabled={!kk || busy === 'kk'} onClick={async () => { setBusy('kk'); try { await loadKakao(kk); save({ kakaoKey: kk }); toast('카카오 지도 연결 성공!'); } catch (e) { toast('연결 실패: 키와 등록한 도메인을 확인해 주세요', 4000); } setBusy(''); }}>{busy === 'kk' ? '확인 중…' : '저장하고 확인'}</button>
+            <button className="btn line sm" onClick={() => { setKk(''); save({ kakaoKey: '' }); toast('카카오 키를 지웠어요'); }}>지우기</button>
+            <button className="btn dark sm" disabled={!kk || busy === 'kk'} onClick={async () => { setBusy('kk'); try { await loadKakao(kk); save({ kakaoKey: kk }); toast('카카오 지도 연결 성공!'); } catch { toast('연결 실패: 키와 등록한 도메인을 확인해 주세요', 4000); } setBusy(''); }}>{busy === 'kk' ? '확인 중…' : '저장하고 확인'}</button>
           </div>
         </div>
         <div className="card" style={{ padding: '0 14px', marginTop: 12 }}>
-          <button className="list-row" onClick={() => { loadDemoShop(); toast('체험용 가게와 예시 주문을 다시 넣었어요'); nav('/o', { replace: true }); }}><Icon n="refresh" /><div className="grow"><div className="t">체험용 가게·예시 주문 다시 넣기</div><div className="s">사장님 화면 시연용</div></div></button>
-          <button className="list-row" onClick={() => { if (confirm('이 기기에 저장된 모든 데이터(주문·가게·설정)를 지울까요?')) { resetAll(); nav('/role', { replace: true }); toast('처음 상태로 돌아갔어요'); } }}><Icon n="trash" /><div className="grow"><div className="t" style={{ color: 'var(--danger)' }}>모든 데이터 지우기</div></div></button>
+          <button className="list-row" onClick={() => { if (confirm('이 기기에 저장된 모든 데이터(주문·가게·설정)를 지울까요?')) { resetAll(); nav('/role', { replace: true }); toast('처음 상태로 돌아갔어요'); } }}><Icon n="trash" /><div className="grow"><div className="t" style={{ color: 'var(--danger)' }}>모든 데이터 지우기</div><div className="s">주문·가게·설정을 이 기기에서 지워요</div></div></button>
         </div>
       </div>
     </div>
@@ -55,40 +81,57 @@ export function Settings() {
 }
 
 export function About() {
-  const detail = SEED_STORES.filter((s) => s.level === 'detail').length;
+  const verified = SEED_STORES.filter((s) => s.verified).length, priced = SEED_STORES.filter((s) => s.price).length;
   return (
     <div className="screen">
       <Header title="앱 정보 · 데이터 출처" fallback="/c/my" />
       <div className="scroll pad">
-        <div className="card pad row" style={{ gap: 12 }}><LogoBadge size={48} /><div><Wordmark size={22} sub /><div className="xs muted" style={{ marginTop: 6 }}>버전 0.1 · 비즈니스 데이터 시각화 프로젝트 프로토타입</div></div></div>
+        <div className="card pad row" style={{ gap: 12 }}><LogoBadge size={48} /><div><Wordmark size={22} sub /><div className="xs muted" style={{ marginTop: 6 }}>버전 0.2 · 비즈니스 데이터 시각화 프로젝트</div></div></div>
         <div className="sec-t"><h3>가게 정보는 어디서 왔나요?</h3></div>
         <div className="card pad small">
-          수원시 커스텀·레터링 케이크 가게 <b>{SEED_STORES.length}곳</b>을 {SEED_UPDATED} 기준으로 공개 자료(다이닝코드·당근 비즈프로필·지역 목록 사이트·가게 SNS, 팀 직접 조사)에서 모았어요.
+          수원시에 <b>실제로 있는</b> 커스텀 케이크 전문점 <b>{SEED_STORES.length}곳</b>을 {SEED_UPDATED} 기준 공개 자료(다이닝코드·당근 비즈프로필·지역 목록·가게 SNS, 팀 직접 조사)에서 모았어요. 만든(가상) 가게는 없어요.
           <ul style={{ margin: '8px 0 0', paddingLeft: 18 }}>
-            <li>가격·운영 정보까지 확인: {detail}곳</li>
-            <li>이름·주소만 확인(영업 여부 확인 필요): {SEED_STORES.length - detail}곳</li>
-            <li>지도 위치는 주소를 OpenStreetMap으로 바꾼 값이라 일부는 대략이에요</li>
-            <li>전화번호는 일부러 넣지 않았어요</li>
+            <li>2025~2026 영업 흔적까지 확인: {verified}곳</li>
+            <li>공개 가격 확인: {priced}곳</li>
+            <li>나머지는 이름·주소만 확인된 곳이라 ‘확인 필요’로 표시해요</li>
+            <li>일반 빵집·프랜차이즈·폐업 의심 가게는 뺐어요. 전화번호는 넣지 않았어요</li>
           </ul>
-          다른 지역은 “이 근처 케이크 가게 더 찾기”로 공개 지도 데이터(또는 카카오 장소 검색)에서 찾아요.
+          구글 지도 키를 연결하면 가게의 실제 사진·별점·영업 여부를 구글에서 바로 받아 와요.
         </div>
         <div className="sec-t"><h3>예상 가격은 어떻게 계산하나요?</h3></div>
         <div className="card pad small">
-          <div className="kv"><span>사장님이 등록한 가게</span><b>가격표 그대로 (정확)</b></div>
+          <div className="kv"><span>입점 가게</span><b>사장님 가격표 그대로 (정확)</b></div>
           <div className="kv"><span>공개 가격이 있는 가게</span><b>공개 기본가 + 평균 추가금</b></div>
           <div className="kv"><span>정보가 없는 가게</span><b>수원 평균 범위</b></div>
           <div className="hr" />
           {SIZES.map((z) => <div key={z.id} className="kv"><span>{z.name} ({z.cm}cm) 평균</span><b>{range(BENCH[z.id][0], BENCH[z.id][1])}</b></div>)}
-          <div className="xs muted" style={{ marginTop: 8 }}>{BENCH_NOTE} 추가금(하트 +1,000~3,000 · 포토 +5,000 · 스프링클 +1,000 · 그림 +5,000~ 등)은 공개 가격표·후기를 참고했어요. 실제 금액은 가게가 확정해요.</div>
+          <div className="xs muted" style={{ marginTop: 8 }}>{BENCH_NOTE} 실제 금액은 가게가 확정해요.</div>
         </div>
-        <div className="sec-t"><h3>내 정보는 어디에 저장되나요?</h3></div>
-        <div className="card pad small">지금은 서버가 없는 프로토타입이라 주문·가게 정보는 <b>이 기기 안에만</b> 저장돼요. 다른 폰으로는 ‘주문서 링크’로 전달해요. 실제 서비스로 만들 때는 회원가입·서버(DB)를 붙이면 돼요.</div>
+        <div className="sec-t"><h3>주문·대화는 어떻게 전달되나요?</h3></div>
+        <div className="card pad small">입점 가게로 보낸 주문과 대화는 <b>기기에서 암호화</b>한 뒤 공개 중계 서비스(ntfy.sh)를 거쳐 사장님 폰으로 전달돼요. 중계 서버는 내용을 읽을 수 없고 12시간만 보관해요. 주문 기록은 각자 기기에 저장돼요. 정식 서비스에서는 자체 서버·로그인으로 바꾸면 돼요.</div>
         <div className="sec-t"><h3>사용한 공개 서비스</h3></div>
-        <div className="card pad xs muted">지도: © OpenStreetMap 기여자, © CARTO · 주소 검색: Nominatim · 주변 가게 찾기: Overpass API · 글꼴: Pretendard, Google Fonts · AI(선택): Claude API, pollinations.ai(실사 이미지 베타)</div>
+        <div className="card pad xs muted">지도: Google Maps(키 연결 시) · Kakao Maps(키 연결 시) · © OpenStreetMap 기여자 · 주소 검색: Nominatim · 글꼴: Pretendard, Google Fonts · 메시지 중계: ntfy.sh · AI(선택): Claude API, pollinations.ai(실사 이미지 베타)</div>
         <div style={{ height: 24 }} />
       </div>
     </div>
   );
+}
+
+// 가게 주문 링크·QR을 열었을 때: 입점 가게로 저장하고 가게 화면으로
+export function JoinShop({ params }) {
+  const [err, setErr] = useState('');
+  useEffect(() => {
+    (async () => {
+      const p = await joinPartner(params.code);
+      let ok = !!(p.menu && p.ops);
+      if (!ok) ok = !!(await refreshPartner(p.id)); // QR(짧은 링크)은 최신 가게 정보를 중계에서 받아 온다
+      if (!ok && !SEED_STORES.some((s) => s.id === p.id)) { setErr(`${p.name || '가게'} 정보를 아직 받지 못했어요. 사장님이 앱을 한 번 열어 두면 바로 받아 올 수 있어요. 잠시 뒤 다시 열어 주세요.`); return; }
+      setState((s) => ({ ...s, role: 'customer', seenGuide: true }));
+      toast(`${p.name} 주문 페이지예요`);
+      nav(`/store/${p.id}`, { replace: true });
+    })().catch(() => setErr('주문 링크가 올바르지 않아요. 가게에 다시 확인해 주세요.'));
+  }, [params.code]);
+  return <div className="screen"><Header title="가게 주문 페이지" fallback="/" />{err ? <Empty icon="⚠️">{err}</Empty> : <Loading text="가게 정보를 불러오는 중…" />}</div>;
 }
 
 // 선물 카드 (받는 분이 여는 링크)
@@ -110,7 +153,7 @@ export function GiftView({ params }) {
         <div className="ticket" style={{ marginTop: 16 }}>
           <div className="stage" style={{ height: 230 }}><CakeView o={{ ...x, text: x.noText ? '' : x.text }} fancy /></div>
           <div className="tb">
-            {g.gift.msg && <div className="msg" style={{ marginTop: 0, fontSize: 15 }}><small>{g.gift.from || '보낸 분'}의 메시지</small>{g.gift.msg}</div>}
+            {g.gift.msg && <div className="bub" style={{ maxWidth: '100%' }}><small className="who">{g.gift.from || '보낸 분'}의 메시지</small><div className="tx">{g.gift.msg}</div></div>}
             <div className="kv" style={{ marginTop: 8 }}><span>받는 곳</span><b>{g.storeName}</b></div>
             <div className="kv"><span>받는 날</span><b className="pink">{fmtDate(x.date)} {x.time}</b></div>
             {store?.addr && <div className="kv"><span>주소</span><b>{store.addr}</b></div>}
@@ -119,7 +162,7 @@ export function GiftView({ params }) {
         </div>
         {store && (
           <div className="linkrow">
-            <a href={`https://map.kakao.com/link/to/${encodeURIComponent(store.name)},${store.lat},${store.lng}`} target="_blank" rel="noreferrer">🗺️ 길찾기</a>
+            <a href={`https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}`} target="_blank" rel="noreferrer">🗺️ 길찾기</a>
             <a href={`https://map.kakao.com/?q=${encodeURIComponent(store.name)}`} target="_blank" rel="noreferrer">🔎 카카오맵</a>
             <a href={`https://map.naver.com/p/search/${encodeURIComponent(store.name)}`} target="_blank" rel="noreferrer">🟢 네이버지도</a>
           </div>
@@ -131,7 +174,7 @@ export function GiftView({ params }) {
   );
 }
 
-// 다른 폰에서 보낸 주문서 링크 열기
+// 입점 전 가게에 보낸 주문서 링크를 사장님이 열었을 때
 export function SharedOrder({ params }) {
   const st = useApp();
   const [o, setO] = useState(null);
@@ -140,16 +183,18 @@ export function SharedOrder({ params }) {
   if (err) return <div className="screen"><Header title="주문서" fallback="/" /><Empty icon="⚠️">{err}</Empty></div>;
   if (!o) return <div className="screen"><Header title="주문서" fallback="/" /><Loading /></div>;
   const x = o.o;
-  const mineShop = st.shop && (st.shop.id === o.storeId || st.role === 'owner');
-  const exists = st.orders.some((r) => r.id === o.id && r.storeId === (st.shop?.id || o.storeId));
   const importIt = () => {
-    const now = new Date().toISOString();
-    const order = { id: exists ? o.id + '-' + uid().slice(-3) : o.id, storeId: st.shop.id, storeName: st.shop.name, storeKind: 'partner', createdAt: o.createdAt || now, status: 'requested', o: x, refThumb: null, customer: o.customer, est: o.est || { lo: 0, hi: 0 }, checks: [], finalPrice: null, history: [{ at: now, by: 'customer', type: 'request', msg: '주문서 링크로 받은 요청이에요' }] };
+    const shop = getState().shop;
+    const store = shopToStore(shop, 'partner');
+    const exists = getState().orders.some((r) => r.id === o.id);
+    let order = { id: exists ? o.id + '-' + uid().slice(-3) : o.id, storeId: shop.id, storeName: shop.name, createdAt: o.createdAt || new Date().toISOString(), status: 'requested', o: x, customer: o.customer, est: estimate(store, x), checks: ruleCheck(store, { ...x, date: null }, {}), finalPrice: null, ev: [], imgs: {}, seen: { o: 0 } };
+    order = applyEvent(order, mkEvent('request', 'c'));
     setState((s) => ({ ...s, orders: [order, ...s.orders] }));
+    liveRefresh();
     toast('주문함에 넣었어요');
     nav(`/o/order/${order.id}`, { replace: true });
   };
-  const deco = [...(x.toppings || []).map((t) => optName(TOPPINGS, t)), ...(x.extras || []).map((t) => optName(EXTRAS, t))];
+  const deco = decoList(x);
   return (
     <div className="screen">
       <Header title="받은 주문서" fallback="/" />
@@ -162,7 +207,7 @@ export function SharedOrder({ params }) {
             <div className="kv"><span>주문자</span><b>{o.customer?.name || '-'} {o.customer?.phone || ''}</b></div>
             <div className="kv"><span>픽업</span><b>{fmtDate(x.date)} {x.time}</b></div>
             <div className="kv"><span>케이크</span><b>{sizeOf(x.size).name} · {optName(SHAPES, x.shape)} · {designOf(x.design).name}</b></div>
-            <div className="kv"><span>맛·크림</span><b>{optName([...FLAVORS, ...RICE_FLAVORS], x.flavor)} · {creamOf(x.cream).name}</b></div>
+            <div className="kv"><span>맛·크림</span><b>{flavorName(x)} · {creamOf(x.cream).name}</b></div>
             <div className="kv"><span>문구</span><b>{x.noText ? '없음' : `“${x.text}”`}</b></div>
             {deco.length > 0 && <div className="kv"><span>장식·추가</span><b>{deco.join(', ')}</b></div>}
             {x.request && <div className="kv"><span>요청</span><b>{x.request}</b></div>}
@@ -173,7 +218,7 @@ export function SharedOrder({ params }) {
         {st.shop && st.role === 'owner' ? (
           <button className="btn pri block" style={{ marginTop: 14 }} onClick={importIt}><Icon n="plus" size="sm" /> 내 가게 주문함에 넣기</button>
         ) : (
-          <div className="note" style={{ marginTop: 14 }}>사장님이라면 Dear Cake 사장님 모드에서 이 링크를 열면 주문함에 바로 넣을 수 있어요.
+          <div className="note" style={{ marginTop: 14 }}>사장님이라면 Dear Cake에 가게를 등록하고 이 링크를 다시 열면 주문함에 바로 넣을 수 있어요. 등록하면 다음부터는 주문이 실시간으로 와요.
             <button className="btn sec block sm" style={{ marginTop: 8 }} onClick={() => { setState({ role: 'owner' }); if (!getState().shop) nav('/o/setup'); }}>사장님 모드로 열기</button>
           </div>
         )}

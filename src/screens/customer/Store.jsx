@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Icon from '../../components/Icon.jsx';
 import MapView from '../../components/MapView.jsx';
 import { CakeView, Header, Stars, toast, Empty } from '../../components/ui.jsx';
@@ -10,7 +10,9 @@ import { storeLook } from '../../lib/cake.js';
 import { range, DOW, shareText, hash, rng, won } from '../../lib/util.js';
 import { askClaude } from '../../lib/ai.js';
 import { SIZES, styleName } from '../../data/catalog.js';
-import { StoreThumb } from './Home.jsx';
+import { StoreThumb, usePlaces } from './Home.jsx';
+import { enrich } from '../../lib/gplaces.js';
+import { refreshPartner } from '../../lib/live.js';
 
 // ── 가게에 물어보기: 가게 정보만 근거로 답한다 (키 없으면 규칙 기반) ──
 function ruleAnswer(s, q) {
@@ -24,7 +26,7 @@ function ruleAnswer(s, q) {
   if (/가격|얼마|비싸|원$|만원/.test(t)) { const r = SIZES.map((z) => ({ z, e: estimate(s, { size: z.id, design: 'simple', shape: 'round', cream: 'white', flavor: 'vanilla', text: 'a' }) })).filter(({ z }) => !s.menu || s.menu.sizes?.[z.id] != null); return `기본 레터링 기준 ${r.map(({ z, e }) => `${z.name} ${range(e.lo, e.hi, true)}`).join(', ')}이에요${s.menu ? '.' : ' (추정).'} 장식·맛을 고르면 주문서에서 바로 계산돼요.`; }
   if (/주차/.test(t)) { const x = has(/주차/); return x ? `가게 정보: ${x}` : '주차 정보는 없어요. 가게에 문의해 주세요.'; }
   if (/캐릭터|그림|저작권/.test(t)) return s.styles?.includes('character') ? '그림·캐릭터 케이크를 만들어요. 저작권이 있는 캐릭터는 사장님이 가능 여부를 확인해요.' : '이 가게 목록에는 그림·캐릭터 케이크가 없어요. 주문서에 요청하면 사장님이 확인해 드려요.';
-  if (/도시락|미니/.test(t)) return s.styles?.includes('dosirak') ? '도시락(미니) 케이크를 만들어요. 1~2인용으로 10cm 안팎이에요.' : '도시락 케이크 정보는 없어요.';
+  if (/도시락|미니|작은/.test(t)) return s.menu ? (s.menu.sizes?.mini != null ? `미니(10~12cm, 1~2인용)는 ${won(s.menu.sizes.mini)}부터예요.` : '미니 사이즈는 만들지 않아요.') : s.price?.mini ? `공개 정보로는 미니(10~12cm)가 ${range(s.price.mini[0], s.price.mini[1], true)}부터예요.` : '미니 사이즈 정보는 없어요. 가게에 확인해 주세요.';
   if (/떡|쌀|앙금/.test(t)) return s.styles?.includes('rice') ? '떡케이크(설기·앙금 장식)를 만들어요.' : '떡케이크 정보는 없어요.';
   if (/사진|포토/.test(t)) return s.styles?.includes('photo') ? '포토 케이크를 만들어요. 주문서에서 사진을 첨부하면 돼요.' : '포토 케이크 정보는 없어요. 요청사항에 적으면 사장님이 확인해요.';
   if (/보냉|포장|멀리/.test(t)) { const x = has(/보냉/); return x ? `가게 정보: ${x}` : s.menu?.extras?.icebag != null ? `보냉백은 ${won(s.menu.extras.icebag)}이에요.` : '30분 넘게 이동하면 보냉백을 요청해 보세요.'; }
@@ -76,9 +78,13 @@ export function heroBg(s) {
 
 export default function StoreDetail({ params }) {
   const st = useApp();
-  const stores = useMemo(() => getStores(st), [st.shop, st.found]); // eslint-disable-line react-hooks/exhaustive-deps
+  usePlaces();
+  const stores = getStores(st);
   const s = stores.find((x) => x.id === params.id);
   const [galIdx, setGalIdx] = useState(null);
+  const [gPhoto, setGPhoto] = useState(null);
+  // 구글 키가 있으면 실제 사진·별점을 받아 오고, 입점 가게면 최신 가격표를 받아 온다
+  useEffect(() => { if (s && st.settings.googleKey) enrich(st.settings.googleKey, s); if (s?.remote) refreshPartner(s.id); }, [params.id, st.settings.googleKey]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!s) return <div className="screen"><Header title="가게" fallback="/c" /><Empty icon="🔎">가게 정보를 찾을 수 없어요.</Empty></div>;
   const d = distKm(st.loc, s);
   const fav = st.favs.includes(s.id);
@@ -111,9 +117,10 @@ export default function StoreDetail({ params }) {
           </div>
         </div>
         <div className="shead">
-          <span className={`tag ${inApp ? 'dark' : s.level === 'detail' ? '' : 'mute'}`}>{inApp ? '⚡ ' : ''}{kindLabel(s)}</span>
+          <span className={`tag ${inApp ? 'dark' : s.verified ? 'ok' : s.level === 'detail' ? '' : 'mute'}`}>{inApp ? '⚡ ' : s.verified ? '✓ ' : ''}{kindLabel(s)}</span>
           <h2>{s.name}</h2>
-          <div className="small muted">{[s.gu, s.dong].filter(Boolean).join(' ')} · 여기서 {fmtKm(d)}{s.geo === 'area' ? ' (위치 대략)' : ''}</div>
+          <div className="small muted">{s.g?.rating ? <><b style={{ color: '#E0A400' }}>★ {s.g.rating.toFixed(1)}</b> 구글 리뷰 {s.g.n}개 · </> : null}{[s.gu, s.dong].filter(Boolean).join(' ')} · 여기서 {fmtKm(d)}{s.geo === 'area' ? ' (위치 대략)' : ''}</div>
+          {s.g?.closed && <div className="note warn" style={{ marginTop: 8 }}>구글 지도에는 ‘폐업’으로 표시돼 있어요. 방문 전에 꼭 확인해 주세요.</div>}
           <div className="tags" style={{ marginTop: 8 }}>
             {(s.styles || []).map((x) => <span key={x} className="tag">{styleName(x)}</span>)}
             {s.sameDay && <span className="tag warn">당일 가능</span>}
@@ -127,10 +134,18 @@ export default function StoreDetail({ params }) {
             <div>휴무<b>{closed.length ? closed.map((x) => DOW[x]).join('·') + '요일' : s.closed || (s.ops ? '없음' : '확인 필요')}</b></div>
           </div>
           {inApp && open && <div className="note ok" style={{ marginTop: 8 }}>가장 빠른 픽업: <b>{open.diff === 0 ? '오늘' : open.diff === 1 ? '내일' : `${open.diff}일 뒤`}</b> · 앱에서 바로 주문하면 사장님이 확인 후 확정해요</div>}
-          {!inApp && <div className="note" style={{ marginTop: 8 }}>아직 디어 케이크 입점 전인 가게예요. 주문서를 완성하면 <b>가게 카톡·인스타로 그대로 보낼 수 있게</b> 정리해 드려요.</div>}
+          {!inApp && <div className="note" style={{ marginTop: 8 }}>아직 디어 케이크 입점 전인 가게예요. 주문서를 완성하면 <b>가게 카톡·인스타로 그대로 보낼 수 있게</b> 정리해 드려요.{s.status && s.kind === 'public' ? <><br /><span className="xs">영업 상태: {s.verified ? '2025~2026년 영업 흔적 확인' : '공개 목록 기준 · 방문 전 확인 필요'}</span></> : null}</div>}
         </div>
 
         <div className="pad" style={{ paddingTop: 4 }}>
+          {s.g?.photos?.length > 0 && (<>
+            <div className="sec-t"><h3>가게 실제 사진</h3><span className="more">구글 지도 제공</span></div>
+            <div className="gal">{s.g.photos.map((p, i) => <button key={i} className="gi" onClick={() => setGPhoto(p)}><div className="im" style={{ aspectRatio: '1' }}><img src={p.src} alt="" referrerPolicy="no-referrer" /></div></button>)}</div>
+            {s.g.hours && <details className="small" style={{ marginTop: 8 }}><summary className="muted" style={{ cursor: 'pointer' }}>구글에 등록된 영업시간 보기</summary>{s.g.hours.map((h) => <div key={h} className="xs muted">{h}</div>)}</details>}
+          </>)}
+          {!s.g?.photos?.length && !s.portfolio?.some((p) => p.src) && (s.insta || !st.settings.googleKey) && (
+            <div className="card pad row" style={{ marginTop: 10 }}><span className="grow small"><b>실제 케이크 사진 보기</b><div className="xs muted">{s.insta ? '가게 인스타그램에서 작품 사진을 볼 수 있어요' : '구글 지도에서 가게 사진과 리뷰를 볼 수 있어요'}</div></span><a className="btn sm sec" href={s.insta ? links.insta : links.google} target="_blank" rel="noreferrer">{s.insta ? '인스타 열기' : '구글 지도'}</a></div>
+          )}
           <div className="sec-t"><h3>{s.portfolio?.some((p) => p.src) ? '이 가게 작품' : '이런 케이크를 만들어요'}</h3><span className="more">{gallery[0]?.gen ? '스타일 예시 그림' : `${gallery.length}개`}</span></div>
           <div className="gal">
             {gallery.map((g, i) => (
@@ -179,11 +194,11 @@ export default function StoreDetail({ params }) {
           <AskBox s={s} />
 
           <div className="sec-t"><h3>위치</h3><span className="more">{s.geo === 'exact' ? '' : '지도 위치는 대략이에요'}</span></div>
-          <div className="minimap"><MapView center={s} zoom={15} pins={[{ s, label: s.name }]} selected={s.id} interactive={false} kakaoKey={st.settings.kakaoKey} /></div>
+          <div className="minimap"><MapView center={s} zoom={16} pins={[{ s, name: s.name, price: '' }]} selected={s.id} interactive={false} googleKey={st.settings.googleKey} kakaoKey={st.settings.kakaoKey} /></div>
           <div className="small" style={{ marginTop: 8 }}>{s.addr}</div>
           <div className="linkrow">
             <a href={links.route} target="_blank" rel="noreferrer"><Icon n="map" />길찾기</a>
-            <a href={links.kakao} target="_blank" rel="noreferrer"><Icon n="search" />카카오맵</a>
+            <a href={links.google} target="_blank" rel="noreferrer"><Icon n="search" />구글 지도</a>
             {links.insta ? <a href={links.insta} target="_blank" rel="noreferrer"><Icon n="insta" />인스타</a> : <a href={links.naver} target="_blank" rel="noreferrer"><Icon n="search" />네이버지도</a>}
           </div>
 
@@ -205,6 +220,11 @@ export default function StoreDetail({ params }) {
         <div className="pp">{hp?.z.name} 기본<b>{hp ? range(hp.e.lo, hp.e.hi, true) : '-'}</b></div>
         <button className="btn pri grow" onClick={() => nav(`/order/${s.id}`)}><Icon n="edit" size="sm" /> 주문서 작성하기</button>
       </div>
+      {gPhoto && (
+        <div className="backdrop" style={{ display: 'grid', placeItems: 'center', padding: 16 }} onClick={() => setGPhoto(null)}>
+          <div style={{ width: '100%' }}><img src={gPhoto.src} alt="" referrerPolicy="no-referrer" style={{ width: '100%', borderRadius: 16, maxHeight: '70vh', objectFit: 'contain' }} /><div className="xs center" style={{ color: '#fff', marginTop: 8 }}>사진: 구글 지도{gPhoto.by ? ` · ${gPhoto.by}` : ''}</div></div>
+        </div>
+      )}
       {galIdx != null && (
         <div className="backdrop" style={{ display: 'grid', placeItems: 'center', padding: 20 }} onClick={() => setGalIdx(null)}>
           <div className="card" style={{ width: '100%', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>

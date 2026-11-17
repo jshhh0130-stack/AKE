@@ -1,0 +1,24 @@
+// 구글 지도 화면 점검 (키 없이 '개발용' 지도로 핀·선택·가게 상세 지도가 그려지는지만 확인)
+import { launch } from './shoot.mjs';
+const BASE = process.argv[2] || 'http://localhost:4173/';
+const KEY = process.argv[3] || 'dev';
+const browser = await launch();
+const page = await browser.newPage();
+await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+const errors = [];
+page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push('console: ' + m.text().slice(0, 200)); });
+page.on('pageerror', (e) => errors.push('page: ' + e.message));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+await page.goto(BASE, { waitUntil: 'networkidle2' });
+await page.evaluate((k) => { localStorage.clear(); localStorage.setItem('dearcake:v2', JSON.stringify({ role: 'customer', seenGuide: true, settings: { googleKey: k, claudeKey: '', kakaoKey: '' } })); }, KEY);
+await page.goto(BASE + '#/c', { waitUntil: 'networkidle2' }); await page.reload({ waitUntil: 'networkidle2' }); await sleep(6000);
+await page.screenshot({ path: 'tools/shots/g1-home.png' });
+const info = await page.evaluate(() => ({ gmap: !!document.querySelector('.gmap'), pins: document.querySelectorAll('.pin2').length, google: !!window.google?.maps }));
+console.log(JSON.stringify(info));
+await page.evaluate(() => document.querySelector('.pin2')?.click()); await sleep(900);
+await page.screenshot({ path: 'tools/shots/g2-selected.png' });
+await page.evaluate(() => { location.hash = '#/store/midori-cake'; }); await sleep(3500);
+await page.evaluate(() => { const h = [...document.querySelectorAll('.sec-t h3')].find((x) => x.innerText.includes('위치')); h?.scrollIntoView(); }); await sleep(800);
+await page.screenshot({ path: 'tools/shots/g3-store-map.png' });
+console.log(errors.length ? 'ERRORS:\n' + errors.slice(0, 8).join('\n') : 'no errors');
+await browser.close();

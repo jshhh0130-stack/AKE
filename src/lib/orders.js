@@ -1,10 +1,10 @@
-// 주문 만들기 · 상태 바꾸기 · 체험용 주문 데이터
+// 주문 = '일어난 일(이벤트)'의 기록. 손님·사장님이 하는 모든 동작(승인, 수정 제안, 시안, 채팅…)이 이벤트 하나로 쌓이고,
+// 같은 이벤트를 상대 폰에도 보내(lib/live.js) 양쪽 화면이 똑같이 바뀐다. 이벤트 목록이 곧 대화방이다.
 import { estimate, ruleCheck, verdictOf } from './price.js';
-import { setState, getState, pushHistory, updateOrder } from './state.js';
-import { orderNo, today, addDays, ymd, rng, pick, won } from './util.js';
+import { setState, getState } from './state.js';
+import { orderNo, today, addDays, ymd, rng, pick, won, fmtDate } from './util.js';
 import { canOrderInApp, shopToStore } from './stores.js';
-import { DEMO_SHOP } from '../data/demo.js';
-import { QUICK_TEXTS } from '../data/catalog.js';
+import { QUICK_TEXTS, sizeOf, designOf, creamOf, optName, TEXT_COLORS, FONTS } from '../data/catalog.js';
 
 export const STATUS = {
   requested: { name: '사장님 확인 중', tone: 'warn', step: 1 },
@@ -18,9 +18,91 @@ export const STATUS = {
   canceled: { name: '취소됨', tone: 'mute', step: 0 },
   external: { name: '가게에 직접 전달', tone: 'mute', step: 1 },
 };
-export const OWNER_NAME = { requested: '새 요청', change: '고객 답 기다림', confirmed: '확정', proof: '시안 확인 중', making: '제작 중', ready: '픽업 대기', done: '완료', declined: '거절', canceled: '취소', external: '-' };
+export const OWNER_NAME = { requested: '새 요청', change: '손님 답 기다림', confirmed: '확정', proof: '시안 확인 중', making: '제작 중', ready: '픽업 대기', done: '완료', declined: '거절', canceled: '취소' };
 export const ACTIVE = ['requested', 'change', 'confirmed', 'proof', 'making', 'ready'];
 export const SALES = ['confirmed', 'proof', 'making', 'ready', 'done'];
+const NEXT = { confirmed: 'making', making: 'ready', ready: 'done' };
+export const nextStatus = (s) => NEXT[s];
+export const NEXT_LABEL = { confirmed: '제작 시작', making: '픽업 준비 완료', ready: '픽업 완료' };
+
+const evId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+export const mkEvent = (t, by, payload = {}) => ({ id: evId(), t, by, at: new Date().toISOString(), ...payload });
+
+// 이벤트 하나를 주문에 반영 (같은 이벤트가 두 번 와도 한 번만)
+export function applyEvent(o, ev) {
+  if (!ev?.id || o.ev?.some((e) => e.id === ev.id)) return o;
+  const n = { ...o, ev: [...(o.ev || []), ev].sort((a, b) => a.at.localeCompare(b.at)) };
+  switch (ev.t) {
+    case 'auto': case 'approve': n.status = 'confirmed'; n.finalPrice = ev.price ?? n.est?.lo ?? null; n.proposedPrice = null; break;
+    case 'change': n.status = 'change'; n.proposedPrice = ev.price ?? null; break;
+    case 'decline': n.status = 'declined'; break;
+    case 'accept': n.status = 'confirmed'; n.finalPrice = n.proposedPrice ?? n.finalPrice ?? n.est?.lo ?? null; n.proposedPrice = null; break;
+    case 'revise': n.o = { ...n.o, ...(ev.patch || {}) }; if (ev.est) n.est = ev.est; n.prevPrice = n.finalPrice ?? n.prevPrice ?? null; n.finalPrice = null; n.status = 'requested'; break;
+    case 'proof': n.status = 'proof'; n.proofImg = ev.img || null; n.needProof = false; break;
+    case 'proofok': n.status = 'making'; break;
+    case 'prooffix': n.status = 'confirmed'; n.needProof = true; break;
+    case 'advance': if (ev.to) n.status = ev.to; break;
+    case 'paid': n.paid = !!ev.paid; break;
+    case 'cancel': n.status = 'canceled'; break;
+    case 'review': n.review = { stars: ev.stars, text: ev.text, at: ev.at }; break;
+    case 'img': n.imgs = { ...(n.imgs || {}), [ev.key]: ev.d }; n.ev = n.ev.filter((e) => e.id !== ev.id).concat([{ id: ev.id, t: 'img', by: ev.by, at: ev.at, key: ev.key }]).sort((a, b) => a.at.localeCompare(b.at)); break;
+    default: break; // request, msg
+  }
+  return n;
+}
+
+// 대화방에 보이는 글
+export function evText(ev, o) {
+  const p = (v) => (v != null ? won(v) : '');
+  switch (ev.t) {
+    case 'request': return o?.gift ? `🎁 ${o.gift.to}님께 보내는 선물 주문서를 보냈어요` : '주문 요청서를 보냈어요';
+    case 'auto': return `사장님이 정해 둔 규칙 안이라 바로 확정됐어요 · ${p(ev.price)}`;
+    case 'approve': return ev.msg || `주문을 확정했어요 · 최종 ${p(ev.price)}`;
+    case 'change': return `${ev.msg || '이렇게 바꾸면 가능해요.'}${ev.price != null ? ` (제안 금액 ${p(ev.price)})` : ''}`;
+    case 'decline': return ev.msg || '죄송해요, 이번 주문은 어려워요.';
+    case 'accept': return '수정 제안을 수락했어요. 이대로 확정해 주세요!';
+    case 'revise': return `주문 내용을 바꾸고 싶어요${ev.summary ? ` — ${ev.summary}` : ''}${ev.msg ? `\n${ev.msg}` : ''}`;
+    case 'proof': return ev.msg || '제작 전 시안이에요. 확인 부탁드려요!';
+    case 'proofok': return '시안 좋아요! 이대로 만들어 주세요 👍';
+    case 'prooffix': return `시안 수정 부탁드려요${ev.tags?.length ? ` — ${ev.tags.join(', ')}` : ''}${ev.msg ? `\n${ev.msg}` : ''}`;
+    case 'advance': return { making: '제작을 시작했어요', ready: '케이크가 준비됐어요! 픽업 시간에 맞춰 오세요', done: '픽업 완료 · 맛있게 드세요!' }[ev.to] || '';
+    case 'paid': return ev.paid ? '예약금 입금을 확인했어요. 고맙습니다!' : '입금 확인을 취소했어요';
+    case 'cancel': return '주문을 취소했어요';
+    case 'review': return `후기를 남겼어요 ${'★'.repeat(ev.stars || 5)}`;
+    case 'msg': return ev.text || '';
+    case 'img': return '';
+    default: return '';
+  }
+}
+export const isSystemish = (ev) => ['auto', 'advance', 'paid', 'request', 'cancel', 'review', 'accept', 'proofok'].includes(ev.t);
+const NOTI = { // 이벤트 → [알림 종류, 제목]
+  request: ['status', '새 주문 요청'], auto: ['status', '주문 자동 확정'], approve: ['status', '주문이 확정됐어요'], change: ['status', '사장님 수정 제안'], decline: ['status', '주문이 어렵대요'],
+  accept: ['status', '손님이 제안을 수락했어요'], revise: ['status', '손님이 주문 수정을 요청했어요'], proof: ['proof', '시안이 도착했어요'], proofok: ['proof', '손님이 시안을 승인했어요'], prooffix: ['proof', '손님이 시안 수정을 요청했어요'],
+  advance: ['status', '주문 진행 소식'], paid: ['status', '입금 확인'], cancel: ['status', '손님이 주문을 취소했어요'], review: ['status', '새 후기'], msg: ['chat', '새 메시지'], img: ['chat', '사진이 도착했어요'],
+};
+export const notiOf = (ev) => NOTI[ev.t] || ['status', '주문 소식'];
+
+// 이 기기에서 그 주문의 손님/사장님 역할을 맡고 있나?
+export const sideOf = (o, s = getState()) => ({ c: !!o.mine, o: !!s.shop && s.shop.id === o.storeId });
+export const unreadOf = (o, role) => Math.max(0, (o.ev || []).filter((e) => e.by !== role && e.t !== 'img').length - (o.seen?.[role] || 0));
+export const unreadTotal = (s, role) => s.orders.filter((o) => (role === 'c' ? o.mine : s.shop && o.storeId === s.shop.id)).reduce((a, o) => a + (unreadOf(o, role) > 0 ? 1 : 0), 0);
+export const markSeen = (id, role) => setState((s) => {
+  const o = s.orders.find((x) => x.id === id); if (!o) return s;
+  const cnt = (o.ev || []).filter((e) => e.by !== role && e.t !== 'img').length;
+  if ((o.seen?.[role] || 0) === cnt) return s;
+  return { ...s, orders: s.orders.map((x) => (x.id === id ? { ...x, seen: { ...(x.seen || {}), [role]: cnt } } : x)) };
+});
+
+// ── 동작 실행: 이 기기에 반영 → (다른 폰이 있으면) 전송 → 알림 ──
+let transport = null; // live.js 가 연결해 준다 (순환 참조 피하기)
+export const setTransport = (t) => { transport = t; };
+export function act(orderId, by, t, payload = {}) {
+  const ev = mkEvent(t, by, payload);
+  let order = null;
+  setState((s) => ({ ...s, orders: s.orders.map((o) => { if (o.id !== orderId) return o; order = applyEvent(o, ev); return order; }) }));
+  if (order) transport?.onLocalEvent(order, ev);
+  return ev;
+}
 
 export function createOrder(store, o, customer, gift = null) {
   const st = getState();
@@ -28,33 +110,32 @@ export function createOrder(store, o, customer, gift = null) {
   const checks = ruleCheck(store, o, { orders: st.orders });
   const v = verdictOf(checks);
   const inApp = canOrderInApp(store);
-  const now = new Date().toISOString();
   const auto = inApp && store.ops?.autoConfirm && v.ok && est.exact;
-  const order = {
-    id: orderNo(),
-    storeId: store.id,
-    storeName: store.name,
-    storeKind: store.kind,
-    createdAt: now,
-    status: inApp ? (auto ? 'confirmed' : 'requested') : 'external',
-    o: { ...o, refPhoto: undefined },
-    refThumb: o.refPhoto || null,
-    customer,
-    est,
-    checks,
-    finalPrice: auto ? est.lo : null,
-    history: [{ at: now, by: 'customer', type: 'request', msg: gift ? `🎁 ${gift.to}님께 보내는 선물 주문서를 보냈어요` : '주문 요청서를 보냈어요' }],
-    mine: true,
-    gift,
+  const { refPhoto, ...oo } = o;
+  let order = {
+    id: orderNo(), storeId: store.id, storeName: store.name, createdAt: new Date().toISOString(),
+    status: inApp ? 'requested' : 'external', o: oo, customer, gift, est, checks, finalPrice: null, ev: [], imgs: refPhoto ? { ref: refPhoto } : {}, mine: true, seen: {},
   };
-  if (auto) order.history.push({ at: now, by: 'system', type: 'auto', msg: `사장님이 정한 규칙 안이라 바로 확정됐어요 · ${won(est.lo)}` });
-  setState((s) => ({ ...s, orders: [order, ...s.orders], seen: { ...(s.seen || {}), [order.id]: order.history.length } }));
+  order = applyEvent(order, mkEvent('request', 'c'));
+  if (auto) order = applyEvent(order, { ...mkEvent('auto', 's', { price: est.lo }), at: new Date(Date.now() + 5).toISOString() });
+  order.seen = { c: order.ev.filter((e) => e.by !== 'c').length };
+  setState((s) => ({ ...s, orders: [order, ...s.orders] }));
+  transport?.onNewOrder(order, store);
   return order;
 }
 
-// 손님이 아직 확인하지 않은 새 소식(사장님 답장·상태 변화)이 있는 주문 수
-export const unseenCount = (s) => s.orders.filter((o) => o.mine && (o.history?.length || 0) > (s.seen?.[o.id] ?? o.history?.length ?? 0)).length;
-export const markSeen = (o) => setState((s) => ((s.seen?.[o.id] ?? 0) >= (o.history?.length || 0) ? s : { ...s, seen: { ...(s.seen || {}), [o.id]: o.history?.length || 0 } }));
+// 손님이 주문 내용을 고칠 때: 바뀐 점 요약
+export function diffSummary(before, patch) {
+  const out = [];
+  if (patch.text != null && patch.text !== before.text) out.push(`문구 “${patch.text}”`);
+  if (patch.cream && patch.cream !== before.cream) out.push(`크림 ${creamOf(patch.cream).name}`);
+  if (patch.textColor && patch.textColor !== before.textColor) out.push(`글씨 ${optName(TEXT_COLORS, patch.textColor)}`);
+  if (patch.font && patch.font !== before.font) out.push(`글씨체 ${optName(FONTS, patch.font)}`);
+  if (patch.size && patch.size !== before.size) out.push(`크기 ${sizeOf(patch.size).name}`);
+  if (patch.design && patch.design !== before.design) out.push(`디자인 ${designOf(patch.design).name}`);
+  if ((patch.date && patch.date !== before.date) || (patch.time && patch.time !== before.time)) out.push(`픽업 ${fmtDate(patch.date || before.date)} ${patch.time || before.time}`);
+  return out.join(', ');
+}
 
 // 엑셀(CSV) 내보내기
 export function ordersCSV(list) {
@@ -69,73 +150,56 @@ export function downloadText(name, text, type = 'text/csv;charset=utf-8') {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
-// 사장님 동작
-export const ownerApprove = (id, price, msg) => updateOrder(id, (o) => ({ status: 'confirmed', finalPrice: price, history: pushHistory(o, 'owner', 'approve', msg || `주문을 확정했어요 · 최종 ${won(price)}`) }));
-export const ownerChange = (id, price, msg) => updateOrder(id, (o) => ({ status: 'change', proposedPrice: price, history: pushHistory(o, 'owner', 'change', msg || `수정 제안 · ${won(price)}`) }));
-export const ownerDecline = (id, msg) => updateOrder(id, (o) => ({ status: 'declined', history: pushHistory(o, 'owner', 'decline', msg || '이번 주문은 어렵다고 답했어요') }));
-export const ownerProof = (id, photo, msg) => updateOrder(id, (o) => ({ status: 'proof', proofPhoto: photo || null, history: pushHistory(o, 'owner', 'proof', msg || '제작 전 시안을 보냈어요. 확인 부탁드려요!') }));
-const NEXT = { confirmed: 'making', proof: 'making', making: 'ready', ready: 'done' };
-const NEXT_MSG = { making: '제작을 시작했어요', ready: '케이크가 준비됐어요! 픽업 시간에 맞춰 오세요', done: '픽업 완료 · 맛있게 드세요!' };
-export const nextStatus = (s) => NEXT[s];
-export const ownerAdvance = (id) => updateOrder(id, (o) => { const n = NEXT[o.status]; return n ? { status: n, history: pushHistory(o, 'owner', n, NEXT_MSG[n]) } : {}; });
-export const ownerMarkPaid = (id, paid = true) => updateOrder(id, (o) => ({ paid, history: pushHistory(o, 'owner', 'paid', paid ? '예약금 입금을 확인했어요. 제작 준비할게요!' : '입금 확인을 취소했어요') }));
-// 손님 동작
-export const custAcceptChange = (id) => updateOrder(id, (o) => ({ status: 'confirmed', finalPrice: o.proposedPrice ?? o.finalPrice ?? o.est?.lo, history: pushHistory(o, 'customer', 'accept', '수정 제안을 수락했어요') }));
-export const custApproveProof = (id) => updateOrder(id, (o) => ({ status: 'making', history: pushHistory(o, 'customer', 'proof-ok', '시안을 확인하고 승인했어요') }));
-export const custCancel = (id) => updateOrder(id, (o) => ({ status: 'canceled', history: pushHistory(o, 'customer', 'cancel', '주문을 취소했어요') }));
-export const custReview = (id, stars, text) => updateOrder(id, () => ({ review: { stars, text, at: new Date().toISOString() } }));
-
-// 체험용 주문 (사장님 화면 시연)
+// 예시 주문 (사장님 화면을 둘러볼 때만 — '예시'라고 표시되고 언제든 지울 수 있다)
 const NAMES = ['김서연', '이도윤', '박지민', '최예린', '정하준', '강수아', '조민준', '윤채원', '장서준', '임지아', '한유진', '오시우', '서다은', '신현우', '권나윤', '배지호'];
-export function makeDemoOrders(shop = DEMO_SHOP) {
-  const store = shopToStore(shop, 'demo');
+export function makeSampleOrders(shop) {
+  const store = shopToStore(shop, 'partner');
+  const sizes = Object.entries(shop.menu.sizes).filter(([, p]) => p != null).map(([k]) => k);
   const r = rng(20261116);
   const t0 = today();
   const out = [];
   const mk = (dayOffset, status, opts = {}) => {
     let d = addDays(t0, dayOffset);
-    if (shop.ops.closedDays.includes(d.getDay())) d = addDays(d, dayOffset >= 0 ? 1 : -1); // 휴무일 피하기
+    if (shop.ops.closedDays.includes(d.getDay())) d = addDays(d, dayOffset >= 0 ? 1 : -1);
     const o = {
-      shape: pick(['round', 'round', 'heart', 'square'], r), size: pick(['dosirak', 'mini', 'h1', 'h1', 'h2', 'h3'], r),
+      shape: pick(['round', 'round', 'heart', 'square'], r), size: pick(sizes.length ? sizes : ['h1'], r),
       design: pick(['simple', 'vintage', 'heartdots', 'flower', 'character', 'photo', 'drip', 'simple'], r),
       cream: pick(['white', 'pink', 'lavender', 'butter', 'mint', 'sky', 'peach', 'cocoa'], r),
       flavor: pick(['vanilla', 'choco', 'strawberry', 'earlgrey', 'vanilla'], r), text: pick(QUICK_TEXTS, r), noText: false,
       font: pick(['jua', 'pen', 'gaegu', 'melody'], r), textColor: pick(['berry', 'choco', 'navy'], r),
       toppings: r() > 0.55 ? [pick(['cherry', 'pearl', 'sprinkle', 'ribbon', 'strawberry'], r)] : [], extras: r() > 0.5 ? ['candle'] : [],
-      date: ymd(d), time: pick(['12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'], r),
-      request: opts.request || '', allergy: '', ...opts.o,
+      date: ymd(d), time: pick(['12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'], r), request: opts.request || '', allergy: '', ...opts.o,
     };
     const est = estimate(store, o);
-    const created = addDays(d, -(2 + Math.floor(r() * 4)));
-    created.setHours(9 + Math.floor(r() * 12), Math.floor(r() * 60));
-    const name = pick(NAMES, r);
-    const order = {
+    const created = addDays(d, -(2 + Math.floor(r() * 4))); created.setHours(9 + Math.floor(r() * 12), Math.floor(r() * 60));
+    const at = (min) => new Date(created.getTime() + min * 60000).toISOString();
+    let order = {
       id: `DC-${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}-${1000 + Math.floor(r() * 9000)}`,
-      storeId: shop.id, storeName: shop.name, storeKind: 'demo', createdAt: created.toISOString(), status,
-      o, refThumb: null, customer: { name, phone: `010-0000-${String(1000 + Math.floor(r() * 9000))}` },
-      est, checks: ruleCheck(store, { ...o, date: null }, {}), finalPrice: ['requested', 'change', 'declined', 'canceled'].includes(status) ? null : est.lo + (r() > 0.8 ? 2000 : 0),
-      history: [{ at: created.toISOString(), by: 'customer', type: 'request', msg: '주문 요청서를 보냈어요' }], demo: true,
-      paid: ['making', 'ready', 'done'].includes(status) || (status === 'confirmed' && r() > 0.5),
+      storeId: shop.id, storeName: shop.name, createdAt: created.toISOString(), status: 'requested', o, customer: { name: pick(NAMES, r), phone: `010-0000-${String(1000 + Math.floor(r() * 9000))}` },
+      est, checks: [], finalPrice: null, ev: [], imgs: {}, sample: true, seen: {},
     };
-    if (status === 'change') order.proposedPrice = est.lo + 3000;
-    if (!['requested', 'canceled'].includes(status)) {
-      const auto = status !== 'change' && r() < 0.45;
-      const at = new Date(created.getTime() + (auto ? 1 : 8 + Math.floor(r() * 170)) * 60000).toISOString();
-      order.history.push(auto ? { at, by: 'system', type: 'auto', msg: '사장님이 정한 규칙 안이라 바로 확정됐어요' }
-        : status === 'change' ? { at, by: 'owner', type: 'change', msg: '캐릭터는 비슷한 느낌으로 바꿔 그려 드려요. 3,000원 추가돼요' }
-        : { at, by: 'owner', type: 'approve', msg: '주문 잘 받았어요! 미리보기 그대로 만들어 드릴게요 :)' });
+    const push = (t, by, min, payload) => { order = applyEvent(order, { id: order.id + t + min, t, by, at: at(min), ...payload }); };
+    push('request', 'c', 0);
+    const price = est.lo + (r() > 0.8 ? 2000 : 0);
+    if (status === 'change') push('change', 'o', 40, { price: est.lo + 3000, msg: '캐릭터는 비슷한 느낌으로 바꿔 그려 드려요. 3,000원이 추가돼요.' });
+    else if (status === 'canceled') push('cancel', 'c', 90);
+    else if (status !== 'requested') {
+      if (r() < 0.45) push('auto', 's', 1, { price }); else push('approve', 'o', 8 + Math.floor(r() * 170), { price, msg: '주문 잘 받았어요! 미리보기 그대로 만들어 드릴게요 :)' });
+      if (['making', 'ready', 'done'].includes(status) || r() > 0.5) push('paid', 'o', 300, { paid: true });
+      if (status === 'proof') push('proof', 'o', 400, { msg: '이런 느낌으로 그릴게요. 확인 부탁드려요!' });
+      if (['making', 'ready', 'done'].includes(status)) push('advance', 'o', 900, { to: 'making' });
+      if (['ready', 'done'].includes(status)) push('advance', 'o', 1500, { to: 'ready' });
+      if (status === 'done') { push('advance', 'o', 1700, { to: 'done' }); if (r() > 0.45) push('review', 'c', 2400, { stars: r() > 0.25 ? 5 : 4, text: pick(['미리보기랑 똑같이 나와서 놀랐어요!', '글씨가 너무 예뻐요', '가격을 미리 알 수 있어서 좋았어요', '사장님 답장이 빨라요', '친구가 엄청 좋아했어요'], r) }); }
     }
-    if (status === 'done' && r() > 0.45) order.review = { stars: r() > 0.25 ? 5 : 4, text: pick(['미리보기랑 똑같이 나와서 놀랐어요!', '글씨가 너무 예뻐요', '가격을 미리 알 수 있어서 좋았어요', '사장님 답장이 빨라요', '친구가 엄청 좋아했어요'], r), at: d.toISOString() };
+    order.seen = { o: order.ev.filter((e) => e.by !== 'o').length - (['requested'].includes(order.status) ? 1 : 0) };
     out.push(order);
   };
   for (let i = 0; i < 26; i++) mk(-1 - Math.floor(r() * 42), r() > 0.06 ? 'done' : 'canceled');
-  mk(0, 'ready'); mk(0, 'making'); mk(1, 'making');
-  mk(2, 'confirmed'); mk(3, 'proof', { o: { design: 'character' } }); mk(4, 'confirmed');
+  mk(0, 'ready'); mk(0, 'making'); mk(1, 'making'); mk(2, 'confirmed'); mk(3, 'proof', { o: { design: 'character' } }); mk(4, 'confirmed');
   mk(3, 'requested', { request: '글씨를 조금 크게 해 주세요' });
   mk(5, 'requested', { o: { design: 'character', text: '우리 강아지 생일' }, request: '강아지 사진 보내드릴게요, 비슷하게 그려 주세요' });
   mk(6, 'change');
   return out;
 }
-export function loadDemoShop() {
-  setState((s) => ({ ...s, role: 'owner', shop: JSON.parse(JSON.stringify(DEMO_SHOP)), orders: [...s.orders.filter((o) => !o.demo), ...makeDemoOrders()] }));
-}
+export const addSampleOrders = () => setState((s) => (s.shop ? { ...s, orders: [...s.orders.filter((o) => !o.sample), ...makeSampleOrders(s.shop)] } : s));
+export const removeSampleOrders = () => setState((s) => ({ ...s, orders: s.orders.filter((o) => !o.sample) }));

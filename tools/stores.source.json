@@ -1,103 +1,1617 @@
 {
-  "_about": "수원시 커스텀·레터링 케이크 가게 공개 정보 (2026-11 조사). level=detail 은 가격·운영 정보까지 출처에서 확인, level=listing 은 지역 목록 사이트 기준(영업 여부 확인 필요). 가격 배열은 [최소, 최대], 최대를 모르면 null. 전화번호는 일부러 넣지 않음.",
-  "stores": [
-    { "id": "ann-cakery", "name": "앤케이커리", "gu": "영통구", "dong": "이의동", "addr": "수원시 영통구 대학1로8번길 16-2", "road": "수원시 영통구 대학1로8번길 16-2",
-      "styles": ["lettering", "dosirak"], "price": { "dosirak": [20000, null], "mini": [33000, null], "h1": [43000, null] },
-      "priceNote": "도시락 20,000원~ · 미니 33,000원~ · 1호 43,000원(흰 배경 간단 레터링 기준, 디자인별 상이)",
-      "sameDay": null, "lead": null, "hours": null, "closed": "일요일", "insta": "ann.cakery", "kakao": null, "naver": false,
-      "note": "레터링 케이크, 머랭쿠키 답례품, 단체 주문", "level": "detail",
-      "src": ["https://daangn.com/kr/local-profile/%EC%95%A4%EC%BC%80%EC%9D%B4%EC%BB%A4%EB%A6%AC-v8rfnc63gcmd/"] },
-    { "id": "midori-cake", "name": "미도리케이크", "gu": "권선구", "dong": "세류동", "addr": "수원시 권선구 세권로 60 1층", "road": "수원시 권선구 세권로 60",
-      "styles": ["lettering", "dosirak"], "price": { "dosirak": [22000, null], "mini": [39000, null], "h1": [50000, null], "h2": [67000, null], "h3": [85000, null] },
-      "priceNote": "도시락(10cm) 22,000원 · 미니(12cm) 39,000원 · 1호 50,000원 · 2호 67,000원 · 3호 85,000원 (흰 바탕 레터링 기준, 옵션 추가금 별도 — 방문 후기 인용)",
-      "sameDay": true, "lead": "당일 제작 가능했다는 후기 있음", "hours": "11:00~18:00 (브레이크 14~16시, 후기마다 다름)", "closed": "월요일(확인 필요)", "insta": "midori_cake", "kakao": "미도리케이크", "naver": false,
-      "note": "24시간 무인 픽업 · 주차 어려움", "level": "detail",
-      "src": ["https://www.diningcode.com/profile.php?rid=hkNxk1IKuhEY"] },
-    { "id": "odor-cake", "name": "오도르케이크", "gu": "권선구", "dong": "구운동", "addr": "수원시 권선구 일월천로4번길 74 상가동 205호", "road": "수원시 권선구 일월천로4번길 74",
-      "styles": ["lettering", "dosirak", "3d", "tiered"], "price": { "dosirak": [15000, null], "mini": [26000, null], "h1": [38000, null], "h2": [45000, null] },
-      "priceNote": "도시락 15,000원+α · 미니 26,000원+α · 1호 38,000원+α · 2호 45,000원+α · 하트 +1,000원 · 사각 +1,500원 · 2단·피규어는 상담",
-      "addon": { "heart": 1000, "square": 1500 },
-      "sameDay": null, "lead": "사전 예약 필수 (3일 전 예약 후기)", "hours": "화~금 12~19시 · 토 10~19시 · 일 10~15시 (후기 기준)", "closed": "월요일", "insta": "odor_cake", "kakao": "odor cake", "naver": false,
-      "note": "무인 픽업 · 2단·피규어·티아라 케이크는 상담 후 가격", "level": "detail",
-      "src": ["https://www.diningcode.com/profile.php?rid=8OMMxQlWDtbL"] },
-    { "id": "holiday-cake", "name": "홀리데이케이크", "gu": "팔달구", "dong": "행궁동", "addr": "수원시 팔달구 정조로 848-1 1층 (블로그에는 정조로 872로도 표기)", "road": "수원시 팔달구 정조로 848-1",
-      "styles": ["lettering", "dosirak"], "price": { "dosirak": [21000, 28000], "h1": [45000, 55000], "h2": [60000, 65000] },
-      "priceNote": "도시락(미니 약 10cm) 2.1~2.8만원 · 1호 4.5~5.5만원 · 2호 6.0~6.5만원 (디자인별 상이)",
-      "sameDay": true, "lead": "당일 가능 케이크 따로 판매", "hours": "12:00~19:00", "closed": "월요일", "insta": null, "kakao": "카카오톡 주문서", "naver": false,
-      "note": "카페 안에서 30분 단위 픽업 · 주차 불가 · 보냉팩 유료", "level": "detail",
-      "src": ["https://www.diningcode.com/profile.php?rid=LJrjvLfciDal"] },
-    { "id": "chou-cake-house", "name": "슈케익하우스 수원본점", "gu": "팔달구", "dong": "매산로2가", "addr": "수원시 팔달구 향교로 36 1층 (수원역 근처)", "road": "수원시 팔달구 향교로 36",
-      "styles": ["lettering", "dosirak", "tiered", "character"], "price": { "dosirak": [18000, null], "mini": [25000, null], "h1": [35000, 43000], "tier": [65000, 120000] },
-      "priceNote": "도시락 레터링 18,000원~ · 미니 25,000원~ · 1호 35,000원~(주문제작 후기 43,000원) · 2단 65,000/85,000/120,000원 · 당일 랜덤 레터링 미니 20,000원·1호 27,000원",
-      "sameDay": true, "lead": "주문제작 레터링은 늦어도 3일 전(후기)", "hours": "08:00~22:30", "closed": "연중무휴", "insta": null, "kakao": null, "naver": true,
-      "note": "네이버 예약·톡톡 · 2단 케이크 딸기·동물성 크림은 추가금 · 전용 주차장 없음", "level": "detail",
-      "src": ["https://www.diningcode.com/profile.php?rid=LOAzxHUA20ev", "https://www.daangn.com/kr/local-profile/%EC%8A%88%EC%BC%80%EC%9D%B5%ED%95%98%EC%9A%B0%EC%8A%A4-%EC%88%98%EC%9B%90%EB%B3%B8%EC%A0%90-knsw7opo6327/"] },
-    { "id": "kkekko", "name": "께꼬 KKEKKO CAKE", "gu": "팔달구", "dong": "매산로2가", "addr": "수원시 팔달구 권선로 477 정문상가 2층 210호", "road": "수원시 팔달구 권선로 477",
-      "styles": ["lettering", "dosirak"], "price": { "dosirak": [33000, null], "h1": [60000, 69000] },
-      "priceNote": "미니 도시락 33,000원(2026 후기) · 1호 하프 디자인 6만 원대 · 홀케이크 커스텀 레터링 80,000원(2025 후기)",
-      "sameDay": null, "lead": "예약 필수", "hours": "상담 10~21시 · 픽업 13~19시", "closed": null, "insta": null, "kakao": "께꼬(kkekko)", "naver": false,
-      "note": "무인 픽업 · 미니 문구 10자 제한 · 보냉백은 주문 때 요청", "level": "detail",
-      "src": ["https://www.diningcode.com/profile.php?rid=yBMssFy290ul"] },
-    { "id": "sader-cake", "name": "세이더케이크", "gu": "팔달구", "dong": "우만동", "addr": "수원시 팔달구 중부대로223번길 20-7 1층", "road": "수원시 팔달구 중부대로223번길 20-7",
-      "styles": ["lettering", "dosirak"], "price": null,
-      "priceNote": "가격 미공개 (사이즈: 도시락 7~8cm · 미니 10~11cm · 2호 20~22cm)",
-      "sameDay": true, "lead": "도시락 케이크는 당일 선착순 판매", "hours": "11:00~20:00 (출처마다 다름)", "closed": null, "insta": null, "kakao": "카카오톡 문의", "naver": false,
-      "note": "24시간 무인 픽업 · 문구 최대 10자(후기)", "level": "detail",
-      "src": ["https://www.diningcode.com/profile.php?rid=JxUcC5A0lBkj"] },
-    { "id": "kcoodang", "name": "케이쿠당", "gu": "팔달구", "dong": "인계동", "addr": "수원시 팔달구 장다리로233번길 21 1층", "road": "수원시 팔달구 장다리로233번길 21",
-      "styles": ["rice", "custom"], "price": null, "priceNote": "가격 미공개 · 쌀 베이스 케이크 예약 제작",
-      "sameDay": null, "lead": "예약제", "hours": "10:00~20:00 (예약에 따라 변동)", "closed": null, "insta": "kcoodang_cake", "kakao": null, "naver": false,
-      "note": "쌀 디저트·케이크 예약 제작 공방", "level": "detail",
-      "src": ["https://daangn.com/kr/local-profile/%EC%BC%80%EC%9D%B4%EC%BF%A0%EB%8B%B9-gv9cf8j5bpxz/"] },
-    { "id": "pure-cake", "name": "퓨어케이크", "gu": "장안구", "dong": "정자동", "addr": "수원시 장안구 장안로89번길 10", "road": "수원시 장안구 장안로89번길 10",
-      "styles": ["lettering", "flower", "character"], "price": null, "priceNote": "가격 미공개",
-      "sameDay": null, "lead": null, "hours": "11:00~20:00", "closed": null, "insta": "pure.cake_", "kakao": "카카오톡 채널", "naver": false,
-      "note": "생화 디자인 케이크 · 레터링·그림 지정 케이크 · 케이크 느낌 꽃다발", "level": "detail",
-      "src": ["https://www.daangn.com/kr/local-profile/%ED%93%A8%EC%96%B4%EC%BC%80%EC%9D%B4%ED%81%AC-jz5rpbbn5qhp/"] },
-
-    { "id": "jdelling", "name": "제이델링 수원점", "gu": "영통구", "dong": "원천동", "addr": "수원시 영통구 원천동 616-3", "styles": ["lettering", "photo"], "hours": "매일 11:00~22:00", "note": "레터링·반전·포토·숫자 케이크", "level": "listing",
-      "src": ["https://www.diningcode.com/profile.php?rid=4CJmmaWGnQk2"] },
-    { "id": "again-cake", "name": "어게인케이크", "gu": "영통구", "dong": "원천동", "addr": "수원시 영통구 원천동 589 중흥S클래스 어뮤즈스퀘어 B2 191호", "styles": ["lettering"], "note": "주문제작·레터링", "level": "listing", "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"] },
-    { "id": "nina-cakery", "name": "니나케이커리", "gu": "영통구", "dong": "신동", "addr": "수원시 영통구 신동 938-1 1층", "styles": ["lettering"], "note": "주문제작·레터링", "level": "listing", "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"] },
-    { "id": "osarang", "name": "오사랑케이크", "gu": "영통구", "dong": "신동", "addr": "수원시 영통구 신동 920-5", "styles": ["flower"], "hours": "평일·토 11~20시 · 일 11~18시", "closed": "월요일", "note": "생크림·플라워 케이크", "level": "listing", "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"] },
-    { "id": "yone-cake", "name": "요네케이크", "gu": "영통구", "dong": "신동", "addr": "수원시 영통구 신동 338 117호", "styles": ["lettering"], "closed": "일요일", "note": "일부 요일 락커 픽업", "level": "listing", "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"] },
-    { "id": "bunny-cakery", "name": "버니케이커리", "gu": "영통구", "dong": "매탄동", "addr": "수원시 영통구 매탄동 1211 상가동 101호", "styles": ["lettering", "dosirak"], "note": "레터링·도시락 케이크", "level": "listing", "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"] },
-    { "id": "roenne-cake", "name": "로엔느케이크", "gu": "영통구", "dong": "망포동", "addr": "수원시 영통구 망포동 13-2 1층", "styles": ["flower", "rice"], "insta": "roenne_cake", "note": "앙금플라워 떡케이크(미니·1호·2호) · 숫자 케이크 · 클래스", "level": "listing", "src": ["https://www.threads.com/@roenne_cake"] },
-    { "id": "sorong-flower", "name": "소롱플라워케이크", "gu": "영통구", "dong": "망포동", "addr": "수원시 영통구 망포동 693", "styles": ["flower", "character"], "note": "플라워·캐릭터 케이크", "level": "listing", "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"] },
-    { "id": "rani-tteok", "name": "라니꽃떡", "gu": "영통구", "dong": "망포동", "addr": "수원시 영통구 망포동 488", "styles": ["rice", "flower"], "closed": "불규칙", "note": "꽃 떡케이크", "level": "listing", "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"] },
-    { "id": "guuum", "name": "구우움", "gu": "영통구", "dong": "이의동", "addr": "수원시 영통구 이의동 1258 A동 112호", "styles": ["dosirak"], "hours": "평일 11~20시 · 토 12~18시(격주)", "closed": "일요일", "note": "마카롱·도시락 케이크", "level": "listing", "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"] },
-    { "id": "lu-bake", "name": "루베이크", "gu": "영통구", "dong": "하동", "addr": "수원시 영통구 하동 987", "styles": ["lettering"], "hours": "10:00~20:00(예약 시간)", "note": "레터링·디저트", "level": "listing", "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"] },
-    { "id": "yourowncake", "name": "yourowncake", "gu": "영통구", "dong": "영통동", "addr": "수원시 영통구 영통동 (영통역 근처 2층, 상세 주소 확인 필요)", "styles": ["photo"], "note": "한입·포토 케이크", "level": "listing", "src": ["https://www.diningcode.com/profile.php?rid=8DxnqhpSB77d"] },
-    { "id": "rolly-polly", "name": "롤리앤폴리", "gu": "권선구", "dong": "금곡동", "addr": "수원시 권선구 금곡동 530", "styles": ["flower", "rice"], "note": "플라워·떡케이크", "level": "listing", "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"] },
-    { "id": "august-rabbit", "name": "8월의토끼", "gu": "권선구", "dong": "금곡동", "addr": "수원시 권선구 금곡동 1125-3 세종헤르메스오피스텔 105호", "styles": ["lettering"], "hours": "12:00~19:00", "closed": "월요일", "note": "레터링 케이크", "level": "listing", "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"] },
-    { "id": "saengil-party", "name": "생일파티 케이크", "gu": "권선구", "dong": "금곡동", "addr": "수원시 권선구 금곡로118번길 10 1층", "road": "수원시 권선구 금곡로118번길 10", "styles": ["lettering", "dosirak", "character", "flower"],
-      "price": null, "priceNote": "정형 케이크는 네이버 예약 상품가, 커스텀은 카톡 상담",
-      "sameDay": null, "lead": null, "hours": "11:30~20:00", "closed": "인스타 공지", "insta": "saengilpati", "kakao": "카카오톡 상담", "naver": true,
-      "note": "정형 디자인은 네이버 예약, 커스텀은 카톡 상담 (꽃다발 케이크·랜덤 캐릭터·도시락 등)", "level": "detail",
-      "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"] },
-    { "id": "hipd-cake", "name": "힙드케이크", "gu": "영통구", "dong": "매탄동", "addr": "수원시 영통구 중부대로 274 1층 (번지 재확인 필요)", "road": "수원시 영통구 중부대로 274", "styles": ["lettering", "dosirak"],
-      "price": null, "priceNote": "사이즈: 도시락 10~11cm · 미니 13~14cm · 1호 16~17cm · 2호 19~20cm. 추가금: 초코 시트 +3,000 · 하트 +3,000 · 겉크림 색 변경 2,000~5,000 · 속크림 맛 변경 +2,000~5,000 · 크림데코·스프링클 각 +1,000 · 색상 4가지 초과 1가지당 +500",
-      "addon": { "heart": 3000 },
-      "sameDay": null, "lead": null, "hours": "유인 픽업 11~19시 · 무인 픽업 24시간", "closed": null, "insta": null, "kakao": "카카오톡 채널", "naver": false,
-      "note": "카톡 자동응답으로 메뉴·가격 안내 후 주문서 양식 작성", "level": "detail",
-      "src": ["팀 리서치 리포트(2026.11.13 직접 주문 체험)"] },
-    { "id": "iroke", "name": "이로케", "gu": "권선구", "dong": "금곡동", "addr": "수원시 권선구 금곡동 1124 광일프라자 204호", "styles": ["custom"], "hours": "평일 11~19시 · 토 11~18시", "note": "수제 주문 케이크", "level": "listing", "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"] },
-    { "id": "ecru-cake", "name": "에크루케이크", "gu": "권선구", "dong": "호매실동", "addr": "수원시 권선구 호매실동 1342-4 1층 102호", "styles": ["photo"], "hours": "11:00~19:00", "closed": "인스타 공지", "note": "포토 케이크", "level": "listing", "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"] },
-    { "id": "verygood-dessert", "name": "베리굿디저트", "gu": "권선구", "dong": "호매실동", "addr": "수원시 권선구 호매실동 78-6 1층", "styles": ["custom"], "hours": "12:00~18:00", "closed": "일·월요일", "note": "주문제작 케이크(목록 사이트 기준)", "level": "listing", "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"] },
-    { "id": "eat-flower", "name": "잇트플라워", "gu": "권선구", "dong": "권선동", "addr": "수원시 권선구 권선동 1268-1", "styles": ["flower"], "closed": "공휴일", "note": "플라워 케이크·클래스", "level": "listing", "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"] },
-    { "id": "woozoo-cake", "name": "우주케이크", "gu": "권선구", "dong": "권선동", "addr": "수원시 권선구 권선동 999-19", "styles": ["custom"], "hours": "11:00~21:00", "closed": "일요일", "note": "마카롱·주문 케이크", "level": "listing", "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"] },
-    { "id": "briante", "name": "브리앙뜨과자점", "gu": "권선구", "dong": "세류동", "addr": "수원시 권선구 세류동 1089-19", "styles": ["custom"], "note": "빵집 · 주문 케이크", "level": "listing", "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"] },
-    { "id": "hallodani", "name": "할로다니", "gu": "팔달구", "dong": "우만동", "addr": "수원시 팔달구 우만동 552-3", "styles": ["lettering"], "note": "주문제작·레터링", "level": "listing", "src": ["http://soonwidot.co.kr/rank/list.php?id=25533"] },
-    { "id": "dazzling-cake", "name": "다즐링케이크", "gu": "팔달구", "dong": "영동", "addr": "수원시 팔달구 영동 8", "styles": ["lettering", "rice"], "note": "떡케이크·주문제작·레터링 (예약제)", "level": "listing", "src": ["http://soonwidot.co.kr/rank/list.php?id=25533"] },
-    { "id": "unar", "name": "우나르", "gu": "팔달구", "dong": "화서동", "addr": "수원시 팔달구 화서동 686-1", "styles": ["custom"], "note": "주문제작 · 빈티지·커스텀 디자인", "level": "listing", "src": ["http://soonwidot.co.kr/rank/list.php?id=25533"] },
-    { "id": "levely-cake", "name": "레벨리케이크", "gu": "팔달구", "dong": "인계동", "addr": "수원시 팔달구 인계동 1170 인계한양수자인 101동 110호", "styles": ["lettering"], "note": "주문제작·레터링 · 케이크 클래스", "level": "listing", "src": ["http://soonwidot.co.kr/rank/list.php?id=25533"] },
-    { "id": "cafe-onemore", "name": "카페원모어", "gu": "팔달구", "dong": "장안동", "addr": "수원시 팔달구 장안동 322-17", "styles": ["lettering"], "hours": "매일 12:00~21:00", "closed": "수요일·격주 목요일", "note": "카페 · 레터링 케이크", "level": "listing", "src": ["http://soonwidot.co.kr/rank/list.php?id=25533"] },
-    { "id": "yodel-cake", "name": "요를레이케이크", "gu": "팔달구", "dong": "인계동", "addr": "수원시 팔달구 인계동 1134-4 1층", "styles": ["lettering"], "hours": "월~금 12~19시 · 토 12~18시", "closed": "일요일", "note": "주문제작·레터링", "level": "listing", "src": ["http://soonwidot.co.kr/rank/list.php?id=25533"] },
-    { "id": "cakejip", "name": "케잌집", "gu": "팔달구", "dong": "인계동", "addr": "수원시 팔달구 인계동 1011-6 1층", "styles": ["lettering"], "hours": "매일 11~20시 (일 11~14시)", "closed": "인스타 공지", "note": "레터링·주문제작", "level": "listing", "src": ["http://soonwidot.co.kr/rank/list.php?id=25533"] },
-    { "id": "jeonssaem-cake", "name": "달달한전쌤cake", "gu": "장안구", "dong": "조원동", "addr": "수원시 장안구 조원동 757-1", "styles": ["lettering"], "hours": "월~토 10~19시", "closed": "일요일", "note": "수제케이크·주문제작·레터링", "level": "listing", "src": ["http://soonwidot.co.kr/rank/list.php?id=25533"] },
-    { "id": "smile-cake", "name": "스마일케이크", "gu": "장안구", "dong": "조원동", "addr": "수원시 장안구 조원1동 729-18", "styles": ["lettering", "rice"], "note": "떡·수제케이크·주문제작·레터링", "level": "listing", "src": ["http://soonwidot.co.kr/rank/list.php?id=25533"] },
-    { "id": "sweety-memory", "name": "스위티메모리", "gu": "장안구", "dong": "율전동", "addr": "수원시 장안구 화산로233번길 12 1층 (성균관대 근처)", "road": "수원시 장안구 화산로233번길 12", "styles": ["lettering"], "note": "레터링 케이크", "level": "listing", "src": ["https://www.diningcode.com/profile.php?rid=fZvwY7UY8ufG"] },
-    { "id": "ludia-cake", "name": "루디아케이크", "gu": "장안구", "dong": "정자동", "addr": "수원시 장안구 정자동 백설마을 동양성지아파트 상가 (상세 주소 확인 필요)", "styles": ["lettering"], "hours": "10:00~19:00", "note": "레터링 케이크", "level": "listing", "src": ["https://www.diningcode.com/profile.php?rid=exczSeOotXeF"] },
-    { "id": "cakey-ingye", "name": "케이키케이키 인계점", "gu": "팔달구", "dong": "인계동", "addr": "수원시 팔달구 효원로249번길 46-12 1층 101호", "road": "수원시 팔달구 효원로249번길 46-12", "styles": ["lettering"], "note": "티아라·크림치즈·생크림 케이크 · 주문제작", "level": "listing", "src": ["https://www.diningcode.com/profile.php?rid=aIApNGQNfk7m"] }
-  ]
+ "_about": "수원시 커스텀 케이크 전문점 공개 정보 (2026-11-17 재조사). verified=true 는 2025~2026 영업 흔적 확인, level=detail 은 가격 또는 영업 확인, listing 은 지역 목록 기준(확인 필요). 가격 [최소, 최대]. 전화번호는 넣지 않음.",
+ "stores": [
+  {
+   "id": "ann-cakery",
+   "name": "앤케이커리",
+   "gu": "영통구",
+   "dong": "이의동",
+   "addr": "수원시 영통구 대학1로8번길 16-2",
+   "road": "수원시 영통구 대학1로8번길 16-2",
+   "styles": [
+    "lettering"
+   ],
+   "price": {
+    "mini": [
+     33000,
+     null
+    ],
+    "h1": [
+     43000,
+     null
+    ]
+   },
+   "priceNote": "도시락케이크 20,000원~(1인용 10cm, 바닐라or쿠앤크크림 선택) · 미니 33,000원~ · 1호 43,000원 (흰배경에 간단한레터링만 기본금액시며 디자인에 따라 가격이 달라집니다)",
+   "priceDate": null,
+   "addons": null,
+   "sameDay": null,
+   "lead": null,
+   "hours": null,
+   "closed": "일요일",
+   "insta": "ann.cakery",
+   "kakao": null,
+   "naver": false,
+   "note": "레터링 위주 주문제작, 머랭쿠키 답례품도 판매",
+   "level": "detail",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "당근 비즈프로필 검색요약에서 가격·후기 확인(게시 날짜는 못 봄). 프로필 직접 열기는 403.",
+   "src": [
+    "https://daangn.com/kr/local-profile/%EC%95%A4%EC%BC%80%EC%9D%B4%EC%BB%A4%EB%A6%AC-v8rfnc63gcmd/"
+   ]
+  },
+  {
+   "id": "jdelling",
+   "name": "제이델링 수원점",
+   "gu": "영통구",
+   "dong": "원천동",
+   "addr": "수원시 영통구 월드컵로97번길 34 (원천동 616-3)",
+   "road": "수원시 영통구 월드컵로97번길 34",
+   "styles": [
+    "lettering",
+    "photo",
+    "3d"
+   ],
+   "price": null,
+   "priceNote": "페이지 표기: 포토케이크 40,000원 · 숫자케이크 54,000원 · 반전케이크(용돈) 60,000원 · 풍선케이크 60,000원 · 볼링공케이크 55,000원. 블로그: 딸기폭탄 1호 43,000/2호 53,000, 반전케이크 2호 65,000. 레터링케이크는 가격 '변동' 표기. (1호·2호 값은 레터링이 아닌 딸기폭탄 시그니처 기준이라 레터링 기본가로 쓰면 안 됨)",
+   "priceDate": "2025",
+   "addons": null,
+   "sameDay": null,
+   "lead": null,
+   "hours": "매일 11:00~22:00",
+   "closed": null,
+   "insta": null,
+   "kakao": "카카오톡 채널(예약)",
+   "naver": false,
+   "note": "레터링·반전(용돈)·숫자·포토·풍선 케이크, 무인 픽업, 과일 시그니처가 강점",
+   "level": "detail",
+   "verified": true,
+   "status": "운영중 확인",
+   "statusEvidence": "다이닝코드 프로필(2026-11-17 열람)에 영업 중 표시, 리뷰 2025-08-04 외 블로그 후기 8~10월(연도 미표시)",
+   "src": [
+    "https://www.diningcode.com/profile.php?rid=4CJmmaWGnQk2"
+   ]
+  },
+  {
+   "id": "yourowncake",
+   "name": "yourowncake",
+   "gu": "영통구",
+   "dong": "영통동",
+   "addr": "수원시 영통구 반달로35번길 30 2층 223호 (영통동 1012-1)",
+   "road": "수원시 영통구 반달로35번길 30",
+   "styles": [
+    "lettering",
+    "photo",
+    "flower",
+    "character"
+   ],
+   "price": {
+    "mini": [
+     32000,
+     null
+    ]
+   },
+   "priceNote": "블로그 후기 기준: 미니 12cm 기본 32,000원(디자인 추가 후 41,000원) · 두입케이크 33,000원 · 한입케이크 강아지 디자인 20,000원(디자인 추가 3,000원 포함). 페이지 자체에는 가격 없음",
+   "priceDate": null,
+   "addons": [
+    "디자인 추가 3,000원(한입 케이크 후기), 미니 케이크 디자인 추가 약 9,000원(32,000→41,000, 후기)"
+   ],
+   "sameDay": true,
+   "lead": "금요일 당일 케이크 있음(후기)",
+   "hours": "수 12:00~19:00 · 목 12:00~19:00 · 금 11:00~20:00 · 토 11:00~16:30 (게시 주간 기준)",
+   "closed": "일·월요일",
+   "insta": "your_own_cake",
+   "kakao": "유어오운케이크(pf.kakao.com/_sxhefG)",
+   "naver": false,
+   "note": "도시락·미니·1·2호, 포토·생화·롤케이크, 카톡 주문서, 무인픽업, 귀여운 디자인 케이크",
+   "level": "detail",
+   "verified": true,
+   "status": "운영중 확인",
+   "statusEvidence": "다이닝코드 프로필(2026-11-17 열람) 영업 중, 블로그 후기 2~3월·7월·8월 29일(연도 미표시) 및 다음 주 영업시간 게시",
+   "src": [
+    "https://www.diningcode.com/profile.php?rid=8DxnqhpSB77d"
+   ]
+  },
+  {
+   "id": "again-cake",
+   "name": "어게인케이크",
+   "gu": "영통구",
+   "dong": "원천동",
+   "addr": "수원시 영통구 원천동 589 중흥S클래스 어뮤즈스퀘어 B2 191호",
+   "styles": [
+    "lettering"
+   ],
+   "price": null,
+   "priceNote": null,
+   "priceDate": null,
+   "addons": null,
+   "sameDay": null,
+   "lead": null,
+   "hours": "평일 12:00~(종료시각 표기 불명확) · 토 12:00~",
+   "closed": null,
+   "insta": null,
+   "kakao": null,
+   "naver": false,
+   "note": "주문제작·레터링(목록 설명)",
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "순위닷 목록에 시간 표기(평일 12시~, 토 12시~)가 있으나 날짜 불명, 검색으로 별도 근거 못 찾음",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ]
+  },
+  {
+   "id": "nina-cakery",
+   "name": "니나케이커리",
+   "gu": "영통구",
+   "dong": "신동",
+   "addr": "수원시 영통구 신동 938-1 1층",
+   "styles": [
+    "lettering"
+   ],
+   "price": null,
+   "priceNote": null,
+   "priceDate": null,
+   "addons": null,
+   "sameDay": null,
+   "lead": null,
+   "hours": "평일 11:00~, 토 11:00~ (종료시각 표기 깨짐)",
+   "closed": null,
+   "insta": null,
+   "kakao": null,
+   "naver": false,
+   "note": "주문제작·레터링(목록 설명)",
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "순위닷 목록 등재만 확인(날짜 불명)",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ]
+  },
+  {
+   "id": "osarang",
+   "name": "오사랑케이크",
+   "gu": "영통구",
+   "dong": "신동",
+   "addr": "수원시 영통구 신동 920-5",
+   "styles": [
+    "flower"
+   ],
+   "price": null,
+   "priceNote": null,
+   "priceDate": null,
+   "addons": null,
+   "sameDay": null,
+   "lead": null,
+   "hours": "평일·토 11:00~20:00 · 일 11:00~18:00",
+   "closed": "월요일",
+   "insta": null,
+   "kakao": null,
+   "naver": false,
+   "note": "생크림·플라워 케이크(주력이 주문제작인지 미확인)",
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "순위닷 목록 등재만 확인(날짜 불명)",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ]
+  },
+  {
+   "id": "yone-cake",
+   "name": "요네케이크",
+   "gu": "영통구",
+   "dong": "신동",
+   "addr": "수원시 영통구 신동 338 117호",
+   "styles": [
+    "lettering"
+   ],
+   "price": null,
+   "priceNote": null,
+   "priceDate": null,
+   "addons": null,
+   "sameDay": null,
+   "lead": null,
+   "hours": "화~금 10:30~17:00 · 토 10:30~14:00 · 월 10:30~14:00(예약케이크 휴무 표기) · 평일 17시 이후/토 14시 이후 사물함 픽업",
+   "closed": "일요일",
+   "insta": null,
+   "kakao": null,
+   "naver": false,
+   "note": "사물함(락커) 픽업 운영, 레터링(기존 데이터)",
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "순위닷 목록 등재만 확인(날짜 불명)",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ]
+  },
+  {
+   "id": "bunny-cakery",
+   "name": "버니케이커리",
+   "gu": "영통구",
+   "dong": "매탄동",
+   "addr": "수원시 영통구 매탄동 1211 상가동 101호",
+   "styles": [
+    "lettering"
+   ],
+   "price": null,
+   "priceNote": null,
+   "priceDate": null,
+   "addons": null,
+   "sameDay": null,
+   "lead": null,
+   "hours": null,
+   "closed": null,
+   "insta": null,
+   "kakao": null,
+   "naver": false,
+   "note": "레터링·도시락 케이크(기존 데이터, 미확인)",
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "순위닷 목록 등재만 확인, 웹검색에서는 아무것도 안 나옴",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ]
+  },
+  {
+   "id": "roenne-cake",
+   "name": "로엔느케이크",
+   "gu": "영통구",
+   "dong": "망포동",
+   "addr": "수원시 영통구 망포동 13-2 1층",
+   "styles": [
+    "flower",
+    "rice"
+   ],
+   "price": null,
+   "priceNote": null,
+   "priceDate": null,
+   "addons": null,
+   "sameDay": null,
+   "lead": null,
+   "hours": null,
+   "closed": null,
+   "insta": "roenne_cake",
+   "kakao": null,
+   "naver": false,
+   "note": "앙금플라워 떡케이크·숫자케이크(환갑·칠순·생일), 클래스",
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "Threads 계정(로엔느 케이크_2015)이 앙금플라워 숫자케이크 소개, 게시일은 못 봄",
+   "src": [
+    "https://www.threads.com/@roenne_cake"
+   ]
+  },
+  {
+   "id": "sorong-flower",
+   "name": "소롱플라워케이크",
+   "gu": "영통구",
+   "dong": "망포동",
+   "addr": "수원시 영통구 망포동 693",
+   "styles": [
+    "flower",
+    "character"
+   ],
+   "price": null,
+   "priceNote": null,
+   "priceDate": null,
+   "addons": null,
+   "sameDay": null,
+   "lead": null,
+   "hours": "월 12:00~19:00 · 화·수 10:00~16:00 · 목 10:00~19:00 · 금 10:00~20:00 · 토·일 10:00~12:00(목록 표기, 불규칙)",
+   "closed": null,
+   "insta": null,
+   "kakao": null,
+   "naver": false,
+   "note": "플라워 케이크 전문(목록 설명)",
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "순위닷 목록 등재만 확인",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ]
+  },
+  {
+   "id": "rani-tteok",
+   "name": "라니꽃떡",
+   "gu": "영통구",
+   "dong": "망포동",
+   "addr": "수원시 영통구 망포동 488",
+   "styles": [
+    "rice",
+    "flower"
+   ],
+   "price": null,
+   "priceNote": null,
+   "priceDate": null,
+   "addons": null,
+   "sameDay": null,
+   "lead": null,
+   "hours": null,
+   "closed": "유동적(불규칙)",
+   "insta": null,
+   "kakao": null,
+   "naver": false,
+   "note": "꽃 떡케이크",
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "순위닷 목록 등재만 확인(영업시간 00~24시 표기는 신뢰 어려움)",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ]
+  },
+  {
+   "id": "hipd-cake",
+   "name": "힙드케이크",
+   "gu": "영통구",
+   "dong": "매탄동",
+   "addr": "수원시 영통구 중부대로 274 1층 (번지 재확인 필요)",
+   "road": "수원시 영통구 중부대로 274",
+   "styles": [
+    "lettering"
+   ],
+   "price": null,
+   "priceNote": "사이즈: 도시락 10~11cm · 미니 13~14cm · 1호 16~17cm · 2호 19~20cm (기존 데이터 인용, 기본가 숫자 없음)",
+   "priceDate": "2026-11-13",
+   "addon": {
+    "heart": 3000
+   },
+   "addons": [
+    "초코 시트 +3,000",
+    "하트 +3,000",
+    "겉크림 색 변경 2,000~5,000",
+    "속크림 맛 변경 +2,000~5,000",
+    "크림데코·스프링클 각 +1,000",
+    "색상 4가지 초과 1가지당 +500"
+   ],
+   "sameDay": null,
+   "lead": null,
+   "hours": "유인 픽업 11~19시 · 무인 픽업 24시간",
+   "closed": null,
+   "insta": null,
+   "kakao": "카카오톡 채널",
+   "naver": false,
+   "note": "카톡 자동응답으로 메뉴·가격 안내 후 주문서 작성",
+   "level": "detail",
+   "verified": true,
+   "status": "운영중 확인",
+   "statusEvidence": "팀 리서치 리포트: 2026-11-13 직접 주문 체험(이번 조사에서 웹으로는 못 찾음)",
+   "src": [
+    "팀 리서치 리포트(2026.11.13 직접 주문 체험)"
+   ]
+  },
+  {
+   "id": "midori-cake",
+   "name": "미도리케이크",
+   "gu": "권선구",
+   "dong": "세류동",
+   "addr": "수원시 권선구 세권로 60 1층",
+   "road": "수원시 권선구 세권로 60",
+   "styles": [
+    "lettering",
+    "photo"
+   ],
+   "price": {
+    "mini": [
+     22000,
+     39000
+    ],
+    "h1": [
+     50000,
+     null
+    ],
+    "h2": [
+     67000,
+     null
+    ],
+    "h3": [
+     85000,
+     null
+    ]
+   },
+   "priceNote": "도시락(10cm) 22,000원 · 미니(12cm) 39,000원 · 1호 50,000원 · 2호 67,000원 · 3호 85,000원 (흰 바탕 레터링 기준; 다이닝코드: \"레터링케이크 변동 제작 원하시는 디자인 문의 주시면 상담 후 주문 제작\", 초코 시트·하트 모양 변경 등 옵션 추가)",
+   "priceDate": null,
+   "addons": null,
+   "sameDay": true,
+   "lead": "당일 제작 가능했다는 후기 있음",
+   "hours": "11:00~18:00",
+   "closed": "월요일(확인 필요)",
+   "insta": "midori_cake",
+   "kakao": "미도리케이크",
+   "naver": false,
+   "note": "레터링·포토 케이크 상담 후 주문제작, 24시간 무인 픽업",
+   "level": "detail",
+   "verified": true,
+   "status": "운영중 확인",
+   "statusEvidence": "다이닝코드 프로필에 영업시간 \"10.02 (금) 11:00-18:00\" 표기(10/2 금요일=2026년, 2026-11-17 조회). 주문은 카카오톡만 받는다는 후기",
+   "src": [
+    "https://www.diningcode.com/profile.php?rid=hkNxk1IKuhEY"
+   ]
+  },
+  {
+   "id": "odor-cake",
+   "name": "오도르케이크",
+   "gu": "권선구",
+   "dong": "구운동",
+   "addr": "수원시 권선구 일월천로4번길 74 성원아파트 상가동 205호",
+   "road": "수원시 권선구 일월천로4번길 74",
+   "styles": [
+    "lettering",
+    "3d",
+    "tiered"
+   ],
+   "price": {
+    "mini": [
+     15000,
+     26000
+    ],
+    "h1": [
+     38000,
+     null
+    ],
+    "h2": [
+     45000,
+     null
+    ]
+   },
+   "priceNote": "도시락 15,000원+α · 미니 26,000원+α · 1호 38,000원+α · 2호 45,000원+α · 하트 +1,000원 · 사각 +1,500원 · 2단·피규어는 상담",
+   "priceDate": null,
+   "addon": {
+    "heart": 1000,
+    "square": 1500
+   },
+   "addons": {
+    "heart": 1000,
+    "square": 1500
+   },
+   "sameDay": null,
+   "lead": "사전 예약 필수 (레터링은 2~3일 전 주문 후기)",
+   "hours": "화~금 12~19시 · 토 10~19시 · 일 10~15시",
+   "closed": "월요일",
+   "insta": "odor_cake",
+   "kakao": "odor cake",
+   "naver": false,
+   "note": "무인 픽업, 2단·피규어·티아라 케이크는 상담 후 가격",
+   "level": "detail",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "다이닝코드·triple 등에서 동일 주소 확인, 그러나 증거 날짜 불명(2025~2026 확인 못함)",
+   "src": [
+    "https://www.diningcode.com/profile.php?rid=8OMMxQlWDtbL",
+    "https://triple.guide/restaurants/cb91e6cb-2e62-451e-a7b5-eb3cdec94337"
+   ]
+  },
+  {
+   "id": "saengil-party",
+   "name": "생일파티 케이크",
+   "gu": "권선구",
+   "dong": "금곡동",
+   "addr": "수원시 권선구 금곡로118번길 10 1층",
+   "road": "수원시 권선구 금곡로118번길 10",
+   "styles": [
+    "lettering",
+    "character",
+    "flower"
+   ],
+   "price": null,
+   "priceNote": "정형 케이크는 네이버 예약 상품가, 커스텀은 카톡 상담 (가격 직접 확인 못함)",
+   "priceDate": null,
+   "addons": null,
+   "sameDay": null,
+   "lead": null,
+   "hours": "11:30~20:00",
+   "closed": "인스타 공지",
+   "insta": "saengilpati",
+   "kakao": "카카오톡 상담",
+   "naver": true,
+   "note": "정형 디자인은 네이버 예약, 커스텀은 카톡 상담",
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "당근 프로필 존재, 영업시간 11:30~20:00 및 선착순 30분 단위 예약제 문구 확인(날짜 불명)",
+   "src": [
+    "https://www.daangn.com/kr/local-profile/",
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ]
+  },
+  {
+   "id": "iroke",
+   "name": "이로케",
+   "gu": "권선구",
+   "dong": "호매실동",
+   "addr": "수원시 권선구 노림로 19 효원빌딩 1층",
+   "road": "수원시 권선구 노림로 19",
+   "styles": [
+    "lettering"
+   ],
+   "price": {
+    "mini": [
+     29000,
+     null
+    ]
+   },
+   "priceNote": "후기: \"내가 주문한 디자인의 도시락케이크 29,000원\"; 사이즈별 가격은 카카오톡 채널 안내, 디자인 추가금 제법 붙음",
+   "priceDate": null,
+   "addons": null,
+   "sameDay": null,
+   "lead": null,
+   "hours": "평일 11~19시 · 토 11~18시",
+   "closed": "월요일",
+   "insta": null,
+   "kakao": null,
+   "naver": false,
+   "note": "호매실 마카롱·레터링케이크, 소금빵도 판매(레터링 전문 여부 확인 필요)",
+   "level": "detail",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "다이닝코드 프로필(호매실 레터링케이크, 월요일 휴무) 후기 다수, 날짜 불명",
+   "src": [
+    "https://www.diningcode.com/profile.php?rid=VwGKVwvlEfxv",
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ]
+  },
+  {
+   "id": "rmrbywh",
+   "name": "라라네케이크",
+   "gu": "권선구",
+   "dong": "호매실동",
+   "addr": "수원시 권선구 호매실동 (정확 주소 미확인; 인스타 소개 \"호매실 레터링케이크\")",
+   "styles": [
+    "lettering"
+   ],
+   "price": null,
+   "priceNote": "가격은 네이버 예약 페이지에서 확인 필요(미확인)",
+   "priceDate": null,
+   "addons": null,
+   "sameDay": true,
+   "lead": "네이버 예약 메뉴 한정 당일 가능",
+   "hours": null,
+   "closed": null,
+   "insta": "raranecake",
+   "kakao": "라라네케이크(수제케이크 전문점)",
+   "naver": true,
+   "note": "수제 레터링·골드바·곰마들렌 케이크, 네이버 예약+카톡 상담",
+   "level": "detail",
+   "verified": true,
+   "status": "운영중 확인",
+   "statusEvidence": "linktr에 네이버 예약 링크(timestamp 2026-01-28, 당일 주문 가능) 및 레터링/골드바/곰마들렌 케이크 주문서 운영 확인",
+   "src": [
+    "https://linktr.ee/raranecake"
+   ]
+  },
+  {
+   "id": "r16x117g",
+   "name": "디어뭉케이크",
+   "gu": "권선구",
+   "dong": "권선동",
+   "addr": "수원시 권선구 세권로166번길 9-19 1층",
+   "road": "수원시 권선구 세권로166번길 9-19",
+   "styles": [
+    "lettering"
+   ],
+   "price": null,
+   "priceNote": "가격 직접 확인 못함",
+   "priceDate": null,
+   "addons": null,
+   "sameDay": null,
+   "lead": null,
+   "hours": "화~일 12:00~19:00 (2025 블로그)",
+   "closed": null,
+   "insta": "dearmung_cake",
+   "kakao": null,
+   "naver": true,
+   "note": "1인 운영 주문제작 레터링케이크, 네이버 예약",
+   "level": "detail",
+   "verified": true,
+   "status": "운영중 확인",
+   "statusEvidence": "네이버 블로그 후기 2025-05-26(주문제작 후기), 쓰레드 계정 활동, 다이닝코드 수원 레터링케이크 목록 등재",
+   "src": [
+    "https://www.keyzard.cc/eun1197/nb/223872500858",
+    "https://www.threads.com/@dearmung_cake"
+   ]
+  },
+  {
+   "id": "r1o5jimn",
+   "name": "자두케이크",
+   "gu": "권선구",
+   "dong": "권선동",
+   "addr": "수원시 권선구 권선동 1194-10",
+   "styles": [
+    "lettering"
+   ],
+   "price": {
+    "mini": [
+     17000,
+     null
+    ]
+   },
+   "priceNote": "후기: \"도시락케이크 기본디자인 17,000원, 주문 총액 28,000원\"; 레터링 가격 \"변동\"",
+   "priceDate": null,
+   "addons": null,
+   "sameDay": null,
+   "lead": null,
+   "hours": null,
+   "closed": null,
+   "insta": null,
+   "kakao": "자두케이크",
+   "naver": false,
+   "note": "도시락·레터링 케이크, 카카오채널 주문",
+   "level": "detail",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "다이닝코드 프로필 존재(레터링 가격 변동 표기), 카카오채널 존재, 날짜 불명",
+   "src": [
+    "https://www.diningcode.com/profile.php?rid=P5abvwFxfZpY",
+    "https://pf.kakao.com/_qMLtxj"
+   ]
+  },
+  {
+   "id": "ruwd6uo",
+   "name": "케이크닷",
+   "gu": "권선구",
+   "dong": "호매실동",
+   "addr": "수원시 권선구 칠보로125번길 16 한스빌리지-D",
+   "road": "수원시 권선구 칠보로125번길 16",
+   "styles": [
+    "lettering"
+   ],
+   "price": null,
+   "priceNote": "가격 확인 못함",
+   "priceDate": null,
+   "addons": null,
+   "sameDay": null,
+   "lead": null,
+   "hours": null,
+   "closed": null,
+   "insta": null,
+   "kakao": "케이크닷",
+   "naver": false,
+   "note": "주문제작 레터링케이크, 카카오채널 문의",
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "당근 프로필에서 주문제작 레터링케이크 샵, 카카오채널로만 문의 안내(날짜 불명)",
+   "src": [
+    "https://www.daangn.com/kr/local-profile/?in=%ED%83%91%EB%8F%99-4532&search=%EC%BC%80%EC%9D%B4%ED%81%AC%EC%A0%84%EB%AC%B8"
+   ]
+  },
+  {
+   "id": "rolly-polly",
+   "name": "롤리앤폴리",
+   "gu": "권선구",
+   "dong": "금곡동",
+   "addr": "수원시 권선구 금곡동 530",
+   "styles": [
+    "flower",
+    "rice"
+   ],
+   "price": null,
+   "priceNote": null,
+   "priceDate": null,
+   "addons": null,
+   "sameDay": null,
+   "lead": null,
+   "hours": null,
+   "closed": null,
+   "insta": null,
+   "kakao": null,
+   "naver": false,
+   "note": "앙금플라워·떡케이크",
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "순위닷 목록(키워드: 수원떡케이크, 플라워케이크, 앙금플라워떡케이크, 케이크주문제작)만 확인",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ]
+  },
+  {
+   "id": "august-rabbit",
+   "name": "8월의토끼",
+   "gu": "권선구",
+   "dong": "금곡동",
+   "addr": "수원시 권선구 금곡동 1125-3 세종헤르메스오피스텔 105호",
+   "styles": [
+    "lettering"
+   ],
+   "price": null,
+   "priceNote": null,
+   "priceDate": null,
+   "addons": null,
+   "sameDay": null,
+   "lead": "12:00~19:00",
+   "hours": "월요일",
+   "closed": "월요일",
+   "insta": null,
+   "kakao": null,
+   "naver": true,
+   "note": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ],
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "순위닷 목록 외 검색 결과 없음",
+   "src": [
+    null,
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ]
+  },
+  {
+   "id": "ecru-cake",
+   "name": "에크루케이크",
+   "gu": "권선구",
+   "dong": "호매실동",
+   "addr": "수원시 권선구 호매실동 1342-4 1층 102호",
+   "styles": [
+    "photo",
+    "lettering"
+   ],
+   "price": null,
+   "priceNote": null,
+   "priceDate": null,
+   "addons": null,
+   "sameDay": null,
+   "lead": "11:00~19:00",
+   "hours": "인스타 공지",
+   "closed": "인스타 공지",
+   "insta": null,
+   "kakao": null,
+   "naver": true,
+   "note": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ],
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "순위닷 목록(수원포토케이크, 호매실 레터링케이크 키워드)만 확인",
+   "src": [
+    null,
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ]
+  },
+  {
+   "id": "r19w4ydp",
+   "name": "미소플라워케이크",
+   "gu": "권선구",
+   "dong": "호매실동",
+   "addr": "수원시 권선구 호매실동 1412-6",
+   "styles": [
+    "flower",
+    "rice"
+   ],
+   "price": null,
+   "priceNote": null,
+   "priceDate": null,
+   "addons": null,
+   "sameDay": null,
+   "lead": null,
+   "hours": null,
+   "closed": null,
+   "insta": null,
+   "kakao": null,
+   "naver": false,
+   "note": "앙금플라워·떡케이크(목록 기준)",
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "순위닷 계열 목록에서 앙금플라워·떡케이크 취급으로 표기, 다른 증거 없음",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ]
+  },
+  {
+   "id": "r1ddrh3t",
+   "name": "이에우케이크",
+   "gu": "팔달구",
+   "dong": "행궁동",
+   "addr": "수원시 팔달구 행궁로 98 신안빌딩 1층",
+   "road": "수원시 팔달구 행궁로 98",
+   "styles": [
+    "lettering",
+    "character",
+    "tiered"
+   ],
+   "price": {
+    "mini": [
+     26000,
+     null
+    ],
+    "h1": [
+     40000,
+     null
+    ],
+    "h2": [
+     50000,
+     null
+    ]
+   },
+   "priceNote": "도시락(10cm) 18,000원~ · 미니(12cm) 26,000원~ · 1호(15cm) 40,000원~ · 2호(18cm) 50,000원~ · 하트 미니 28,000원~ / 하트 1호 42,000원~ · 사각 미니 28,000원~ / 사각 1호 42,000원~ (레터링 한글 10자·영문 15자 포함, 디테일 추가 시 추가금)",
+   "priceDate": null,
+   "addons": [
+    "초코시트+초코크림 +2,000원",
+    "하트/사각 모양은 위 가격표(원형보다 +2,000원)"
+   ],
+   "sameDay": false,
+   "lead": "최소 일주일 전 문의, 카카오 플러스친구로 픽업일 확인 후 디자인 전송, 예약금 결제 후 확정(이후 디자인·날짜 변경 불가)",
+   "hours": "11:30~19:30 (30분 단위 픽업/상담)",
+   "closed": null,
+   "insta": "yeu_cake",
+   "kakao": "카카오톡 플러스친구(채널명 미확인)",
+   "naver": false,
+   "note": "타 가게 디자인은 받지 않는 디자인 재현도 높은 레터링·캐릭터 주문제작",
+   "level": "detail",
+   "verified": true,
+   "status": "운영중 확인",
+   "statusEvidence": "공식 hicake 페이지가 2026-11-17 조회 시 '오늘 11:30-19:30' 영업을 표시(날짜 표기 후기는 못 봄). 다이닝코드엔 교동 103-1 주소도 병기",
+   "src": [
+    "https://www.hicake.co.kr/yeu_cake",
+    "https://www.diningcode.com/profile.php?rid=cOBd6n1MIq8G"
+   ]
+  },
+  {
+   "id": "holiday-cake",
+   "name": "홀리데이케이크",
+   "gu": "팔달구",
+   "dong": "행궁동",
+   "addr": "수원시 팔달구 정조로 848-1 1층",
+   "road": "수원시 팔달구 정조로 848-1",
+   "styles": [
+    "lettering"
+   ],
+   "price": {
+    "mini": [
+     21000,
+     28000
+    ],
+    "h1": [
+     45000,
+     55000
+    ],
+    "h2": [
+     60000,
+     65000
+    ]
+   },
+   "priceNote": "기존 목록 기록: 도시락(미니 약 10cm) 2.1~2.8만원 · 1호 4.5~5.5만원 · 2호 6.0~6.5만원 (디자인별 상이). 이번 조사에서 직접 재확인 못 함",
+   "priceDate": null,
+   "addons": [],
+   "sameDay": true,
+   "lead": "당일 가능 케이크 따로 판매",
+   "hours": "매일 12:00~19:00 (일 12:00~18:00)",
+   "closed": "월요일",
+   "insta": null,
+   "kakao": "카카오톡 채널(주문서)",
+   "naver": false,
+   "note": "심플한 레터링이 특징인 행궁동 도시락·홀케이크 주문제작",
+   "level": "detail",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "2026-11-17 검색 결과에서 다이닝코드 프로필 노출 및 '카카오톡 채널 문의, 월요일 휴무' 안내 확인. 날짜 있는 최근 후기는 직접 못 봄",
+   "src": [
+    "https://www.diningcode.com/profile.php?rid=LJrjvLfciDal"
+   ]
+  },
+  {
+   "id": "cafe-onemore",
+   "name": "카페원모어",
+   "gu": "팔달구",
+   "dong": "장안동",
+   "addr": "수원시 팔달구 장안동 322-17",
+   "styles": [
+    "lettering"
+   ],
+   "price": {
+    "mini": [
+     21000,
+     null
+    ],
+    "h1": [
+     50000,
+     null
+    ]
+   },
+   "priceNote": "도시락케이크 21,000원 미니 도시락(12cm) 기준, 디자인에 따라 추가금 / 홀케이크 50,000원 1호(15cm)부터 (검색 결과 요약문)",
+   "priceDate": null,
+   "addons": [
+    "디자인에 따라 추가금(금액 미확인)"
+   ],
+   "sameDay": null,
+   "lead": null,
+   "hours": "월~토 12:00~20:00",
+   "closed": "일요일",
+   "insta": null,
+   "kakao": null,
+   "naver": false,
+   "note": "카페 겸 주문제작 레터링 케이크(영통 2호점 있음). 카페 비중이 커 주력은 애매함",
+   "level": "detail",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "다이닝코드 후기 '10.01 (목) 휴무일' 방문 기록(연도 미확인, 10/1이 목요일인 해는 2020·2026 → 2026 가능성 있으나 단정 불가)",
+   "src": [
+    "https://www.diningcode.com/profile.php?rid=2tv2pbmMoiMX",
+    "http://soonwidot.co.kr/rank/list.php?id=25533"
+   ]
+  },
+  {
+   "id": "r17mtgf3",
+   "name": "마치모어 디저트",
+   "gu": "팔달구",
+   "dong": "행궁동",
+   "addr": "수원시 팔달구 정조로 873-1 2층 202호",
+   "road": "수원시 팔달구 정조로 873-1",
+   "styles": [
+    "lettering",
+    "flower"
+   ],
+   "price": null,
+   "priceNote": "가격 미확인 (polle에 파블로바 등 낱개 메뉴만, 호수별 가격 없음)",
+   "priceDate": null,
+   "addons": [],
+   "sameDay": false,
+   "lead": "예약 주문 + 픽업만 가능한 작은 매장(후기)",
+   "hours": null,
+   "closed": null,
+   "insta": null,
+   "kakao": null,
+   "naver": false,
+   "note": "플라워 스타일 주문케이크와 진짜 생크림 케이크로 후기 호평",
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "polle 후기 최신이 '1년 전'(상대표기, 2026 기준 2025년경). 영업 상태 표기 없음",
+   "src": [
+    "https://polle.com/place/3peKZO/%EB%A7%88%EC%B9%98%EB%AA%A8%EC%96%B4%20%EB%94%94%EC%A0%80%ED%8A%B8"
+   ]
+  },
+  {
+   "id": "kkekko",
+   "name": "께꼬 KKEKKO CAKE",
+   "gu": "팔달구",
+   "dong": "매산로2가",
+   "addr": "수원시 팔달구 권선로 477 정문상가 2층 210호 (지번 매산로2가 90)",
+   "road": "수원시 팔달구 권선로 477",
+   "styles": [
+    "lettering",
+    "tiered"
+   ],
+   "price": {
+    "mini": [
+     33000,
+     null
+    ],
+    "h1": [
+     60000,
+     69000
+    ]
+   },
+   "priceNote": "다이닝코드 후기: 도시락 케이크 33,000원 / 기존 기록: 1호 하프 디자인 6만 원대, 홀케이크 커스텀 레터링 80,000원(2025 후기). 당근 프로필엔 가격 '문의'",
+   "priceDate": null,
+   "addons": [],
+   "sameDay": null,
+   "lead": "레터링 케이크 예약 필수, 정해진 날짜에 픽업",
+   "hours": "상담 10~21시 · 픽업 13~19시",
+   "closed": null,
+   "insta": null,
+   "kakao": "께꼬(kkekko)",
+   "naver": false,
+   "note": "도시락·미니 2단 주문제작 레터링 전문, 무인 픽업",
+   "level": "detail",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "다이닝코드·당근·soonwidot 프로필 노출. 기존 기록에 '2026 후기 33,000원'이 있으나 날짜는 이번에 직접 못 봄",
+   "src": [
+    "https://www.diningcode.com/profile.php?rid=yBMssFy290ul",
+    "https://www.daangn.com/kr/local-profile/%EA%BB%98%EA%BC%AC-qmfghrtm8i1s/"
+   ]
+  },
+  {
+   "id": "sader-cake",
+   "name": "세이더케이크",
+   "gu": "팔달구",
+   "dong": "우만동",
+   "addr": "수원시 팔달구 우만동 95-1",
+   "road": "수원시 팔달구 중부대로223번길 20-7",
+   "styles": [
+    "lettering"
+   ],
+   "price": null,
+   "priceNote": "도시락케이크 가격은 변동, 디자인·문구를 양식에 맞춰 주문하면 금액 확정해 답장(다이닝코드 후기)",
+   "priceDate": null,
+   "addons": [],
+   "sameDay": true,
+   "lead": "도시락은 당일 선착순",
+   "hours": "11:00~20:00, 영업시간 외 24시 무인픽업",
+   "closed": null,
+   "insta": "saythe_cake",
+   "kakao": "카카오톡 문의(문의는 카톡만)",
+   "naver": false,
+   "note": "도시락·미니 위주 레터링, 문앞 냉장고 무인 픽업",
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "인스타 @saythe_cake 검색 노출(게시일 미확인), 다이닝코드 평점 3.0",
+   "src": [
+    "https://www.instagram.com/saythe_cake/",
+    "https://www.diningcode.com/profile.php?rid=JxUcC5A0lBkj"
+   ]
+  },
+  {
+   "id": "r1dgsvvl",
+   "name": "히랑피랑",
+   "gu": "팔달구",
+   "dong": "인계동",
+   "addr": "수원시 팔달구 인계로 140",
+   "road": "수원시 팔달구 인계로 140",
+   "styles": [
+    "lettering"
+   ],
+   "price": {
+    "mini": [
+     23000,
+     38000
+    ],
+    "h1": [
+     42000,
+     null
+    ]
+   },
+   "priceNote": "도시락 레터링(고정 디자인, 당일 가능) 23,000원 · 판레터링 서비스 미니 홀케이크 38,000원 · 1호 레터링 42,000원(2~3일 전 주문) · 1-2호 홀케이크 49,000원부터(당근)",
+   "priceDate": null,
+   "addons": [
+    "DIY 레터링 케이크 사전예약 15,900원"
+   ],
+   "sameDay": true,
+   "lead": "1호 레터링은 여유 두고 2~3일 전 주문",
+   "hours": null,
+   "closed": null,
+   "insta": null,
+   "kakao": null,
+   "naver": false,
+   "note": "디저트카페형이나 레터링 주문·당일 도시락케이크 모두 가능",
+   "level": "detail",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "다이닝코드·polle·당근 프로필 노출(날짜 미확인). 다이닝코드 수원 레터링케이크 4위, 평점 4.9(8명)",
+   "src": [
+    "https://www.diningcode.com/profile.php?rid=V7GnHQ4cWVsD",
+    "https://polle.com/place/34H7xj/%ED%9E%88%EB%9E%91%20%ED%94%BC%EB%9E%91",
+    "https://www.daangn.com/kr/local-profile/%ED%9E%88%EB%9E%91%ED%94%BC%EB%9E%91-yse1zewn6k1x/"
+   ]
+  },
+  {
+   "id": "rx9drbf",
+   "name": "하뚜 케이크",
+   "gu": "팔달구",
+   "dong": "인계동",
+   "addr": "수원시 팔달구 경수대로428번길 31 1층 103호 (지번 인계동 1027-5)",
+   "road": "수원시 팔달구 경수대로428번길 31",
+   "styles": [
+    "lettering"
+   ],
+   "price": null,
+   "priceNote": "가격 미확인",
+   "priceDate": null,
+   "addons": [],
+   "sameDay": null,
+   "lead": "주문·클래스 문의는 인스타 DM",
+   "hours": "월~토 11:00~19:00",
+   "closed": "일요일",
+   "insta": "hattu_cake",
+   "kakao": null,
+   "naver": false,
+   "note": "생크림 레터링 주문제작 + 레터링케이크 클래스, 수원시청역 인근",
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "인스타 @hattu_cake 및 다이닝코드 프로필 노출(게시일 미확인)",
+   "src": [
+    "https://www.instagram.com/hattu_cake/",
+    "https://www.diningcode.com/profile.php?rid=MHkGEzlFH4vF"
+   ]
+  },
+  {
+   "id": "cakey-ingye",
+   "name": "케이키케이키 인계점",
+   "gu": "팔달구",
+   "dong": "인계동",
+   "addr": "수원시 팔달구 효원로249번길 46-12 1층 101호",
+   "road": "수원시 팔달구 효원로249번길 46-12",
+   "styles": [
+    "lettering"
+   ],
+   "price": {
+    "mini": [
+     20000,
+     null
+    ]
+   },
+   "priceNote": "미니 도시락 케이크 20,000원 / 생크림 케이크 35,000원(검색 요약문)",
+   "priceDate": "2025-03",
+   "addons": [],
+   "sameDay": true,
+   "lead": "쇼케이스에 당일 구매 가능한 무지 디자인 홀케이크, 도시락 당일 가능",
+   "hours": null,
+   "closed": null,
+   "insta": null,
+   "kakao": null,
+   "naver": false,
+   "note": "당일 도시락·무지 홀케이크 구매와 주문제작 병행(여러 지점 있는 브랜드로 보임)",
+   "level": "detail",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "다이닝코드 수원 레터링 11위 노출, 네이버 블로그 '당일 도시락케이크 주문 가능한 인계동 레터링케이크 맛집 케이키케이키 인계점'(등록 2025-03-03)",
+   "src": [
+    "https://www.diningcode.com/profile.php?rid=aIApNGQNfk7m",
+    "https://www.keyzard.cc/eyoyo-/nb/223780504986"
+   ]
+  },
+  {
+   "id": "kcoodang",
+   "name": "케이쿠당",
+   "gu": "팔달구",
+   "dong": "인계동",
+   "addr": "수원시 팔달구 장다리로233번길 21 1층",
+   "road": "수원시 팔달구 장다리로233번길 21",
+   "styles": [
+    "rice",
+    "flower"
+   ],
+   "price": {
+    "h1": [
+     46000,
+     55000
+    ]
+   },
+   "priceNote": "앙금플라워 떡케이크 1~4호 정가 50,000원에 46,000원 표시 / 하트 모양 46,000원·55,000원 혼재(아이디어스, 표기 불일치)",
+   "priceDate": null,
+   "addons": [],
+   "sameDay": false,
+   "lead": "예약제, 하루 제작 수량 한정",
+   "hours": "10:00~20:00 (예약에 따라 변동)",
+   "closed": null,
+   "insta": "kcoodang_cake",
+   "kakao": null,
+   "naver": false,
+   "note": "앙금플라워 떡케이크 공방, 수작업 한정 수량",
+   "level": "detail",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "당근 프로필·아이디어스 상품 페이지 노출(날짜 미확인)",
+   "src": [
+    "https://daangn.com/kr/local-profile/%EC%BC%80%EC%9D%B4%EC%BF%A0%EB%8B%B9-gv9cf8j5bpxz/",
+    "https://www.idus.com/v2/product/8177ff74-dcbb-4146-ad74-2f81a62dc9ee"
+   ]
+  },
+  {
+   "id": "yodel-cake",
+   "name": "요를레이케이크",
+   "gu": "팔달구",
+   "dong": "인계동",
+   "addr": "수원시 팔달구 인계동 1134-4 1층",
+   "styles": [
+    "lettering"
+   ],
+   "price": null,
+   "priceNote": null,
+   "priceDate": null,
+   "addons": [],
+   "sameDay": null,
+   "lead": "예약에 따라 마감시간 변동",
+   "hours": "월~금 12:00~19:00, 토 12:00~18:00",
+   "closed": "일요일",
+   "insta": null,
+   "kakao": null,
+   "naver": false,
+   "note": "주문제작·레터링(목록 태그)",
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "soonwidot 목록만 확인, 웹검색으로는 다른 정보 못 찾음",
+   "src": [
+    "http://soonwidot.co.kr/rank/list.php?id=25533"
+   ]
+  },
+  {
+   "id": "cakejip",
+   "name": "케잌집",
+   "gu": "팔달구",
+   "dong": "인계동",
+   "addr": "수원시 팔달구 인계동 1011-6 1층",
+   "styles": [
+    "lettering"
+   ],
+   "price": null,
+   "priceNote": null,
+   "priceDate": null,
+   "addons": [],
+   "sameDay": null,
+   "lead": null,
+   "hours": "매일 11:00~20:00 (일 11:00~14:00)",
+   "closed": "인스타 공지 확인",
+   "insta": null,
+   "kakao": null,
+   "naver": false,
+   "note": "레터링·주문제작(목록 태그)",
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "soonwidot 목록만 확인, 웹검색으로는 못 찾음",
+   "src": [
+    "http://soonwidot.co.kr/rank/list.php?id=25533"
+   ]
+  },
+  {
+   "id": "levely-cake",
+   "name": "레벨리케이크",
+   "gu": "팔달구",
+   "dong": "인계동",
+   "addr": "수원시 팔달구 인계동 1170 인계한양수자인 101동 110호",
+   "styles": [
+    "lettering"
+   ],
+   "price": null,
+   "priceNote": null,
+   "priceDate": null,
+   "addons": [],
+   "sameDay": false,
+   "lead": null,
+   "hours": null,
+   "closed": null,
+   "insta": null,
+   "kakao": null,
+   "naver": false,
+   "note": "주문제작·레터링·케이크 클래스(목록 태그)",
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "soonwidot 목록만 확인(아파트 단지 내 홈베이킹 공방형), 웹검색 결과 없음",
+   "src": [
+    "http://soonwidot.co.kr/rank/list.php?id=25533"
+   ]
+  },
+  {
+   "id": "dazzling-cake",
+   "name": "다즐링케이크",
+   "gu": "팔달구",
+   "dong": "영동",
+   "addr": "수원시 팔달구 영동 8",
+   "styles": [
+    "rice",
+    "lettering"
+   ],
+   "price": null,
+   "priceNote": null,
+   "priceDate": null,
+   "addons": [],
+   "sameDay": false,
+   "lead": "예약제",
+   "hours": null,
+   "closed": null,
+   "insta": null,
+   "kakao": null,
+   "naver": false,
+   "note": "떡케이크·주문제작·레터링(목록 태그)",
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "soonwidot 목록(영업시간 00:00~24:00로 부정확), 수업 안내 페이지에서 팔달구 영동 소재로 언급된다는 검색 요약만 있음",
+   "src": [
+    "http://soonwidot.co.kr/rank/list.php?id=25533"
+   ]
+  },
+  {
+   "id": "r13vuhzg",
+   "name": "용소담케이크",
+   "gu": "팔달구",
+   "dong": "화서동",
+   "addr": "수원시 팔달구 화양로21번길 36 1층",
+   "road": "수원시 팔달구 화양로21번길 36",
+   "styles": [
+    "lettering",
+    "flower",
+    "rice"
+   ],
+   "price": {
+    "h1": [
+     40000,
+     null
+    ]
+   },
+   "priceNote": "수원 앙금플라워떡케이크(레터링케이크) 40,000원 (1,000g~4,000g, 아이디어스)",
+   "priceDate": null,
+   "addons": [],
+   "sameDay": false,
+   "lead": "제작 기간 3일 이내(다른 페이지엔 평균 6일)",
+   "hours": null,
+   "closed": null,
+   "insta": null,
+   "kakao": null,
+   "naver": false,
+   "note": "앙금플라워 떡케이크·레터링 떡케이크 공방",
+   "level": "detail",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "아이디어스 상품 페이지(날짜 미확인)",
+   "src": [
+    "https://www.idus.com/v2/product/a83d1f3c-c115-480d-84ab-a9c71f579e5c"
+   ]
+  },
+  {
+   "id": "pure-cake",
+   "name": "퓨어케이크",
+   "gu": "장안구",
+   "dong": "정자동",
+   "addr": "수원시 장안구 장안로89번길 10",
+   "road": "수원시 장안구 장안로89번길 10",
+   "styles": [
+    "lettering",
+    "flower",
+    "character"
+   ],
+   "price": null,
+   "priceNote": "가격 미공개",
+   "priceDate": null,
+   "addons": null,
+   "sameDay": null,
+   "lead": null,
+   "hours": "11:00~20:00",
+   "closed": null,
+   "insta": "pure.cake_",
+   "kakao": "카카오톡 채널",
+   "naver": false,
+   "note": "생화 디자인 케이크, 레터링·그림 지정 케이크 (기존 목록 기준)",
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "당근 비즈프로필(기존 목록 출처)은 이번에 403으로 열리지 않음. 웹 검색에서도 2025~2026 근거 미확인",
+   "src": [
+    "https://www.daangn.com/kr/local-profile/%ED%93%A8%EC%96%B4%EC%BC%80%EC%9D%B4%ED%81%AC-jz5rpbbn5qhp/"
+   ]
+  },
+  {
+   "id": "jeonssaem-cake",
+   "name": "달달한전쌤cake",
+   "gu": "장안구",
+   "dong": "조원동",
+   "addr": "수원시 장안구 조원동 757-1 (지번)",
+   "styles": [
+    "lettering"
+   ],
+   "price": null,
+   "priceNote": null,
+   "priceDate": null,
+   "addons": null,
+   "sameDay": null,
+   "lead": null,
+   "hours": "월~토 10:00~19:00",
+   "closed": "일요일",
+   "insta": null,
+   "kakao": null,
+   "naver": false,
+   "note": "수제케이크·주문제작케이크·레터링케이크 태그",
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "순위닷 목록(2026-11-05 갱신 표기 페이지)에 등재. 가게 자체의 2025~2026 후기/게시물은 못 봄",
+   "src": [
+    "http://soonwidot.co.kr/rank/list.php?id=25533",
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ]
+  },
+  {
+   "id": "smile-cake",
+   "name": "스마일케이크",
+   "gu": "장안구",
+   "dong": "조원동",
+   "addr": "수원시 장안구 조원1동 729-18 (지번)",
+   "styles": [
+    "lettering",
+    "flower",
+    "rice"
+   ],
+   "price": null,
+   "priceNote": null,
+   "priceDate": null,
+   "addons": null,
+   "sameDay": null,
+   "lead": null,
+   "hours": "10:00~20:00",
+   "closed": "일요일",
+   "insta": null,
+   "kakao": null,
+   "naver": false,
+   "note": "앙금플라워떡케이크·수제케이크·주문제작·레터링 태그",
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "순위닷 목록(2026-11-05 갱신 표기 페이지)에 등재. 가게 자체 후기는 못 봄",
+   "src": [
+    "http://soonwidot.co.kr/rank/list.php?id=25533"
+   ]
+  },
+  {
+   "id": "sweety-memory",
+   "name": "스위티메모리",
+   "gu": "장안구",
+   "dong": "율전동",
+   "addr": "수원시 장안구 화산로233번길 12 1층 (율전동 295)",
+   "road": "수원시 장안구 화산로233번길 12",
+   "styles": [
+    "lettering",
+    "character"
+   ],
+   "price": {
+    "mini": [
+     43000,
+     null
+    ]
+   },
+   "priceNote": "블로그 후기 언급: 미니 사이즈 레터링 케이크 43,000원, 짱구 결혼 축하 케이크 69,000원 (연도 미확인)",
+   "priceDate": null,
+   "addons": [
+    "모양초 일반 1,000원",
+    "물결 모양 초 2,000원"
+   ],
+   "sameDay": null,
+   "lead": null,
+   "hours": null,
+   "closed": null,
+   "insta": null,
+   "kakao": "카카오톡 채널 사용(채널명 미확인)",
+   "naver": false,
+   "note": "성균관대역 근처 레터링·캐릭터 케이크, 미니/1호/2호/한입/웨딩(프로포즈) 케이크",
+   "level": "detail",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "2026-11-17 다이닝코드 페이지에서 영업중 표기, 연결 블로그 후기 날짜 11/7, 11/1, 10/22 (연도 표기 없음)",
+   "src": [
+    "https://www.diningcode.com/profile.php?rid=fZvwY7UY8ufG"
+   ]
+  },
+  {
+   "id": "ludia-cake",
+   "name": "루디아케이크",
+   "gu": "장안구",
+   "dong": "정자동",
+   "addr": "수원시 장안구 정자천로133번길 26, 상가동 1층 (정자동 879-1)",
+   "road": "수원시 장안구 정자천로133번길 26",
+   "styles": [
+    "lettering"
+   ],
+   "price": {
+    "mini": [
+     18000,
+     30000
+    ],
+    "h1": [
+     40000,
+     null
+    ],
+    "h2": [
+     50000,
+     null
+    ],
+    "h3": [
+     60000,
+     null
+    ]
+   },
+   "priceNote": "도시락케이크 18,000원~, 미니 30,000원~, 1호(15cm) 40,000원~, 2호(18cm) 50,000원~, 3호(21cm) 60,000원~ (블로그 후기 기재), 레터링·그림 추가 시 추가금",
+   "priceDate": "2025-12 후기 기준 (정확한 날짜 불명)",
+   "addons": [
+    "레터링·그림 추가 시 추가금(금액 미확인)"
+   ],
+   "sameDay": null,
+   "lead": null,
+   "hours": "화~금 10:00~19:00, 토·일 09:30~18:00",
+   "closed": "월요일",
+   "insta": null,
+   "kakao": "카카오톡 채널로 주문(채널명 미확인)",
+   "naver": false,
+   "note": "도시락(10cm)·미니(12cm) 쌀가루 시트 생크림 레터링 케이크, 아파트 상가 1층",
+   "level": "detail",
+   "verified": true,
+   "status": "운영중 확인",
+   "statusEvidence": "다이닝코드 2026-11-17 확인: 11/18~11/23 주간 영업시간 표기, 블로그 후기 2025-12-08, 2025-12-09 날짜 확인",
+   "src": [
+    "https://www.diningcode.com/profile.php?rid=exczSeOotXeF"
+   ]
+  },
+  {
+   "id": "r1aq43rn",
+   "name": "유어마이선샤인",
+   "gu": "장안구",
+   "dong": "연무동",
+   "addr": "수원시 장안구 연무동 234-20 (지번)",
+   "styles": [
+    "lettering"
+   ],
+   "price": null,
+   "priceNote": null,
+   "priceDate": null,
+   "addons": null,
+   "sameDay": null,
+   "lead": null,
+   "hours": "수~일 13:00~19:00",
+   "closed": "월·화",
+   "insta": null,
+   "kakao": null,
+   "naver": false,
+   "note": "주문제작·맞춤 케이크 태그 (스타일 미확인)",
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "순위닷 목록(2026-11-05 갱신 표기 페이지)에 등재, 별도 후기 검색 결과 없음",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ]
+  },
+  {
+   "id": "r4l9q88",
+   "name": "해피스윗데이",
+   "gu": "장안구",
+   "dong": "영화동",
+   "addr": "수원시 장안구 영화동 401-35 1층 (지번)",
+   "styles": [
+    "lettering"
+   ],
+   "price": null,
+   "priceNote": null,
+   "priceDate": null,
+   "addons": null,
+   "sameDay": null,
+   "lead": null,
+   "hours": null,
+   "closed": null,
+   "insta": null,
+   "kakao": null,
+   "naver": false,
+   "note": "레터링·커스텀·주문제작 케이크 태그",
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "순위닷 목록(2026-11-05 갱신 표기 페이지)에 등재, 별도 후기 검색 결과 없음",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ]
+  },
+  {
+   "id": "rxxv8iq",
+   "name": "채영플라워케이크",
+   "gu": "장안구",
+   "dong": "영화동",
+   "addr": "수원시 장안구 영화동 404-27 1층 (지번)",
+   "styles": [
+    "flower",
+    "rice"
+   ],
+   "price": null,
+   "priceNote": null,
+   "priceDate": null,
+   "addons": null,
+   "sameDay": null,
+   "lead": null,
+   "hours": null,
+   "closed": null,
+   "insta": null,
+   "kakao": null,
+   "naver": false,
+   "note": "앙금플라워 떡케이크·맞춤제작 케이크 태그",
+   "level": "listing",
+   "verified": false,
+   "status": "확인 필요",
+   "statusEvidence": "순위닷 목록(2026-11-05 갱신 표기 페이지)에 등재, 별도 후기 검색 결과 없음",
+   "src": [
+    "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+   ]
+  }
+ ]
 }

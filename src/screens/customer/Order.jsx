@@ -12,7 +12,7 @@ import { storeLook } from '../../lib/cake.js';
 import { range, won, today, addDays, ymd, DOW, fmtDate, textLen, parseYmd } from '../../lib/util.js';
 import { SIZES, SHAPES, DESIGNS, FLAVORS, RICE_FLAVORS, CREAMS, CREAM_ADD, TEXT_COLORS, FONTS, TOPPINGS, EXTRAS, QUICK_TEXTS, SIZE_MULT, sizeOf, optName, designOf, creamOf, fontOf, textColorOf } from '../../data/catalog.js';
 
-const SIZE_CMP = { dosirak: '손바닥만 해요', mini: '휴대폰보다 작아요', h1: '휴대폰 길이쯤', h2: '휴대폰보다 조금 커요', h3: 'A4 종이 짧은 쪽 정도' };
+const SIZE_CMP = { mini: '손바닥~휴대폰보다 작아요', h1: '휴대폰 길이쯤', h2: '휴대폰보다 조금 커요', h3: 'A4 종이 짧은 쪽 정도' };
 const priceTxt = (lo, hi, exact) => (lo == null ? '' : lo === 0 && hi === 0 ? '기본' : exact || lo === hi ? `+${won(lo)}` : `+${(lo / 1000).toFixed(lo % 1000 ? 1 : 0)}~${(hi / 1000).toFixed(hi % 1000 ? 1 : 0)}천원`);
 
 function addOf(store, kind, id, base, size) {
@@ -60,7 +60,8 @@ export default function OrderForm({ params, path }) {
   const store = useMemo(() => getStores(st).find((s) => s.id === params.id), [st.shop, st.found, params.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const q = queryOf(path);
   const from = useMemo(() => { try { return q.get('from') ? JSON.parse(q.get('from')) : null; } catch { return null; } }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const [o, setO] = useState(() => (store ? initialOrder(store, from, st.photo) : null));
+  const photoQ = st.find?.photo ? { ...st.find.photo, at: st.find.at } : null;
+  const [o, setO] = useState(() => (store ? initialOrder(store, from, photoQ) : null));
   const [sec, setSec] = useState('design');
   const [mini, setMini] = useState(false);
   const [confirm, setConfirm] = useState(false);
@@ -186,7 +187,7 @@ export default function OrderForm({ params, path }) {
             {["내일 미니 초코 '고생했어'", "토요일 2시 2호 화이트 꽃 '칠순 축하드려요'", "1호 하늘색 빈티지 '합격 축하해' 체리"].map((e) => <button key={e} className="chip sm" onClick={() => setAiText(e)}>{e}</button>)}
           </div>
           <div className="row" style={{ marginTop: 10 }}>
-            {st.photo?.thumb ? <button className="btn sm line grow" onClick={() => { set({ design: st.photo.design || o.design, shape: st.photo.shape || o.shape, cream: st.photo.cream || o.cream, refPhoto: st.photo.thumb, ...photoToOptions(st.photo.ai) }); toast('내 사진 기준으로 채웠어요'); }}><img src={st.photo.thumb} alt="" style={{ width: 22, height: 22, borderRadius: 6, objectFit: 'cover' }} /> 내 사진으로 채우기</button>
+            {photoQ?.thumb ? <button className="btn sm line grow" onClick={() => { set({ design: photoQ.design || o.design, shape: photoQ.shape || o.shape, cream: photoQ.cream || o.cream, refPhoto: photoQ.thumb, ...photoToOptions(photoQ.ai) }); toast('내 사진 기준으로 채웠어요'); }}><img src={photoQ.thumb} alt="" style={{ width: 22, height: 22, borderRadius: 6, objectFit: 'cover' }} /> 내 사진으로 채우기</button>
               : <PhotoPick onPick={photoFill} className="btn sm line grow"><Icon n="image" size="sm" /> 원하는 사진으로 채우기</PhotoPick>}
           </div>
           <div className="lbl">이 가게 추천 조합</div>
@@ -362,7 +363,7 @@ function ConfirmSheet({ open, onClose, store, o, view, est, checks, v, inApp }) 
     setState({ me: { name: name.trim(), phone: phone.trim() } });
     const order = createOrder(store, o, { name: name.trim(), phone: phone.trim() }, gift ? { to: to.trim(), msg: gmsg.trim(), from: name.trim() } : null);
     onClose();
-    navAfterSheet(`/done/${order.id}`);
+    navAfterSheet(order.status === 'external' ? `/done/${order.id}` : `/done/${order.id}`);
   };
   const deco = [...o.toppings.map((t) => optName(TOPPINGS, t)), ...o.extras.map((t) => optName(EXTRAS, t))];
   return (

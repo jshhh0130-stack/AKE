@@ -1,0 +1,503 @@
+﻿{
+    "gu":  "권선구",
+    "checked":  "2026-11-17",
+    "shops":  [
+                  {
+                      "name":  "미도리케이크",
+                      "gu":  "권선구",
+                      "dong":  "세류동",
+                      "addr":  "수원시 권선구 세권로 60 1층",
+                      "isCustomCake":  true,
+                      "status":  "운영중 확인",
+                      "statusEvidence":  "다이닝코드 프로필에 영업시간 \"10.02 (금) 11:00-18:00\" 표기(10/2 금요일=2026년, 2026-11-17 조회). 주문은 카카오톡만 받는다는 후기",
+                      "styles":  [
+                                     "lettering",
+                                     "photo"
+                                 ],
+                      "price":  {
+                                    "mini":  [
+                                                 22000,
+                                                 39000
+                                             ],
+                                    "h1":  [
+                                               50000,
+                                               null
+                                           ],
+                                    "h2":  [
+                                               67000,
+                                               null
+                                           ],
+                                    "h3":  [
+                                               85000,
+                                               null
+                                           ]
+                                },
+                      "priceNote":  "도시락(10cm) 22,000원 · 미니(12cm) 39,000원 · 1호 50,000원 · 2호 67,000원 · 3호 85,000원 (흰 바탕 레터링 기준; 다이닝코드: \"레터링케이크 변동 제작 원하시는 디자인 문의 주시면 상담 후 주문 제작\", 초코 시트·하트 모양 변경 등 옵션 추가)",
+                      "priceDate":  null,
+                      "addons":  null,
+                      "sameDay":  null,
+                      "lead":  null,
+                      "hours":  "다이닝코드 기준 11:00~18:00 (출처마다 다름: 평일 13~19시/주말 11~19시)",
+                      "closed":  "월요일(확인 필요)",
+                      "insta":  "midori_cake",
+                      "kakao":  "미도리케이크",
+                      "naver":  false,
+                      "note":  "레터링·포토 케이크 상담 후 주문제작, 24시간 무인 픽업",
+                      "src":  [
+                                  "https://www.diningcode.com/profile.php?rid=hkNxk1IKuhEY"
+                              ]
+                  },
+                  {
+                      "name":  "오도르케이크",
+                      "gu":  "권선구",
+                      "dong":  "구운동",
+                      "addr":  "수원시 권선구 일월천로4번길 74 성원아파트 상가동 205호",
+                      "isCustomCake":  true,
+                      "status":  "확인 필요",
+                      "statusEvidence":  "다이닝코드·triple 등에서 동일 주소 확인, 그러나 증거 날짜 불명(2025~2026 확인 못함)",
+                      "styles":  [
+                                     "lettering",
+                                     "3d",
+                                     "tiered"
+                                 ],
+                      "price":  {
+                                    "mini":  [
+                                                 15000,
+                                                 26000
+                                             ],
+                                    "h1":  [
+                                               38000,
+                                               null
+                                           ],
+                                    "h2":  [
+                                               45000,
+                                               null
+                                           ]
+                                },
+                      "priceNote":  "도시락 15,000원+α · 미니 26,000원+α · 1호 38,000원+α · 2호 45,000원+α · 하트 +1,000원 · 사각 +1,500원 · 2단·피규어는 상담",
+                      "priceDate":  null,
+                      "addons":  {
+                                     "heart":  1000,
+                                     "square":  1500
+                                 },
+                      "sameDay":  null,
+                      "lead":  "사전 예약 필수 (레터링은 2~3일 전 주문 후기)",
+                      "hours":  "화~금 12~19시 · 토 10~19시 · 일 10~15시(출처마다 다름)",
+                      "closed":  "월요일",
+                      "insta":  "odor_cake",
+                      "kakao":  "odor cake",
+                      "naver":  false,
+                      "note":  "무인 픽업, 2단·피규어·티아라 케이크는 상담 후 가격",
+                      "src":  [
+                                  "https://www.diningcode.com/profile.php?rid=8OMMxQlWDtbL",
+                                  "https://triple.guide/restaurants/cb91e6cb-2e62-451e-a7b5-eb3cdec94337"
+                              ]
+                  },
+                  {
+                      "name":  "생일파티 케이크",
+                      "gu":  "권선구",
+                      "dong":  "금곡동",
+                      "addr":  "수원시 권선구 금곡로118번길 10 1층 (다른 목록: 금곡동 1085 비즈웍스)",
+                      "isCustomCake":  true,
+                      "status":  "확인 필요",
+                      "statusEvidence":  "당근 프로필 존재, 영업시간 11:30~20:00 및 선착순 30분 단위 예약제 문구 확인(날짜 불명)",
+                      "styles":  [
+                                     "lettering",
+                                     "character",
+                                     "flower"
+                                 ],
+                      "price":  null,
+                      "priceNote":  "정형 케이크는 네이버 예약 상품가, 커스텀은 카톡 상담 (가격 직접 확인 못함)",
+                      "priceDate":  null,
+                      "addons":  null,
+                      "sameDay":  null,
+                      "lead":  null,
+                      "hours":  "11:30~20:00",
+                      "closed":  "인스타 공지",
+                      "insta":  "saengilpati",
+                      "kakao":  "카카오톡 상담",
+                      "naver":  true,
+                      "note":  "정형 디자인은 네이버 예약, 커스텀은 카톡 상담",
+                      "src":  [
+                                  "https://www.daangn.com/kr/local-profile/"
+                              ]
+                  },
+                  {
+                      "name":  "이로케",
+                      "gu":  "권선구",
+                      "dong":  "호매실동",
+                      "addr":  "수원시 권선구 노림로 19 효원빌딩 1층 (기존 목록: 금곡동 1124 광일프라자 204호 - 상이)",
+                      "isCustomCake":  true,
+                      "status":  "확인 필요",
+                      "statusEvidence":  "다이닝코드 프로필(호매실 레터링케이크, 월요일 휴무) 후기 다수, 날짜 불명",
+                      "styles":  [
+                                     "lettering"
+                                 ],
+                      "price":  {
+                                    "mini":  [
+                                                 29000,
+                                                 null
+                                             ]
+                                },
+                      "priceNote":  "후기: \"내가 주문한 디자인의 도시락케이크 29,000원\"; 사이즈별 가격은 카카오톡 채널 안내, 디자인 추가금 제법 붙음",
+                      "priceDate":  null,
+                      "addons":  null,
+                      "sameDay":  null,
+                      "lead":  null,
+                      "hours":  "평일 11~19시 · 토 11~18시(기존 목록)",
+                      "closed":  "월요일",
+                      "insta":  null,
+                      "kakao":  null,
+                      "naver":  null,
+                      "note":  "호매실 마카롱·레터링케이크, 소금빵도 판매(레터링 전문 여부 확인 필요)",
+                      "src":  [
+                                  "https://www.diningcode.com/profile.php?rid=VwGKVwvlEfxv"
+                              ]
+                  },
+                  {
+                      "name":  "라라네케이크",
+                      "gu":  "권선구",
+                      "dong":  "호매실동",
+                      "addr":  "수원시 권선구 호매실동 (정확 주소 미확인; 인스타 소개 \"호매실 레터링케이크\")",
+                      "isCustomCake":  true,
+                      "status":  "운영중 확인",
+                      "statusEvidence":  "linktr에 네이버 예약 링크(timestamp 2026-01-28, 당일 주문 가능) 및 레터링/골드바/곰마들렌 케이크 주문서 운영 확인",
+                      "styles":  [
+                                     "lettering"
+                                 ],
+                      "price":  null,
+                      "priceNote":  "가격은 네이버 예약 페이지에서 확인 필요(미확인)",
+                      "priceDate":  null,
+                      "addons":  null,
+                      "sameDay":  true,
+                      "lead":  "네이버 예약 메뉴 한정 당일 가능",
+                      "hours":  null,
+                      "closed":  null,
+                      "insta":  "raranecake",
+                      "kakao":  "라라네케이크(수제케이크 전문점)",
+                      "naver":  true,
+                      "note":  "수제 레터링·골드바·곰마들렌 케이크, 네이버 예약+카톡 상담",
+                      "src":  [
+                                  "https://linktr.ee/raranecake"
+                              ],
+                      "naverPlaceUrl":  "https://map.naver.com/p/entry/place/1967836255"
+                  },
+                  {
+                      "name":  "디어뭉케이크",
+                      "gu":  "권선구",
+                      "dong":  "권선동",
+                      "addr":  "수원시 권선구 세권로166번길 9-19 1층",
+                      "isCustomCake":  true,
+                      "status":  "운영중 확인",
+                      "statusEvidence":  "네이버 블로그 후기 2025-05-26(주문제작 후기), 쓰레드 계정 활동, 다이닝코드 수원 레터링케이크 목록 등재",
+                      "styles":  [
+                                     "lettering"
+                                 ],
+                      "price":  null,
+                      "priceNote":  "가격 직접 확인 못함",
+                      "priceDate":  null,
+                      "addons":  null,
+                      "sameDay":  null,
+                      "lead":  null,
+                      "hours":  "화~일 12:00~19:00 (2025 블로그)",
+                      "closed":  null,
+                      "insta":  "dearmung_cake",
+                      "kakao":  null,
+                      "naver":  true,
+                      "note":  "1인 운영 주문제작 레터링케이크, 네이버 예약",
+                      "src":  [
+                                  "https://www.keyzard.cc/eun1197/nb/223872500858",
+                                  "https://www.threads.com/@dearmung_cake"
+                              ]
+                  },
+                  {
+                      "name":  "자두케이크",
+                      "gu":  "권선구",
+                      "dong":  "권선동",
+                      "addr":  "수원시 권선구 권선동 1194-10",
+                      "isCustomCake":  true,
+                      "status":  "확인 필요",
+                      "statusEvidence":  "다이닝코드 프로필 존재(레터링 가격 변동 표기), 카카오채널 존재, 날짜 불명",
+                      "styles":  [
+                                     "lettering"
+                                 ],
+                      "price":  {
+                                    "mini":  [
+                                                 17000,
+                                                 null
+                                             ]
+                                },
+                      "priceNote":  "후기: \"도시락케이크 기본디자인 17,000원, 주문 총액 28,000원\"; 레터링 가격 \"변동\"",
+                      "priceDate":  null,
+                      "addons":  null,
+                      "sameDay":  null,
+                      "lead":  null,
+                      "hours":  "다이닝코드 09:00-00:00 표기(신뢰 낮음)",
+                      "closed":  null,
+                      "insta":  null,
+                      "kakao":  "자두케이크",
+                      "naver":  null,
+                      "note":  "도시락·레터링 케이크, 카카오채널 주문",
+                      "src":  [
+                                  "https://www.diningcode.com/profile.php?rid=P5abvwFxfZpY",
+                                  "https://pf.kakao.com/_qMLtxj"
+                              ],
+                      "kakaoPlaceUrl":  "https://pf.kakao.com/_qMLtxj"
+                  },
+                  {
+                      "name":  "케이크닷",
+                      "gu":  "권선구",
+                      "dong":  "호매실동",
+                      "addr":  "수원시 권선구 칠보로125번길 16 한스빌리지-D",
+                      "isCustomCake":  true,
+                      "status":  "확인 필요",
+                      "statusEvidence":  "당근 프로필에서 주문제작 레터링케이크 샵, 카카오채널로만 문의 안내(날짜 불명)",
+                      "styles":  [
+                                     "lettering"
+                                 ],
+                      "price":  null,
+                      "priceNote":  "가격 확인 못함",
+                      "priceDate":  null,
+                      "addons":  null,
+                      "sameDay":  null,
+                      "lead":  null,
+                      "hours":  null,
+                      "closed":  null,
+                      "insta":  null,
+                      "kakao":  "케이크닷",
+                      "naver":  null,
+                      "note":  "주문제작 레터링케이크, 카카오채널 문의",
+                      "src":  [
+                                  "https://www.daangn.com/kr/local-profile/?in=%ED%83%91%EB%8F%99-4532\u0026search=%EC%BC%80%EC%9D%B4%ED%81%AC%EC%A0%84%EB%AC%B8"
+                              ]
+                  },
+                  {
+                      "name":  "롤리앤폴리",
+                      "gu":  "권선구",
+                      "dong":  "금곡동",
+                      "addr":  "수원시 권선구 금곡동 530",
+                      "isCustomCake":  true,
+                      "status":  "확인 필요",
+                      "statusEvidence":  "순위닷 목록(키워드: 수원떡케이크, 플라워케이크, 앙금플라워떡케이크, 케이크주문제작)만 확인",
+                      "styles":  [
+                                     "flower",
+                                     "rice"
+                                 ],
+                      "price":  null,
+                      "priceNote":  null,
+                      "priceDate":  null,
+                      "addons":  null,
+                      "sameDay":  null,
+                      "lead":  null,
+                      "hours":  null,
+                      "closed":  null,
+                      "insta":  null,
+                      "kakao":  null,
+                      "naver":  null,
+                      "note":  "앙금플라워·떡케이크",
+                      "src":  [
+                                  "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+                              ]
+                  },
+                  {
+                      "name":  "8월의토끼",
+                      "gu":  "권선구",
+                      "dong":  "금곡동",
+                      "addr":  "수원시 권선구 금곡동 1125-3 세종헤르메스오피스텔 105호",
+                      "isCustomCake":  true,
+                      "status":  "확인 필요",
+                      "statusEvidence":  "순위닷 목록 외 검색 결과 없음",
+                      "styles":  [
+                                     "lettering"
+                                 ],
+                      "price":  null,
+                      "priceNote":  null,
+                      "priceDate":  null,
+                      "addons":  null,
+                      "sameDay":  null,
+                      "lead":  "12:00~19:00",
+                      "hours":  "월요일",
+                      "closed":  null,
+                      "insta":  null,
+                      "kakao":  null,
+                      "naver":  "레터링 케이크(목록 기준)",
+                      "note":  [
+                                   "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+                               ],
+                      "src":  [
+                                  null
+                              ]
+                  },
+                  {
+                      "name":  "에크루케이크",
+                      "gu":  "권선구",
+                      "dong":  "호매실동",
+                      "addr":  "수원시 권선구 호매실동 1342-4 1층 102호",
+                      "isCustomCake":  true,
+                      "status":  "확인 필요",
+                      "statusEvidence":  "순위닷 목록(수원포토케이크, 호매실 레터링케이크 키워드)만 확인",
+                      "styles":  [
+                                     "photo",
+                                     "lettering"
+                                 ],
+                      "price":  null,
+                      "priceNote":  null,
+                      "priceDate":  null,
+                      "addons":  null,
+                      "sameDay":  null,
+                      "lead":  "11:00~19:00",
+                      "hours":  "인스타 공지",
+                      "closed":  null,
+                      "insta":  null,
+                      "kakao":  null,
+                      "naver":  "포토 케이크",
+                      "note":  [
+                                   "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+                               ],
+                      "src":  [
+                                  null
+                              ]
+                  },
+                  {
+                      "name":  "베리굿디저트",
+                      "gu":  "권선구",
+                      "dong":  "호매실동",
+                      "addr":  "수원시 권선구 호매실동 78-6 1층",
+                      "isCustomCake":  null,
+                      "status":  "확인 필요",
+                      "statusEvidence":  "순위닷 목록 외 증거 없음, 주력(디저트) 불명",
+                      "styles":  [
+
+                                 ],
+                      "price":  null,
+                      "priceNote":  null,
+                      "priceDate":  null,
+                      "addons":  null,
+                      "sameDay":  null,
+                      "lead":  null,
+                      "hours":  "12:00~18:00",
+                      "closed":  "일·월요일",
+                      "insta":  null,
+                      "kakao":  null,
+                      "naver":  null,
+                      "note":  "주문제작 케이크(목록 기준), 커스텀 전문 여부 불명",
+                      "src":  [
+                                  "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+                              ],
+                      "dropReason":  "커스텀케이크 전문 근거 없음"
+                  },
+                  {
+                      "name":  "미소플라워케이크",
+                      "gu":  "권선구",
+                      "dong":  "호매실동",
+                      "addr":  "수원시 권선구 호매실동 1412-6",
+                      "isCustomCake":  true,
+                      "status":  "확인 필요",
+                      "statusEvidence":  "순위닷 계열 목록에서 앙금플라워·떡케이크 취급으로 표기, 다른 증거 없음",
+                      "styles":  [
+                                     "flower",
+                                     "rice"
+                                 ],
+                      "price":  null,
+                      "priceNote":  null,
+                      "priceDate":  null,
+                      "addons":  null,
+                      "sameDay":  null,
+                      "lead":  null,
+                      "hours":  null,
+                      "closed":  null,
+                      "insta":  null,
+                      "kakao":  null,
+                      "naver":  null,
+                      "note":  "앙금플라워·떡케이크(목록 기준)",
+                      "src":  [
+                                  "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+                              ]
+                  },
+                  {
+                      "name":  "잇트플라워",
+                      "gu":  "권선구",
+                      "dong":  "권선동",
+                      "addr":  "수원시 권선구 권선동 1268-1",
+                      "isCustomCake":  null,
+                      "status":  "확인 필요",
+                      "statusEvidence":  "순위닷 목록 외 증거 없음, 플라워 케이크·클래스(클래스 중심 가능성)",
+                      "styles":  [
+                                     "flower"
+                                 ],
+                      "price":  null,
+                      "priceNote":  null,
+                      "priceDate":  null,
+                      "addons":  null,
+                      "sameDay":  null,
+                      "lead":  null,
+                      "hours":  "공휴일",
+                      "closed":  null,
+                      "insta":  null,
+                      "kakao":  null,
+                      "naver":  "플라워 케이크·클래스",
+                      "note":  [
+                                   "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+                               ],
+                      "src":  [
+                                  null
+                              ]
+                  },
+                  {
+                      "name":  "우주케이크",
+                      "gu":  "권선구",
+                      "dong":  "권선동",
+                      "addr":  "수원시 권선구 권선동 999-19",
+                      "isCustomCake":  false,
+                      "status":  "확인 필요",
+                      "statusEvidence":  "순위닷 목록 외 증거 없음. 마카롱·주문 케이크로 소개되어 커스텀 전문 근거 부족",
+                      "styles":  [
+
+                                 ],
+                      "price":  null,
+                      "priceNote":  null,
+                      "priceDate":  null,
+                      "addons":  null,
+                      "sameDay":  null,
+                      "lead":  null,
+                      "hours":  "11:00~21:00",
+                      "closed":  "일요일",
+                      "insta":  null,
+                      "kakao":  null,
+                      "naver":  null,
+                      "note":  "마카롱·주문 케이크",
+                      "src":  [
+                                  "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+                              ],
+                      "dropReason":  "마카롱 병행, 커스텀 전문 근거 없음"
+                  },
+                  {
+                      "name":  "브리앙뜨과자점",
+                      "gu":  "권선구",
+                      "dong":  "세류동",
+                      "addr":  "수원시 권선구 세류동 1089-19",
+                      "isCustomCake":  false,
+                      "status":  "확인 필요",
+                      "statusEvidence":  "빵집으로 소개, 커스텀 전문 아님",
+                      "styles":  [
+
+                                 ],
+                      "price":  null,
+                      "priceNote":  null,
+                      "priceDate":  null,
+                      "addons":  null,
+                      "sameDay":  null,
+                      "lead":  null,
+                      "hours":  null,
+                      "closed":  null,
+                      "insta":  null,
+                      "kakao":  null,
+                      "naver":  null,
+                      "note":  "일반 빵집",
+                      "src":  [
+                                  "http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"
+                              ],
+                      "dropReason":  "일반 제과점"
+                  }
+              ]
+}

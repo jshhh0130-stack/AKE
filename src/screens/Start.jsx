@@ -47,7 +47,7 @@ export function RoleSelect() {
           <span className="lbl">FOR OWNER</span>
           <h3>사장님용</h3>
           <p>가게 등록하고<br />주문 받기</p>
-          <ul><li>✓ 3분이면 가게 등록</li><li>✓ 가격표 한 번만 입력</li><li>✓ 주문은 승인만 누르면 끝</li></ul>
+          <ul><li>✓ 3분이면 가게 등록</li><li>✓ 주문이 실시간 도착</li><li>✓ 매출·장부·근무기록</li></ul>
           <div className="art" dangerouslySetInnerHTML={{ __html: storeArt }} />
         </button>
         <button className="pick cust" onClick={() => choose('customer')}>
@@ -55,7 +55,7 @@ export function RoleSelect() {
           <span className="lbl">FOR CUSTOMER</span>
           <h3>고객용</h3>
           <p>내 주변 케이크<br />찾고 주문하기</p>
-          <ul><li>✓ 사진 한 장으로 추천</li><li>✓ 가격 먼저 확인</li><li>✓ 시안 미리보기</li></ul>
+          <ul><li>✓ 사진·말로 가게 찾기</li><li>✓ 가격 먼저 확인</li><li>✓ 사장님과 바로 대화</li></ul>
           <div className="art" dangerouslySetInnerHTML={{ __html: cake }} />
         </button>
       </div>
@@ -106,10 +106,10 @@ function art5() {
 }
 const SLIDES = [
   { art: art1, t: '내 위치를 정해요', d: '지금 위치나 동네를 고르면 주변 커스텀·레터링 케이크 가게가 지도에 떠요.' },
-  { art: art2, t: '원하는 케이크 사진을 올려요', d: '사진 속 색·모양·스타일을 분석해서 비슷한 케이크를 만드는 가게를 골라 드려요.' },
+  { art: art2, t: '사진이나 말로 찾아요', d: '원하는 케이크 사진을 올리거나 “영통 4만원대 캐릭터 케이크”처럼 말하면 딱 맞는 가게를 골라 드려요.' },
   { art: art3, t: '가게를 한눈에 비교해요', d: '거리, 할 수 있는 스타일, 예상 가격, 예시 디자인을 카드 하나로 비교해요.' },
   { art: art4, t: '고르면 시안과 가격이 바로', d: '크기·맛·문구·장식을 고를 때마다 케이크 시안이 그려지고 예상 가격이 바뀌어요.' },
-  { art: art5, t: '사장님이 확인하면 끝', d: '주문서를 보내면 사장님은 승인만 누르면 돼요. 가게 규칙 안이면 바로 확정!' },
+  { art: art5, t: '사장님과 대화하며 확정', d: '주문서를 보내면 사장님이 승인하고, 대화방에서 시안을 보며 고칠 곳을 바로 이야기해요. 소식은 알림으로 와요.' },
 ];
 
 export function Guide() {

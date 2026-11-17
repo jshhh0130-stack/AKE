@@ -96,12 +96,33 @@ export async function aiParseOrder(key, sentence) {
   });
 }
 
+// 2-1) 말로 찾기: "영통 근처 4만원대 캐릭터 케이크" → 찾기 조건
+const FIND_SCHEMA = {
+  type: 'object', additionalProperties: false,
+  required: ['styles', 'budget_min', 'budget_max', 'gu', 'place', 'same_day', 'summary_ko'],
+  properties: {
+    styles: { type: 'array', items: { type: 'string', enum: ['lettering', 'photo', 'character', 'flower', 'rice', '3d', 'tiered'] } },
+    budget_min: { type: 'integer' }, budget_max: { type: 'integer' },
+    gu: { type: 'string', enum: ['영통구', '권선구', '팔달구', '장안구', 'none'] },
+    place: { type: 'string' },
+    same_day: { type: 'boolean' },
+    summary_ko: { type: 'string' },
+  },
+};
+export async function aiParseFind(key, sentence) {
+  return askClaude({
+    key, schema: FIND_SCHEMA,
+    system: '너는 수원시 커스텀 케이크 가게 찾기 도우미야. 손님의 말을 찾기 조건으로 바꿔. styles: 레터링=lettering, 사진=photo, 그림·캐릭터(산리오 등)=character, 꽃·앙금=flower, 떡케이크=rice, 입체·피규어=3d, 2단=tiered. 예산은 원 단위(없으면 0, 0). "4만원대"는 40000~49999. gu는 수원의 구 이름을 말했을 때만, 아니면 none. place는 동네·역 이름(없으면 빈 문자열). same_day는 당일·오늘·급함일 때 true. summary_ko는 "이렇게 이해했어요: …" 형태의 존댓말 한 문장.',
+    content: [{ type: 'text', text: sentence }],
+  });
+}
+
 // 3) 가격표 사진 → 가격표
 const MENU_SCHEMA = {
   type: 'object', additionalProperties: false,
-  required: ['dosirak', 'mini', 'h1', 'h2', 'h3', 'heart', 'square', 'addons', 'notes'],
+  required: ['mini', 'h1', 'h2', 'h3', 'heart', 'square', 'addons', 'notes'],
   properties: {
-    dosirak: { type: 'integer' }, mini: { type: 'integer' }, h1: { type: 'integer' }, h2: { type: 'integer' }, h3: { type: 'integer' },
+    mini: { type: 'integer' }, h1: { type: 'integer' }, h2: { type: 'integer' }, h3: { type: 'integer' },
     heart: { type: 'integer' }, square: { type: 'integer' },
     addons: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['name', 'price'], properties: { name: { type: 'string' }, price: { type: 'integer' } } } },
     notes: { type: 'string' },
@@ -110,7 +131,7 @@ const MENU_SCHEMA = {
 export async function aiReadMenu(key, dataURL) {
   return askClaude({
     key, effort: 'medium', schema: MENU_SCHEMA,
-    system: '케이크 가게 가격표 사진을 읽어 숫자로 정리해. 사이즈: 도시락(10cm 안팎), 미니(12~14cm), 1호(15cm), 2호(18cm), 3호(21cm). 표에 없는 값은 0. 하트·사각 모양 추가금이 있으면 heart·square에. 나머지 추가 옵션은 addons에 원 단위 정수로.',
+    system: '케이크 가게 가격표 사진을 읽어 숫자로 정리해. 사이즈: 미니(10~13cm, 도시락 크기 포함), 1호(15cm), 2호(18cm), 3호(21cm). 표에 없는 값은 0. 하트·사각 모양 추가금이 있으면 heart·square에. 나머지 추가 옵션은 addons에 원 단위 정수로.',
     content: [b64(dataURL), { type: 'text', text: '이 가격표를 정리해 주세요.' }],
   });
 }
@@ -135,7 +156,7 @@ export function ruleParseOrder(text, { validDate } = {}) {
   const t = text.trim();
   const got = {}, said = [], unsure = [];
   let m;
-  if (/도시락/.test(t)) got.size = 'dosirak'; else if (/미니/.test(t)) got.size = 'mini'; else if ((m = t.match(/([1-3])\s*호/))) got.size = 'h' + m[1];
+  if (/도시락|미니/.test(t)) got.size = 'mini'; else if ((m = t.match(/([1-3])\s*호/))) got.size = 'h' + m[1];
   if (/하트/.test(t) && !/하트\s*도트/.test(t)) got.shape = 'heart'; else if (/사각|네모/.test(t)) got.shape = 'square'; else if (/원형|동그/.test(t)) got.shape = 'round';
   const cmap = [['hotpink', /진핑크|진한\s*분홍|핫핑크/], ['pink', /분홍|핑크/], ['lavender', /라벤더|보라/], ['sky', /하늘|파랑|블루|스카이/], ['butter', /노랑|옐로|버터/], ['mint', /민트|초록|그린/], ['peach', /피치|살구|주황/], ['navy', /네이비|남색/], ['cocoa', /코코아|갈색|브라운/], ['white', /흰|화이트|하얀/]];
   for (const [id, re] of cmap) if (re.test(t)) { got.cream = id; break; }
@@ -200,7 +221,7 @@ export function realisticImageURL(o, seed = 1) {
   const cream = CREAMS.find((c) => c.id === o.cream)?.name || 'white';
   const en = { white: 'white', 베이비핑크: 'baby pink', 피치: 'peach', 버터옐로: 'butter yellow', 민트: 'mint', 스카이: 'sky blue', 라벤더: 'lavender', 코코아: 'cocoa brown', 진핑크: 'hot pink', 네이비: 'navy', 화이트: 'white' }[cream] || 'white';
   const shape = { round: 'round', heart: 'heart-shaped', square: 'square' }[o.shape || 'round'];
-  const size = o.size === 'dosirak' ? 'small bento lunchbox cake in a kraft paper box' : o.size === 'mini' ? 'small mini cake' : 'cake';
+  const size = o.size === 'mini' ? 'small mini cake' : 'cake';
   const design = { simple: 'simple piped buttercream border', vintage: 'vintage lambeth frills and garlands', heartdots: 'small piped hearts on the side', flower: 'piped buttercream flowers', drip: 'chocolate ganache drip', character: 'a cute hand-piped bear drawing on top', photo: 'an edible photo print on top' }[o.design || 'simple'];
   const tops = (o.toppings || []).map((t) => ({ cherry: 'cherries', strawberry: 'fresh strawberries', sprinkle: 'colorful sprinkles', pearl: 'sugar pearls', ribbon: 'a satin ribbon', freshflower: 'edible fresh flowers', macaron: 'macarons' }[t])).filter(Boolean);
   const prompt = `Korean lettering cake bakery product photo, ${shape} ${size}, smooth ${en} buttercream, ${design}${tops.length ? ', decorated with ' + tops.join(', ') : ''}, 45 degree angle, soft natural light, pastel background, plain top surface without any text, high detail`;

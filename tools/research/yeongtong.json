@@ -1,0 +1,217 @@
+{
+  "gu": "영통구",
+  "checked": "2026-11-17",
+  "limits": "웹검색 도구가 미국 한정이고 네이버·인스타·당근 직접 열람이 막혀(403/빈 페이지) 다이닝코드 2곳과 순위닷 목록, 당근 검색 요약만 직접 확인함. 나머지는 '확인 필요'.",
+  "shops": [
+    {
+      "name": "앤케이커리", "gu": "영통구", "dong": "이의동", "addr": "수원시 영통구 대학1로8번길 16-2",
+      "isCustomCake": true, "status": "확인 필요",
+      "statusEvidence": "당근 비즈프로필 검색요약에서 가격·후기 확인(게시 날짜는 못 봄). 프로필 직접 열기는 403.",
+      "styles": ["lettering"],
+      "price": {"mini": [33000, null], "h1": [43000, null], "h2": null, "h3": null},
+      "priceNote": "도시락케이크 20,000원~(1인용 10cm, 바닐라or쿠앤크크림 선택) · 미니 33,000원~ · 1호 43,000원 (흰배경에 간단한레터링만 기본금액시며 디자인에 따라 가격이 달라집니다)",
+      "priceDate": null, "addons": null, "sameDay": null, "lead": null, "hours": null, "closed": "일요일(기존 데이터)",
+      "insta": "ann.cakery", "kakao": null, "naver": null, "naverPlaceUrl": null, "kakaoPlaceUrl": null,
+      "note": "레터링 위주 주문제작, 머랭쿠키 답례품도 판매",
+      "src": ["https://daangn.com/kr/local-profile/%EC%95%A4%EC%BC%80%EC%9D%B4%EC%BB%A4%EB%A6%AC-v8rfnc63gcmd/"]
+    },
+    {
+      "name": "제이델링 수원점", "gu": "영통구", "dong": "원천동", "addr": "수원시 영통구 월드컵로97번길 34 (원천동 616-3)",
+      "isCustomCake": true, "status": "운영중 확인",
+      "statusEvidence": "다이닝코드 프로필(2026-11-17 열람)에 영업 중 표시, 리뷰 2025-08-04 외 블로그 후기 8~10월(연도 미표시)",
+      "styles": ["lettering", "photo", "3d"],
+      "price": {"mini": null, "h1": [43000, null], "h2": [53000, null], "h3": null},
+      "priceNote": "페이지 표기: 포토케이크 40,000원 · 숫자케이크 54,000원 · 반전케이크(용돈) 60,000원 · 풍선케이크 60,000원 · 볼링공케이크 55,000원. 블로그: 딸기폭탄 1호 43,000/2호 53,000, 반전케이크 2호 65,000. 레터링케이크는 가격 '변동' 표기. (1호·2호 값은 레터링이 아닌 딸기폭탄 시그니처 기준이라 레터링 기본가로 쓰면 안 됨)",
+      "priceDate": "2025", "addons": null, "sameDay": null, "lead": null,
+      "hours": "매일 11:00~22:00", "closed": null,
+      "insta": null, "kakao": "카카오톡 채널(예약)", "naver": null, "naverPlaceUrl": null, "kakaoPlaceUrl": null,
+      "note": "레터링·반전(용돈)·숫자·포토·풍선 케이크, 무인 픽업, 과일 시그니처가 강점",
+      "src": ["https://www.diningcode.com/profile.php?rid=4CJmmaWGnQk2"]
+    },
+    {
+      "name": "yourowncake (유어오운케이크)", "gu": "영통구", "dong": "영통동", "addr": "수원시 영통구 반달로35번길 30 2층 223호 (영통동 1012-1)",
+      "isCustomCake": true, "status": "운영중 확인",
+      "statusEvidence": "다이닝코드 프로필(2026-11-17 열람) 영업 중, 블로그 후기 2~3월·7월·8월 29일(연도 미표시) 및 다음 주 영업시간 게시",
+      "styles": ["lettering", "photo", "flower", "character"],
+      "price": {"mini": [32000, null], "h1": null, "h2": null, "h3": null},
+      "priceNote": "블로그 후기 기준: 미니 12cm 기본 32,000원(디자인 추가 후 41,000원) · 두입케이크 33,000원 · 한입케이크 강아지 디자인 20,000원(디자인 추가 3,000원 포함). 페이지 자체에는 가격 없음",
+      "priceDate": null, "addons": ["디자인 추가 3,000원(한입 케이크 후기), 미니 케이크 디자인 추가 약 9,000원(32,000→41,000, 후기)"],
+      "sameDay": true, "lead": "금요일 당일 케이크 있음(후기)",
+      "hours": "수 12:00~19:00 · 목 12:00~19:00 · 금 11:00~20:00 · 토 11:00~16:30 (게시 주간 기준)", "closed": "일·월요일(블로그)",
+      "insta": "your_own_cake", "kakao": "유어오운케이크(pf.kakao.com/_sxhefG)", "naver": null, "naverPlaceUrl": null, "kakaoPlaceUrl": null,
+      "note": "도시락·미니·1·2호, 포토·생화·롤케이크, 카톡 주문서, 무인픽업, 귀여운 디자인 케이크",
+      "src": ["https://www.diningcode.com/profile.php?rid=8DxnqhpSB77d"]
+    },
+    {
+      "name": "어게인케이크", "gu": "영통구", "dong": "원천동", "addr": "수원시 영통구 원천동 589 중흥S클래스 어뮤즈스퀘어 B2 191호",
+      "isCustomCake": true, "status": "확인 필요",
+      "statusEvidence": "순위닷 목록에 시간 표기(평일 12시~, 토 12시~)가 있으나 날짜 불명, 검색으로 별도 근거 못 찾음",
+      "styles": ["lettering"], "price": null, "priceNote": null, "priceDate": null, "addons": null,
+      "sameDay": null, "lead": null, "hours": "평일 12:00~(종료시각 표기 불명확) · 토 12:00~", "closed": null,
+      "insta": null, "kakao": null, "naver": null, "naverPlaceUrl": null, "kakaoPlaceUrl": null,
+      "note": "주문제작·레터링(목록 설명)",
+      "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"]
+    },
+    {
+      "name": "니나케이커리", "gu": "영통구", "dong": "신동", "addr": "수원시 영통구 신동 938-1 1층",
+      "isCustomCake": true, "status": "확인 필요", "statusEvidence": "순위닷 목록 등재만 확인(날짜 불명)",
+      "styles": ["lettering"], "price": null, "priceNote": null, "priceDate": null, "addons": null,
+      "sameDay": null, "lead": null, "hours": "평일 11:00~, 토 11:00~ (종료시각 표기 깨짐)", "closed": null,
+      "insta": null, "kakao": null, "naver": null, "naverPlaceUrl": null, "kakaoPlaceUrl": null,
+      "note": "주문제작·레터링(목록 설명)",
+      "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"]
+    },
+    {
+      "name": "오사랑케이크", "gu": "영통구", "dong": "신동", "addr": "수원시 영통구 신동 920-5",
+      "isCustomCake": null, "status": "확인 필요", "statusEvidence": "순위닷 목록 등재만 확인(날짜 불명)",
+      "styles": ["flower"], "price": null, "priceNote": null, "priceDate": null, "addons": null,
+      "sameDay": null, "lead": null, "hours": "평일·토 11:00~20:00 · 일 11:00~18:00", "closed": "월요일",
+      "insta": null, "kakao": null, "naver": null, "naverPlaceUrl": null, "kakaoPlaceUrl": null,
+      "note": "생크림·플라워 케이크(주력이 주문제작인지 미확인)",
+      "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"]
+    },
+    {
+      "name": "요네케이크", "gu": "영통구", "dong": "신동", "addr": "수원시 영통구 신동 338 117호",
+      "isCustomCake": null, "status": "확인 필요", "statusEvidence": "순위닷 목록 등재만 확인(날짜 불명)",
+      "styles": ["lettering"], "price": null, "priceNote": null, "priceDate": null, "addons": null,
+      "sameDay": null, "lead": null,
+      "hours": "화~금 10:30~17:00 · 토 10:30~14:00 · 월 10:30~14:00(예약케이크 휴무 표기) · 평일 17시 이후/토 14시 이후 사물함 픽업", "closed": "일요일",
+      "insta": null, "kakao": null, "naver": null, "naverPlaceUrl": null, "kakaoPlaceUrl": null,
+      "note": "사물함(락커) 픽업 운영, 레터링(기존 데이터)",
+      "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"]
+    },
+    {
+      "name": "버니케이커리", "gu": "영통구", "dong": "매탄동", "addr": "수원시 영통구 매탄동 1211 상가동 101호",
+      "isCustomCake": null, "status": "확인 필요", "statusEvidence": "순위닷 목록 등재만 확인, 웹검색에서는 아무것도 안 나옴",
+      "styles": ["lettering"], "price": null, "priceNote": null, "priceDate": null, "addons": null,
+      "sameDay": null, "lead": null, "hours": null, "closed": null,
+      "insta": null, "kakao": null, "naver": null, "naverPlaceUrl": null, "kakaoPlaceUrl": null,
+      "note": "레터링·도시락 케이크(기존 데이터, 미확인)",
+      "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"]
+    },
+    {
+      "name": "로엔느케이크", "gu": "영통구", "dong": "망포동", "addr": "수원시 영통구 망포동 13-2 1층",
+      "isCustomCake": true, "status": "확인 필요", "statusEvidence": "Threads 계정(로엔느 케이크_2015)이 앙금플라워 숫자케이크 소개, 게시일은 못 봄",
+      "styles": ["flower", "rice"], "price": null, "priceNote": null, "priceDate": null, "addons": null,
+      "sameDay": null, "lead": null, "hours": null, "closed": null,
+      "insta": "roenne_cake", "kakao": null, "naver": null, "naverPlaceUrl": null, "kakaoPlaceUrl": null,
+      "note": "앙금플라워 떡케이크·숫자케이크(환갑·칠순·생일), 클래스",
+      "src": ["https://www.threads.com/@roenne_cake"]
+    },
+    {
+      "name": "소롱플라워케이크", "gu": "영통구", "dong": "망포동", "addr": "수원시 영통구 망포동 693",
+      "isCustomCake": true, "status": "확인 필요", "statusEvidence": "순위닷 목록 등재만 확인",
+      "styles": ["flower", "character"], "price": null, "priceNote": null, "priceDate": null, "addons": null,
+      "sameDay": null, "lead": null,
+      "hours": "월 12:00~19:00 · 화·수 10:00~16:00 · 목 10:00~19:00 · 금 10:00~20:00 · 토·일 10:00~12:00(목록 표기, 불규칙)", "closed": null,
+      "insta": null, "kakao": null, "naver": null, "naverPlaceUrl": null, "kakaoPlaceUrl": null,
+      "note": "플라워 케이크 전문(목록 설명)",
+      "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"]
+    },
+    {
+      "name": "라니꽃떡", "gu": "영통구", "dong": "망포동", "addr": "수원시 영통구 망포동 488",
+      "isCustomCake": true, "status": "확인 필요", "statusEvidence": "순위닷 목록 등재만 확인(영업시간 00~24시 표기는 신뢰 어려움)",
+      "styles": ["rice", "flower"], "price": null, "priceNote": null, "priceDate": null, "addons": null,
+      "sameDay": null, "lead": null, "hours": null, "closed": "유동적(불규칙)",
+      "insta": null, "kakao": null, "naver": null, "naverPlaceUrl": null, "kakaoPlaceUrl": null,
+      "note": "꽃 떡케이크",
+      "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"]
+    },
+    {
+      "name": "구우움", "gu": "영통구", "dong": "이의동", "addr": "수원시 영통구 이의동 1258 A동 112호",
+      "isCustomCake": false, "status": "확인 필요",
+      "statusEvidence": "순위닷 목록 등재만 확인. 마카롱·도시락 케이크 중심이라 주문제작 전문 아님으로 판단(미확정)",
+      "styles": [], "price": null, "priceNote": null, "priceDate": null, "addons": null,
+      "sameDay": null, "lead": null, "hours": "월~금 11:00~20:00 · 토 12:00~18:00", "closed": "일요일, 토요일 격주",
+      "insta": null, "kakao": null, "naver": null, "naverPlaceUrl": null, "kakaoPlaceUrl": null,
+      "note": "마카롱 중심 + 도시락 케이크 (제외 권장)",
+      "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"]
+    },
+    {
+      "name": "루베이크", "gu": "영통구", "dong": "하동", "addr": "수원시 영통구 하동 987",
+      "isCustomCake": null, "status": "확인 필요", "statusEvidence": "순위닷 목록 등재만 확인",
+      "styles": ["lettering"], "price": null, "priceNote": null, "priceDate": null, "addons": null,
+      "sameDay": null, "lead": null, "hours": "10:00~20:00(예약 가능 시간)", "closed": null,
+      "insta": null, "kakao": null, "naver": null, "naverPlaceUrl": null, "kakaoPlaceUrl": null,
+      "note": "레터링·디저트(주력 불명)",
+      "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"]
+    },
+    {
+      "name": "힙드케이크", "gu": "영통구", "dong": "매탄동", "addr": "수원시 영통구 중부대로 274 1층 (번지 재확인 필요)",
+      "isCustomCake": true, "status": "운영중 확인",
+      "statusEvidence": "팀 리서치 리포트: 2026-11-13 직접 주문 체험(이번 조사에서 웹으로는 못 찾음)",
+      "styles": ["lettering"],
+      "price": null,
+      "priceNote": "사이즈: 도시락 10~11cm · 미니 13~14cm · 1호 16~17cm · 2호 19~20cm (기존 데이터 인용, 기본가 숫자 없음)",
+      "priceDate": "2026-11-13",
+      "addons": ["초코 시트 +3,000", "하트 +3,000", "겉크림 색 변경 2,000~5,000", "속크림 맛 변경 +2,000~5,000", "크림데코·스프링클 각 +1,000", "색상 4가지 초과 1가지당 +500"],
+      "sameDay": null, "lead": null, "hours": "유인 픽업 11~19시 · 무인 픽업 24시간", "closed": null,
+      "insta": null, "kakao": "카카오톡 채널", "naver": null, "naverPlaceUrl": null, "kakaoPlaceUrl": null,
+      "note": "카톡 자동응답으로 메뉴·가격 안내 후 주문서 작성",
+      "src": ["팀 리서치 리포트(2026.11.13 직접 주문 체험)"]
+    },
+    {
+      "name": "스위트키친", "gu": "영통구", "dong": "영통동", "addr": "수원시 영통구 영통동 1012-1",
+      "isCustomCake": null, "status": "확인 필요", "statusEvidence": "순위닷 목록 등재만 확인. yourowncake와 같은 지번(1012-1)이라 이름이 바뀌었거나 같은 건물 입점일 가능성(확인 필요)",
+      "styles": [], "price": null, "priceNote": null, "priceDate": null, "addons": null,
+      "sameDay": null, "lead": null, "hours": "매일 12:00~21:00(소진 시 마감)", "closed": "월요일",
+      "insta": null, "kakao": null, "naver": null, "naverPlaceUrl": null, "kakaoPlaceUrl": null,
+      "note": "신규 후보, 주문제작 여부 미확인",
+      "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"]
+    },
+    {
+      "name": "루니제과", "gu": "영통구", "dong": "원천동", "addr": "수원시 영통구 원천동 579",
+      "isCustomCake": null, "status": "확인 필요", "statusEvidence": "순위닷 목록 등재만 확인",
+      "styles": [], "price": null, "priceNote": null, "priceDate": null, "addons": null,
+      "sameDay": null, "lead": null, "hours": null, "closed": null,
+      "insta": null, "kakao": null, "naver": null, "naverPlaceUrl": null, "kakaoPlaceUrl": null,
+      "note": "신규 후보, 제과점일 수 있어 주문제작 여부 미확인",
+      "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"]
+    },
+    {
+      "name": "아뜰리에 율", "gu": "영통구", "dong": "하동", "addr": "수원시 영통구 하동 1016-1 업무시설 A동 715호",
+      "isCustomCake": null, "status": "확인 필요", "statusEvidence": "순위닷 목록 등재만 확인",
+      "styles": [], "price": null, "priceNote": null, "priceDate": null, "addons": null,
+      "sameDay": null, "lead": null, "hours": null, "closed": null,
+      "insta": null, "kakao": null, "naver": null, "naverPlaceUrl": null, "kakaoPlaceUrl": null,
+      "note": "신규 후보, 주문제작 여부 미확인",
+      "src": ["http://www.soonwidot.co.kr/rank/search.php?stx=%EC%88%98%EC%9B%90+%EC%A3%BC%EB%AC%B8%EC%A0%9C%EC%9E%91%EC%BC%80%EC%9D%B4%ED%81%AC"]
+    },
+    {
+      "name": "케이크얍", "gu": "영통구", "dong": "망포동", "addr": "망포역 1번 출구 도보 3분 (Threads 소개, 상세 주소 미확인)",
+      "isCustomCake": null, "status": "확인 필요", "statusEvidence": "Threads 프로필 제목·소개만 확인(날짜 못 봄). 매장에서 케이크 고르면 레터링해 주는 방식이라 주문제작 전문인지 불명",
+      "styles": ["lettering"], "price": null, "priceNote": null, "priceDate": null, "addons": null,
+      "sameDay": true, "lead": "매장 케이크 즉석 레터링(Threads 소개)", "hours": null, "closed": null,
+      "insta": "cake_yap(Threads 계정)", "kakao": null, "naver": null, "naverPlaceUrl": null, "kakaoPlaceUrl": null,
+      "note": "망포역 근처, 즉석 레터링·레터링케이크 배달",
+      "src": ["https://www.threads.com/@cake_yap"]
+    },
+    {
+      "name": "카페 원모어 2호점", "gu": "영통구", "dong": "영통동", "addr": null,
+      "isCustomCake": null, "status": "확인 필요", "statusEvidence": "다이닝코드 검색요약에서 영통 레터링케이크로 표기, 카톡 예약·영업일 기준 최소 3일 전 예약이라 적혔다는 요약만 확인(프로필 본문은 못 열었음)",
+      "styles": ["lettering"], "price": null, "priceNote": null, "priceDate": null, "addons": null,
+      "sameDay": false, "lead": "영업일 기준 최소 3일 전 예약(검색요약)", "hours": null, "closed": null,
+      "insta": null, "kakao": "카카오톡 채널", "naver": null, "naverPlaceUrl": null, "kakaoPlaceUrl": null,
+      "note": "카페 겸업, 레터링·그림 케이크 호평(카페라 주문제작 전문인지 판단 보류)",
+      "src": ["https://www.diningcode.com/profile.php?rid=t1ilNhcz48sh"]
+    },
+    {
+      "name": "라띠케이크", "gu": "영통구", "dong": "신동", "addr": "신동카페거리 일대(상세 주소 미확인)",
+      "isCustomCake": true, "status": "확인 필요", "statusEvidence": "다이닝코드 검색요약: 레터링 주문제작 후기 다수, 날짜는 못 봄",
+      "styles": ["lettering"], "price": null, "priceNote": null, "priceDate": null, "addons": null,
+      "sameDay": null, "lead": null, "hours": null, "closed": null,
+      "insta": null, "kakao": null, "naver": null, "naverPlaceUrl": null, "kakaoPlaceUrl": null,
+      "note": "신규 후보, 신동카페거리 레터링 주문제작",
+      "src": ["https://www.diningcode.com/profile.php?rid=ql4q6siSjlRA"]
+    },
+    {
+      "name": "홀린케이크", "gu": "영통구", "dong": "영통동", "addr": "수원시 영통구 반달로35번길 30",
+      "isCustomCake": null, "status": "폐업 의심", "statusEvidence": "검색 요약에 '운영 여부 확인 안 됨'. yourowncake와 같은 도로명 주소라 이름 변경/이전 가능성",
+      "styles": [], "price": null, "priceNote": null, "priceDate": null, "addons": null,
+      "sameDay": null, "lead": "예약 주문 방식(검색요약)", "hours": null, "closed": null,
+      "insta": null, "kakao": null, "naver": null, "naverPlaceUrl": null, "kakaoPlaceUrl": null,
+      "note": "yourowncake와 중복 가능성, 지도에는 넣지 않기",
+      "src": ["https://www.siksinhot.com/P/1269484"]
+    }
+  ]
+}

@@ -80,7 +80,7 @@ export function MenuEditor({ shop, set, compact = false }) {
       const r = await aiReadMenu(st.settings.claudeKey, toDataURL(el, 1200, 0.85));
       const menu = JSON.parse(JSON.stringify(m));
       let n = 0;
-      ['dosirak', 'mini', 'h1', 'h2', 'h3'].forEach((k) => { if (r[k] > 0) { menu.sizes[k] = r[k]; n++; } });
+      ['mini', 'h1', 'h2', 'h3'].forEach((k) => { if (r[k] > 0) { menu.sizes[k] = r[k]; n++; } });
       if (r.heart > 0) { menu.shapes.heart = r.heart; n++; }
       if (r.square > 0) { menu.shapes.square = r.square; n++; }
       set({ menu });
