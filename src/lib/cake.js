@@ -107,8 +107,8 @@ export function cakeSVG(o = {}, opt = {}) {
     <clipPath id="${id}top"><use href="#${id}p"/></clipPath>
   </defs>`;
 
-  if (opt.bg !== false) s += `<rect width="300" height="250" fill="url(#${id}bg)"/>`;
-  if (opt.fancy) {
+  if (opt.bg !== false) s += `<rect width="300" height="250" fill="#FBF6EF"/>`; // 크림 단색 바탕
+  if (opt.fancy && opt.sparkle) { // 반짝이 장식은 따로 켤 때만 (기본은 꺼서 깔끔하게)
     [[40, 48, 7], [262, 60, 6], [268, 178, 5], [30, 170, 5], [232, 30, 4], [70, 205, 4]].forEach(([x, y, z]) => {
       s += `<path d="M${x} ${y - z}Q${x} ${y} ${x + z} ${y}Q${x} ${y} ${x} ${y + z}Q${x} ${y} ${x - z} ${y}Q${x} ${y} ${x} ${y - z}Z" fill="#FF9EBE" opacity=".75"/>`;
     });

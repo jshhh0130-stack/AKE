@@ -73,7 +73,7 @@ export default function OrderForm({ params, path }) {
   useEffect(() => { if (o?._fromPhoto) toast('내 사진 분석 결과로 디자인을 미리 채웠어요'); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const est = useMemo(() => (store && o ? estimate(store, o) : null), [store, o]);
   const checks = useMemo(() => (store && o ? ruleCheck(store, o, { orders: st.orders }) : []), [store, o, st.orders]);
-  if (!store || !o) return <div className="screen"><Header title="주문서" fallback="/c" /><Empty icon="🔎">가게를 찾을 수 없어요.</Empty></div>;
+  if (!store || !o) return <div className="screen"><Header title="주문서" fallback="/c" /><Empty icon="search">가게를 찾을 수 없어요.</Empty></div>;
   const set = (patch) => setO((x) => ({ ...x, ...patch }));
   const form = store.form || {};
   const toggleIn = (key, id) => setO((x) => ({ ...x, [key]: x[key].includes(id) ? x[key].filter((i) => i !== id) : [...x[key], id] }));
@@ -161,7 +161,7 @@ export default function OrderForm({ params, path }) {
       <div className={`oprev ${mini ? 'mini' : ''}`}>
         <div className="stage">
           <CakeView o={view} />
-          <span className="size-cmp">📏 {sizeOf(o.size).name} · 지름 {sizeOf(o.size).cm}cm · {sizeOf(o.size).serves}</span>
+          <span className="size-cmp"><Icon n="ruler" /> {sizeOf(o.size).name} · 지름 {sizeOf(o.size).cm}cm · {sizeOf(o.size).serves}</span>
           {!mini && <div className="tools">
             <button onClick={() => setVarOpen(true)}><Icon n="sparkle" size="sm" />시안 3가지</button>
             <button onClick={() => setRealOpen(true)}><Icon n="wand" size="sm" />AI 실사</button>
@@ -172,7 +172,7 @@ export default function OrderForm({ params, path }) {
           <span className="small muted">예상</span><b>{range(est.lo, est.hi)}</b>
           <span className={`tag ${est.exact ? 'ok' : 'mute'}`}>{est.exact ? '가게 가격표 기준' : '추정 범위'}</span>
           <span className="grow" />
-          {v.ok ? <span className="tag ok">✓ 규칙 안</span> : <span className="tag warn">확인 {v.warn}</span>}
+          {v.ok ? <span className="tag ok"><Icon n="check" />규칙 안</span> : <span className="tag warn">확인 {v.warn}</span>}
         </div>
       </div>
       <div className="scroll pad" ref={scroller} onScroll={(e) => setMini(e.currentTarget.scrollTop > 60)} style={{ paddingBottom: 110 }}>
@@ -181,7 +181,7 @@ export default function OrderForm({ params, path }) {
           <div className="small muted" style={{ marginBottom: 8 }}>원하는 케이크를 글로 쓰면 이 가게 옵션 안에서 채워 드려요. 애매한 건 사장님께 넘겨요.</div>
           <div className="row" style={{ alignItems: 'stretch' }}>
             <textarea className="inp grow" style={{ minHeight: 62, fontSize: 14.5 }} value={aiText} onChange={(e) => setAiText(e.target.value)} placeholder="예) 토요일 오후 3시 1호 핑크 하트, 문구는 '생일 축하해 지민아' 초도 넣어주세요" />
-            <button className="btn dark" style={{ minHeight: 'auto', width: 72, whiteSpace: 'normal', lineHeight: 1.25 }} onClick={runAI} disabled={aiBusy}>{aiBusy ? '읽는 중' : '채우기'}</button>
+            <button className="btn dark" style={{ minHeight: 'auto', padding: '0 14px', whiteSpace: 'nowrap', lineHeight: 1.25 }} onClick={runAI} disabled={aiBusy}>{aiBusy ? '읽는 중' : '채우기'}</button>
           </div>
           <div className="chips" style={{ marginTop: 8 }}>
             {["내일 미니 초코 '고생했어'", "토요일 2시 2호 화이트 꽃 '칠순 축하드려요'", "1호 하늘색 빈티지 '합격 축하해' 체리"].map((e) => <button key={e} className="chip sm" onClick={() => setAiText(e)}>{e}</button>)}
@@ -222,7 +222,7 @@ export default function OrderForm({ params, path }) {
             {SIZES.map((z) => { const ok = sizesOK.some((x) => x.id === z.id); const e = estimate(store, { size: z.id, design: 'simple', shape: 'round', cream: 'white', flavor: 'vanilla', text: 'a' });
               return <button key={z.id} disabled={!ok} className={`opt ${o.size === z.id ? 'on' : ''}`} onClick={() => set({ size: z.id })}>{z.name}<small>{z.cm}cm · {z.serves}</small><span className="pr">{ok ? range(e.lo, e.hi, true) : '안 만들어요'}</span></button>; })}
           </div>
-          <div className="note" style={{ marginTop: 10 }}>📱 크기 감 잡기: {sizeOf(o.size).name}은(는) 지름 {sizeOf(o.size).cm}cm — <b>{SIZE_CMP[o.size]}</b> · 문구는 {lim}자까지 예쁘게 들어가요</div>
+          <div className="note" style={{ marginTop: 10 }}>크기 감 잡기: {sizeOf(o.size).name}은(는) 지름 {sizeOf(o.size).cm}cm — <b>{SIZE_CMP[o.size]}</b> · 문구는 {lim}자까지 예쁘게 들어가요</div>
           <button className="btn sec block sm" style={{ marginTop: 12 }} onClick={() => nextSec('size')}>다음: 픽업 날짜</button>
         </Sec>
 
@@ -396,8 +396,8 @@ function ConfirmSheet({ open, onClose, store, o, view, est, checks, v, inApp }) 
         <div className="total"><span className="small muted">예상 합계</span><b>{range(est.lo, est.hi)}</b></div>
         <div className="xs muted">{basisText(est.basis)}{est.exact ? '' : ' · 최종 금액은 사장님이 확정해요'}</div>
       </div>
-      <ul className="rules">{checks.map((c, i) => <li key={i} className={c.ok ? 'k' : 'w'}><i>{c.ok ? '✓' : '!'}</i><span>{c.t}</span></li>)}</ul>
-      <div className={`verdict ${v.ok ? 'ok' : 'w'}`}>{v.ok ? '✓' : '!'} {v.text}</div>
+      <ul className="rules">{checks.map((c, i) => <li key={i} className={c.ok ? 'k' : 'w'}><i>{c.ok ? <Icon n="check" size="sm" /> : '!'}</i><span>{c.t}</span></li>)}</ul>
+      <div className={`verdict ${v.ok ? 'ok' : 'w'}`}>{v.ok ? <Icon n="check" size="sm" /> : '!'} {v.text}</div>
       {inApp && store.ops?.autoConfirm && v.ok && est.exact && <div className="note ok" style={{ marginTop: 8 }}>이 가게는 규칙 안 주문을 <b>바로 자동 확정</b>해요.</div>}
       {needNotice && (
         <div className="card pad" style={{ marginTop: 12 }}>
@@ -410,7 +410,7 @@ function ConfirmSheet({ open, onClose, store, o, view, est, checks, v, inApp }) 
       <div className="row"><input className="inp" style={{ flex: 1 }} value={name} onChange={(e) => setName(e.target.value)} placeholder="이름" maxLength={20} /><input className="inp" style={{ flex: 1.4 }} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={inApp ? '010-0000-0000' : '연락처(선택)'} inputMode="tel" maxLength={13} /></div>
       <div className="xs muted" style={{ marginTop: 6 }}>{inApp ? '사장님이 확정·픽업 안내에만 써요. 이 기기와 해당 가게 주문함에만 저장돼요.' : '주문서에 함께 적어 드려요. 서버로 보내지 않아요.'}</div>
       <div className="card pad" style={{ marginTop: 12 }}>
-        <div className="row"><span className="grow"><b className="small">🎁 선물로 보내기</b><div className="xs muted">받는 분이 직접 픽업하고, 선물 카드 링크를 보낼 수 있어요</div></span><Toggle on={gift} onChange={setGift} label="선물" /></div>
+        <div className="row"><span className="grow"><b className="small">선물로 보내기</b><div className="xs muted">받는 분이 직접 픽업하고, 선물 카드 링크를 보낼 수 있어요</div></span><Toggle on={gift} onChange={setGift} label="선물" /></div>
         {gift && (
           <div style={{ marginTop: 10 }}>
             <input className="inp" value={to} onChange={(e) => setTo(e.target.value)} placeholder="받는 분 이름" maxLength={20} />

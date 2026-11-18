@@ -98,7 +98,7 @@ function ShareBox({ shop }) {
       <div className="qrbox card"><QR text={links.qr} size={190} /></div>
       <div className="btns" style={{ width: '100%' }}>
         <button className="btn line" onClick={async () => toast((await copyText(links.full)) ? '주문 링크를 복사했어요' : '복사 실패')}><Icon n="copy" size="sm" />링크 복사</button>
-        <button className="btn pri" onClick={async () => { const r = await shareText({ title: shop.name, text: `${shop.name} 케이크 주문은 여기서 해 주세요! 가격을 바로 보고 주문할 수 있어요 🎂`, url: links.full }); if (r === 'copied') toast('주문 링크를 복사했어요'); }}><Icon n="share" size="sm" />공유하기</button>
+        <button className="btn pri" onClick={async () => { const r = await shareText({ title: shop.name, text: `${shop.name} 케이크 주문은 여기서 해 주세요! 가격을 바로 보고 주문할 수 있어요`, url: links.full }); if (r === 'copied') toast('주문 링크를 복사했어요'); }}><Icon n="share" size="sm" />공유하기</button>
       </div>
       <div className="note" style={{ width: '100%', lineHeight: 1.6 }}>
         <b>어떻게 전달되나요?</b><br />· 주문과 대화는 암호화돼서 손님 폰 ↔ 사장님 폰으로 바로 전달돼요.<br />· 앱을 열어 두면 새 주문 알림이 떠요. 닫아 둔 동안 온 주문은 다시 열 때(12시간 안) 들어와요.<br />· 가격표를 바꾸면 손님 화면에도 자동으로 반영돼요.

@@ -1,13 +1,13 @@
 {
-  "name": "Dear Cake 디어 케이크",
-  "short_name": "Dear Cake",
-  "description": "사진 한 장으로 내 주변 커스텀·레터링 케이크 가게를 찾고, 가격을 먼저 보고, 미리보기로 주문하는 앱",
+  "name": "에이크 · AKE 커스텀 케이크",
+  "short_name": "에이크",
+  "description": "내 주변 커스텀·레터링 케이크 가게를 지도에서 찾고, 가격을 먼저 보고, 사장님과 바로 대화하며 주문하는 앱",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#F75C8D",
-  "theme_color": "#F75C8D",
+  "background_color": "#FFFDF9",
+  "theme_color": "#FFFFFF",
   "lang": "ko",
   "categories": ["food", "shopping", "lifestyle"],
   "icons": [

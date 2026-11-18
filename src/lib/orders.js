@@ -55,7 +55,7 @@ export function applyEvent(o, ev) {
 export function evText(ev, o) {
   const p = (v) => (v != null ? won(v) : '');
   switch (ev.t) {
-    case 'request': return o?.gift ? `🎁 ${o.gift.to}님께 보내는 선물 주문서를 보냈어요` : '주문 요청서를 보냈어요';
+    case 'request': return o?.gift ? `${o.gift.to}님께 보내는 선물 주문서를 보냈어요` : '주문 요청서를 보냈어요';
     case 'auto': return `사장님이 정해 둔 규칙 안이라 바로 확정됐어요 · ${p(ev.price)}`;
     case 'approve': return ev.msg || `주문을 확정했어요 · 최종 ${p(ev.price)}`;
     case 'change': return `${ev.msg || '이렇게 바꾸면 가능해요.'}${ev.price != null ? ` (제안 금액 ${p(ev.price)})` : ''}`;
@@ -63,7 +63,7 @@ export function evText(ev, o) {
     case 'accept': return '수정 제안을 수락했어요. 이대로 확정해 주세요!';
     case 'revise': return `주문 내용을 바꾸고 싶어요${ev.summary ? ` — ${ev.summary}` : ''}${ev.msg ? `\n${ev.msg}` : ''}`;
     case 'proof': return ev.msg || '제작 전 시안이에요. 확인 부탁드려요!';
-    case 'proofok': return '시안 좋아요! 이대로 만들어 주세요 👍';
+    case 'proofok': return '시안 좋아요! 이대로 만들어 주세요';
     case 'prooffix': return `시안 수정 부탁드려요${ev.tags?.length ? ` — ${ev.tags.join(', ')}` : ''}${ev.msg ? `\n${ev.msg}` : ''}`;
     case 'advance': return { making: '제작을 시작했어요', ready: '케이크가 준비됐어요! 픽업 시간에 맞춰 오세요', done: '픽업 완료 · 맛있게 드세요!' }[ev.to] || '';
     case 'paid': return ev.paid ? '예약금 입금을 확인했어요. 고맙습니다!' : '입금 확인을 취소했어요';

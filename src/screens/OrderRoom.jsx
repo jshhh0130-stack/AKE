@@ -22,7 +22,7 @@ function Steps({ status }) {
   const dead = ['declined', 'canceled'].includes(status);
   return (
     <div className="steps">
-      {STEPS.map((s, i) => <div key={s} className={`st ${dead ? '' : status === 'done' || i < step ? 'done' : i === step ? 'now' : ''}`}><i>{status === 'done' || i < step ? '✓' : i + 1}</i><span>{s}</span></div>)}
+      {STEPS.map((s, i) => <div key={s} className={`st ${dead ? '' : status === 'done' || i < step ? 'done' : i === step ? 'now' : ''}`}><i>{status === 'done' || i < step ? <Icon n="check" /> : i + 1}</i><span>{s}</span></div>)}
     </div>
   );
 }
@@ -62,7 +62,7 @@ function Summary({ order, role, open, setOpen }) {
             {x.plateText && <div className="kv"><span>판 문구</span><b>{x.plateText}</b></div>}
             {x.request && <div className="kv"><span>요청</span><b>{x.request}</b></div>}
             {x.allergy && <div className="kv"><span>알레르기</span><b style={{ color: 'var(--danger)' }}>{x.allergy}</b></div>}
-            {order.gift && <div className="kv"><span>🎁 선물</span><b>받는 분 {order.gift.to}님이 픽업</b></div>}
+            {order.gift && <div className="kv"><span>선물</span><b>받는 분 {order.gift.to}님이 픽업</b></div>}
             <div className="kv"><span>주문번호</span><b>{order.id}</b></div>
           </div>
         </div>
@@ -80,7 +80,7 @@ function Thread({ order, role }) {
         const text = evText(ev, order);
         const img = ev.img ? order.imgs?.[ev.img] : null;
         if (sys || (isSystemish(ev) && ev.t !== 'request' && !ev.msg && ['advance', 'paid'].includes(ev.t))) {
-          return <div key={ev.id} className="tsys"><span>{sys ? '⚡ ' : ''}{text}</span><small>{ago(ev.at)}</small></div>;
+          return <div key={ev.id} className="tsys"><span>{text}</span><small>{ago(ev.at)}</small></div>;
         }
         return (
           <div key={ev.id} className={`bub ${mine ? 'me' : ''} ${ev.t !== 'msg' ? 'act' : ''}`}>
@@ -206,7 +206,7 @@ export function CustomerOrder({ params }) {
         {s === 'external' && (
           <div className="card pad todo">
             <div className="b">가게에 주문서를 직접 보내 주세요</div>
-            <div className="small muted" style={{ margin: '4px 0 10px' }}>아직 디어 케이크 입점 전인 가게라, 완성된 주문서를 가게 카톡·인스타로 보내야 해요.</div>
+            <div className="small muted" style={{ margin: '4px 0 10px' }}>아직 에이크 입점 전인 가게라, 완성된 주문서를 가게 카톡·인스타로 보내야 해요.</div>
             <div className="btns"><button className="btn pri sm" onClick={async () => { const ok = await copyText(orderText(order, await orderLink(order))); toast(ok ? '주문서를 복사했어요. 가게 채팅창에 붙여 넣으세요' : '복사하지 못했어요'); }}><Icon n="copy" size="sm" />주문서 복사</button>
               <button className="btn line sm" onClick={async () => { const r = await shareText({ title: '케이크 주문서', text: orderText(order), url: await orderLink(order) }); if (r === 'copied') toast('공유 대신 복사했어요'); }}><Icon n="share" size="sm" />카톡·문자</button></div>
             {store && <div className="linkrow">{store.insta && <a href={mapLinks(store).insta} target="_blank" rel="noreferrer"><Icon n="insta" />인스타</a>}<a href={mapLinks(store).kakao} target="_blank" rel="noreferrer"><Icon n="chat" />카카오맵</a><a href={mapLinks(store).naver} target="_blank" rel="noreferrer"><Icon n="search" />네이버지도</a></div>}
@@ -234,7 +234,7 @@ export function CustomerOrder({ params }) {
         {s === 'done' && !order.review && (
           <div className="card pad" style={{ marginTop: 12 }}>
             <div className="b">후기를 남겨 주세요</div>
-            <div className="row" style={{ margin: '8px 0' }}>{[1, 2, 3, 4, 5].map((k) => <button key={k} onClick={() => setStars(k)} aria-label={`${k}점`}><Icon n="star" style={{ width: 30, height: 30, fill: k <= stars ? '#FFB400' : 'none', stroke: '#FFB400' }} /></button>)}</div>
+            <div className="row" style={{ margin: '8px 0' }}>{[1, 2, 3, 4, 5].map((k) => <button key={k} onClick={() => setStars(k)} aria-label={`${k}점`}><Icon n="star" style={{ width: 30, height: 30, fill: k <= stars ? 'var(--candle)' : 'none', stroke: 'var(--candle)' }} /></button>)}</div>
             <textarea className="inp" value={rv} onChange={(e) => setRv(e.target.value)} placeholder="미리보기랑 얼마나 비슷했나요?" maxLength={200} />
             <button className="btn pri block" style={{ marginTop: 8 }} onClick={() => { act(order.id, 'c', 'review', { stars, text: rv.trim() || '좋았어요!' }); toast('후기 고마워요!'); }}>후기 올리기</button>
           </div>
@@ -242,7 +242,7 @@ export function CustomerOrder({ params }) {
         {order.review && <div className="card pad" style={{ marginTop: 12 }}><Stars n={order.review.stars} /><div className="small" style={{ marginTop: 4 }}>{order.review.text}</div></div>}
         <div className="row wrap" style={{ marginTop: 14 }}>
           {canRevise && <button className="btn line sm" onClick={() => setRevise(true)}><Icon n="edit" size="sm" />주문 내용 고치기</button>}
-          {order.gift && <button className="btn sec sm" onClick={async () => { const url = await giftLink(order); const r = await shareText({ title: '케이크 선물이 도착했어요', text: `${order.gift.to}님, ${order.gift.from || '친구'}님이 보낸 케이크 선물이 도착했어요! 🎂`, url }); if (r === 'copied') toast('선물 카드 링크를 복사했어요'); }}>🎁 선물 카드 보내기</button>}
+          {order.gift && <button className="btn sec sm" onClick={async () => { const url = await giftLink(order); const r = await shareText({ title: '케이크 선물이 도착했어요', text: `${order.gift.to}님, ${order.gift.from || '친구'}님이 보낸 케이크 선물이 도착했어요!`, url }); if (r === 'copied') toast('선물 카드 링크를 복사했어요'); }}><Icon n="gift" size="sm" />선물 카드 보내기</button>}
           {store && <a className="btn line sm" href={mapLinks(store).route} target="_blank" rel="noreferrer"><Icon n="pin" size="sm" />길찾기</a>}
           <button className="btn ghost sm" onClick={() => nav(`/store/${order.storeId}`)}>가게 보기</button>
           {['done', 'canceled', 'declined', 'external'].includes(s) && <button className="btn sec sm" onClick={() => { const { date, time, ...d } = order.o; nav(`/order/${order.storeId}?from=${encodeURIComponent(JSON.stringify(d))}`); }}><Icon n="refresh" size="sm" />다시 주문</button>}
@@ -286,7 +286,7 @@ export function OwnerOrderDetail({ params }) {
       setMsg(''); toast('시안을 보냈어요. 손님이 확정하면 알려 드려요');
     } catch { toast('사진을 읽지 못했어요'); }
   };
-  const confirmText = () => [`[${st.shop?.name || o.storeName}] ${o.customer?.name || ''}님, 케이크 주문이 확정됐어요! 🎂`, `· 픽업: ${fmtDate(x.date)} ${x.time}`, `· 케이크: ${sizeOf(x.size).name} ${designOf(x.design).name} / “${x.noText ? '문구 없음' : x.text}”`, `· 확정 금액: ${won(o.finalPrice)}`, dep && !o.paid ? `· 예약금 ${st.shop.ops.deposit}%: ${won(dep)}${st.shop.ops.account ? ` → ${st.shop.ops.account}` : ''} (입금 후 제작 시작)` : null, o.paid ? '· 예약금 입금 확인 완료' : null, st.shop?.addr ? `· 주소: ${st.shop.addr}` : null].filter(Boolean).join('\n');
+  const confirmText = () => [`[${st.shop?.name || o.storeName}] ${o.customer?.name || ''}님, 케이크 주문이 확정됐어요!`, `· 픽업: ${fmtDate(x.date)} ${x.time}`, `· 케이크: ${sizeOf(x.size).name} ${designOf(x.design).name} / “${x.noText ? '문구 없음' : x.text}”`, `· 확정 금액: ${won(o.finalPrice)}`, dep && !o.paid ? `· 예약금 ${st.shop.ops.deposit}%: ${won(dep)}${st.shop.ops.account ? ` → ${st.shop.ops.account}` : ''} (입금 후 제작 시작)` : null, o.paid ? '· 예약금 입금 확인 완료' : null, st.shop?.addr ? `· 주소: ${st.shop.addr}` : null].filter(Boolean).join('\n');
   return (
     <div className="screen">
       <Header title={`${maskName(o.customer?.name)}님 주문`} fallback="/o/orders" right={<span style={{ marginRight: 10 }}><StatusTag status={s} owner /></span>} />
@@ -297,7 +297,7 @@ export function OwnerOrderDetail({ params }) {
             <div className="b">{lastRevise ? '손님이 주문을 고쳤어요 — 다시 확인해 주세요' : '새 주문이에요 — 승인만 누르면 끝!'}</div>
             {lastRevise?.summary && <div className="note pink" style={{ marginTop: 6 }}>바뀐 점: <b>{lastRevise.summary}</b></div>}
             <ul className="rules" style={{ marginTop: 8 }}>{checks.filter((c) => !c.ok).map((c, i) => <li key={i} className="w"><i>!</i><span>{c.t}</span></li>)}</ul>
-            <div className={`verdict ${v.ok ? 'ok' : 'w'}`}>{v.ok ? '✓ 가게 규칙 안이에요' : `! 확인할 항목 ${v.warn}개`}</div>
+            <div className={`verdict ${v.ok ? 'ok' : 'w'}`}>{v.ok ? '가게 규칙 안이에요' : `! 확인할 항목 ${v.warn}개`}</div>
             <div className="row" style={{ marginTop: 10 }}><span className="grow small muted">손님이 본 예상 금액</span><b>{range(o.est?.lo, o.est?.hi)}</b></div>
             <div className="row" style={{ marginTop: 8 }}><span className="grow b">최종 금액</span><div className="pricerow" style={{ border: 0, padding: 0 }}><PriceInput value={price} onChange={(vv) => setPrice(vv ?? 0)} /></div></div>
             <div className="chips" style={{ marginTop: 6 }}>{[-1000, 1000, 3000, 5000].map((d) => <button key={d} className="chip sm" onClick={() => setPrice((p) => Math.max(0, (p || 0) + d))}>{d > 0 ? '+' : ''}{d.toLocaleString()}</button>)}</div>
@@ -316,7 +316,7 @@ export function OwnerOrderDetail({ params }) {
             <div className="b">{o.needProof ? '손님이 시안 수정을 요청했어요' : '확정된 주문이에요'}</div>
             {o.needProof && lastFix && <div className="note pink" style={{ marginTop: 6 }}>{evText(lastFix, o)}</div>}
             <div className="row" style={{ marginTop: 8 }}><span className="grow small muted">확정 금액</span><b className="pink" style={{ fontSize: 18 }}>{won(o.finalPrice)}</b></div>
-            {dep > 0 && <div className="row" style={{ marginTop: 6 }}><span className="grow small">예약금 {st.shop.ops.deposit}% · <b>{won(dep)}</b></span><button className={`btn xs ${o.paid ? 'line' : 'ok'}`} onClick={() => { act(o.id, 'o', 'paid', { paid: !o.paid }); toast(o.paid ? '입금 확인을 취소했어요' : '입금 확인! 손님에게 알렸어요'); }}>{o.paid ? '✓ 입금 완료' : '입금 확인'}</button></div>}
+            {dep > 0 && <div className="row" style={{ marginTop: 6 }}><span className="grow small">예약금 {st.shop.ops.deposit}% · <b>{won(dep)}</b></span><button className={`btn xs ${o.paid ? 'line' : 'ok'}`} onClick={() => { act(o.id, 'o', 'paid', { paid: !o.paid }); toast(o.paid ? '입금 확인을 취소했어요' : '입금 확인! 손님에게 알렸어요'); }}>{o.paid ? '입금 완료' : '입금 확인'}</button></div>}
             <input className="inp" style={{ marginTop: 8 }} value={msg} onChange={(e) => setMsg(e.target.value)} placeholder="시안과 함께 보낼 말 (선택)" maxLength={200} />
             <div className="btns" style={{ marginTop: 8 }}>
               <PhotoPick className="btn line sm" onPick={sendProof}><Icon n="image" size="sm" />시안 사진 보내기</PhotoPick>
@@ -329,13 +329,13 @@ export function OwnerOrderDetail({ params }) {
         {s === 'proof' && <div className="note warn" style={{ marginTop: 10 }}>손님이 시안을 확인하고 있어요. 확정하거나 수정 요청하면 알려 드려요.</div>}
         {['making', 'ready'].includes(s) && (
           <div className="card pad todo">
-            <div className="row"><span className="grow b">{s === 'making' ? '제작 중이에요' : '픽업을 기다리고 있어요'}</span>{dep > 0 && <button className={`btn xs ${o.paid ? 'line' : 'ok'}`} onClick={() => act(o.id, 'o', 'paid', { paid: !o.paid })}>{o.paid ? '✓ 입금 완료' : '입금 확인'}</button>}</div>
+            <div className="row"><span className="grow b">{s === 'making' ? '제작 중이에요' : '픽업을 기다리고 있어요'}</span>{dep > 0 && <button className={`btn xs ${o.paid ? 'line' : 'ok'}`} onClick={() => act(o.id, 'o', 'paid', { paid: !o.paid })}>{o.paid ? '입금 완료' : '입금 확인'}</button>}</div>
             <button className="btn dark block" style={{ marginTop: 10 }} onClick={() => { act(o.id, 'o', 'advance', { to: nextStatus(s) }); toast(`${NEXT_LABEL[s]} 처리했어요`); }}>{NEXT_LABEL[s]} →</button>
           </div>
         )}
         {o.review && <div className="card pad" style={{ marginTop: 12 }}><div className="b small">손님 후기</div><Stars n={o.review.stars} /><div className="small">{o.review.text}</div></div>}
         {['done', 'ready', 'making'].includes(s) && st.shop && (st.shop.portfolio.some((p) => p.fromOrder === o.id)
-          ? <div className="note ok" style={{ marginTop: 12 }}>✓ 이 케이크는 가게 작품에 들어가 있어요</div>
+          ? <div className="note ok" style={{ marginTop: 12 }}>이 케이크는 가게 작품에 들어가 있어요</div>
           : <button className="btn sec block sm" style={{ marginTop: 12 }} onClick={() => { const { date, time, request, allergy, ...d } = x; patchShop((sh) => ({ portfolio: [{ id: 'p' + Date.now(), fromOrder: o.id, design: d, caption: `${sizeOf(x.size).name} ${designOf(x.design).name}`, src: (o.proofImg && o.imgs?.[o.proofImg]) || undefined }, ...sh.portfolio].slice(0, 12) })); toast('가게 작품에 추가했어요'); }}><Icon n="image" size="sm" /> 이 케이크를 가게 작품에 추가</button>)}
         <Thread order={o} role="o" />
         {o.customer?.phone && !o.sample && <div className="row" style={{ marginTop: 12 }}><a className="btn xs line" href={`tel:${o.customer.phone}`}><Icon n="phone" size="sm" />전화</a><a className="btn xs line" href={`sms:${o.customer.phone}`}><Icon n="chat" size="sm" />문자</a></div>}

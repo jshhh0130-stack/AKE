@@ -1,5 +1,5 @@
-// Dear Cake 서비스워커: 새 버전은 인터넷에서 먼저 받고(자동 업데이트), 인터넷이 없으면 저장본으로 열기
-const CACHE = 'dearcake-v2';
+// 에이크 서비스워커: 새 버전은 인터넷에서 먼저 받고(자동 업데이트), 인터넷이 없으면 저장본으로 열기
+const CACHE = 'aike-v3';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim()));

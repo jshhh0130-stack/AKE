@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import Icon from '../components/Icon.jsx';
 import { CakeView, Header, toast, Loading, Empty } from '../components/ui.jsx';
-import { LogoBadge, Wordmark } from '../components/Logo.jsx';
+import { LogoBadge, Logo } from '../components/Logo.jsx';
 import { useApp, setState, resetAll, getState } from '../lib/state.js';
 import { nav } from '../lib/router.js';
 import { askClaude } from '../lib/ai.js';
@@ -86,7 +86,7 @@ export function About() {
     <div className="screen">
       <Header title="앱 정보 · 데이터 출처" fallback="/c/my" />
       <div className="scroll pad">
-        <div className="card pad row" style={{ gap: 12 }}><LogoBadge size={48} /><div><Wordmark size={22} sub /><div className="xs muted" style={{ marginTop: 6 }}>버전 0.2 · 비즈니스 데이터 시각화 프로젝트</div></div></div>
+        <div className="card cream pad row" style={{ gap: 12 }}><LogoBadge size={48} /><div><Logo h={28} /><div className="xs muted" style={{ marginTop: 6 }}>버전 0.3 · 비즈니스 데이터 시각화 프로젝트</div></div></div>
         <div className="sec-t"><h3>가게 정보는 어디서 왔나요?</h3></div>
         <div className="card pad small">
           수원시에 <b>실제로 있는</b> 커스텀 케이크 전문점 <b>{SEED_STORES.length}곳</b>을 {SEED_UPDATED} 기준 공개 자료(다이닝코드·당근 비즈프로필·지역 목록·가게 SNS, 팀 직접 조사)에서 모았어요. 만든(가상) 가게는 없어요.
@@ -131,7 +131,7 @@ export function JoinShop({ params }) {
       nav(`/store/${p.id}`, { replace: true });
     })().catch(() => setErr('주문 링크가 올바르지 않아요. 가게에 다시 확인해 주세요.'));
   }, [params.code]);
-  return <div className="screen"><Header title="가게 주문 페이지" fallback="/" />{err ? <Empty icon="⚠️">{err}</Empty> : <Loading text="가게 정보를 불러오는 중…" />}</div>;
+  return <div className="screen"><Header title="가게 주문 페이지" fallback="/" />{err ? <Empty icon="alert">{err}</Empty> : <Loading text="가게 정보를 불러오는 중…" />}</div>;
 }
 
 // 선물 카드 (받는 분이 여는 링크)
@@ -140,16 +140,16 @@ export function GiftView({ params }) {
   const [g, setG] = useState(null);
   const [err, setErr] = useState('');
   useEffect(() => { decodeGift(params.code).then(setG).catch(() => setErr('선물 카드 링크가 올바르지 않아요.')); }, [params.code]);
-  if (err) return <div className="screen"><Header title="선물" fallback="/" /><Empty icon="⚠️">{err}</Empty></div>;
+  if (err) return <div className="screen"><Header title="선물" fallback="/" /><Empty icon="alert">{err}</Empty></div>;
   if (!g) return <div className="screen"><Header title="선물" fallback="/" /><Loading /></div>;
   const store = getStores(st).find((s) => s.id === g.storeId);
   const x = g.o;
   return (
-    <div className="screen fade" style={{ background: 'linear-gradient(180deg,#FFE3EC 0%,#FFF9FB 45%)' }}>
+    <div className="screen fade" style={{ background: 'var(--cream)' }}>
       <div className="scroll pad" style={{ paddingTop: 'calc(24px + var(--st))' }}>
-        <div className="center" style={{ fontSize: 44 }}>🎁</div>
+        <div className="empty" style={{ padding: '4px 0 0' }}><div className="big"><Icon n="gift" /></div></div>
         <h2 className="center" style={{ margin: '6px 0 4px', fontSize: 23, letterSpacing: -0.4 }}>{g.gift.to ? `${g.gift.to}님,` : ''} 케이크 선물이 도착했어요!</h2>
-        <p className="center muted small" style={{ margin: 0 }}>{g.gift.from ? `${g.gift.from}님이` : '친구가'} Dear Cake로 보낸 선물이에요</p>
+        <p className="center muted small" style={{ margin: 0 }}>{g.gift.from ? `${g.gift.from}님이` : '친구가'} 에이크로 보낸 선물이에요</p>
         <div className="ticket" style={{ marginTop: 16 }}>
           <div className="stage" style={{ height: 230 }}><CakeView o={{ ...x, text: x.noText ? '' : x.text }} fancy /></div>
           <div className="tb">
@@ -162,9 +162,9 @@ export function GiftView({ params }) {
         </div>
         {store && (
           <div className="linkrow">
-            <a href={`https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}`} target="_blank" rel="noreferrer">🗺️ 길찾기</a>
-            <a href={`https://map.kakao.com/?q=${encodeURIComponent(store.name)}`} target="_blank" rel="noreferrer">🔎 카카오맵</a>
-            <a href={`https://map.naver.com/p/search/${encodeURIComponent(store.name)}`} target="_blank" rel="noreferrer">🟢 네이버지도</a>
+            <a href={`https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}`} target="_blank" rel="noreferrer"><Icon n="nav" />길찾기</a>
+            <a href={`https://map.kakao.com/?q=${encodeURIComponent(store.name)}`} target="_blank" rel="noreferrer"><Icon n="map" />카카오맵</a>
+            <a href={`https://map.naver.com/p/search/${encodeURIComponent(store.name)}`} target="_blank" rel="noreferrer"><Icon n="search" />네이버지도</a>
           </div>
         )}
         <div className="note" style={{ marginTop: 12 }}>가게에서 받는 분 이름을 말하면 케이크를 받을 수 있어요. 그림은 참고용 시안이에요.</div>
@@ -180,7 +180,7 @@ export function SharedOrder({ params }) {
   const [o, setO] = useState(null);
   const [err, setErr] = useState('');
   useEffect(() => { decodeOrder(params.code).then(setO).catch(() => setErr('주문서 링크가 올바르지 않아요.')); }, [params.code]);
-  if (err) return <div className="screen"><Header title="주문서" fallback="/" /><Empty icon="⚠️">{err}</Empty></div>;
+  if (err) return <div className="screen"><Header title="주문서" fallback="/" /><Empty icon="alert">{err}</Empty></div>;
   if (!o) return <div className="screen"><Header title="주문서" fallback="/" /><Loading /></div>;
   const x = o.o;
   const importIt = () => {
@@ -218,7 +218,7 @@ export function SharedOrder({ params }) {
         {st.shop && st.role === 'owner' ? (
           <button className="btn pri block" style={{ marginTop: 14 }} onClick={importIt}><Icon n="plus" size="sm" /> 내 가게 주문함에 넣기</button>
         ) : (
-          <div className="note" style={{ marginTop: 14 }}>사장님이라면 Dear Cake에 가게를 등록하고 이 링크를 다시 열면 주문함에 바로 넣을 수 있어요. 등록하면 다음부터는 주문이 실시간으로 와요.
+          <div className="note" style={{ marginTop: 14 }}>사장님이라면 에이크에 가게를 등록하고 이 링크를 다시 열면 주문함에 바로 넣을 수 있어요. 등록하면 다음부터는 주문이 실시간으로 와요.
             <button className="btn sec block sm" style={{ marginTop: 8 }} onClick={() => { setState({ role: 'owner' }); if (!getState().shop) nav('/o/setup'); }}>사장님 모드로 열기</button>
           </div>
         )}

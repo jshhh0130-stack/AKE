@@ -52,7 +52,7 @@ export function InfoEditor({ shop, set }) {
 export function StylesEditor({ shop, set }) {
   const toggle = (id) => set({ styles: shop.styles.includes(id) ? shop.styles.filter((x) => x !== id) : [...shop.styles, id] });
   return (
-    <div className="chips wrap">{STYLES.map((s) => <button key={s.id} className={`chip ${shop.styles.includes(s.id) ? 'on' : ''}`} onClick={() => toggle(s.id)}>{s.emoji} {s.name}</button>)}</div>
+    <div className="chips wrap">{STYLES.map((s) => <button key={s.id} className={`chip ${shop.styles.includes(s.id) ? 'on' : ''}`} onClick={() => toggle(s.id)}>{s.name}</button>)}</div>
   );
 }
 
@@ -137,7 +137,7 @@ export function OpsEditor({ shop, set }) {
       <div className="chips wrap">{DOW.map((d, i) => <button key={i} className={`chip ${o.closedDays.includes(i) ? 'on' : ''}`} onClick={() => setO({ closedDays: o.closedDays.includes(i) ? o.closedDays.filter((x) => x !== i) : [...o.closedDays, i] })}>{d}</button>)}</div>
       <div className="lbl">임시 휴무일</div>
       <div className="row"><input type="date" className="inp grow" value={hd} onChange={(e) => setHd(e.target.value)} /><button className="btn dark sm" style={{ minHeight: 48 }} onClick={() => { if (hd && !o.holidays.includes(hd)) { setO({ holidays: [...o.holidays, hd].sort() }); setHd(''); } }}>추가</button></div>
-      {o.holidays.length > 0 && <div className="chips wrap" style={{ marginTop: 6 }}>{o.holidays.map((h) => <button key={h} className="chip sm soft on" onClick={() => setO({ holidays: o.holidays.filter((x) => x !== h) })}>{h} ✕</button>)}</div>}
+      {o.holidays.length > 0 && <div className="chips wrap" style={{ marginTop: 6 }}>{o.holidays.map((h) => <button key={h} className="chip sm soft on" onClick={() => setO({ holidays: o.holidays.filter((x) => x !== h) })}>{h} <Icon n="close" /></button>)}</div>}
       <div className="lbl">주문 마감</div>
       <div className="card pad">
         <div className="row"><span className="grow b small">당일 주문 받기</span><Toggle on={o.sameDay} onChange={(v) => setO({ sameDay: v })} /></div>

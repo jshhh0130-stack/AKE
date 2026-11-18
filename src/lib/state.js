@@ -8,9 +8,13 @@ export const initial = {
   v: 2,
   role: null, // 'customer' | 'owner'
   seenGuide: false,
+  seenTour: false, // 지도 첫 화면 안내(코치마크)를 봤는지
   loc: DEFAULT_LOC,
   radius: 5,
-  favs: [],
+  locOk: false, // 위치 사용 안내를 보고 허용했는지
+  favs: [], // 찜한 가게
+  likes: [], // 관심 케이크 사진 (data/gallery.json id)
+  recentQ: [], // 최근 검색어
   find: null, // 찾기 조건 { text, styles[], budget:[lo,hi], gu, sameDay, appOnly, photo:{thumb,...}, at }
   orders: [],
   shop: null, // 사장님이 등록한 내 가게

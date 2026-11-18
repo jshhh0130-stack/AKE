@@ -63,7 +63,7 @@ await B.page.goto(BASE + '#/j/' + code, { waitUntil: 'networkidle2' });
 await B.waitFor(() => location.hash.startsWith('#/store/'), 'B store page after QR', 30000); await sleep(1200); await B.snap('B1-store');
 const bst = await B.state();
 console.log('B partner has menu', !!bst.partners?.['midori-cake']?.menu, 'syncedAt', !!bst.partners?.['midori-cake']?.syncedAt);
-await B.click('주문서 작성하기'); await sleep(1200);
+await B.click('주문서 쓰기'); await sleep(1200);
 await B.setVal('.ai-box textarea', "다음주 토요일 오후 2시 1호 하늘색 하트, 문구는 '합격 축하해' 체리");
 await B.click('채우기', { exact: true }); await sleep(900);
 await B.click('문구 확인하고 주문 요청'); await sleep(800);

@@ -2,7 +2,7 @@
 import { useMemo, useState } from 'react';
 import Icon from '../../components/Icon.jsx';
 import { CakeView, toast, Toggle } from '../../components/ui.jsx';
-import { LogoBadge } from '../../components/Logo.jsx';
+import { Logo } from '../../components/Logo.jsx';
 import { useApp, setState } from '../../lib/state.js';
 import { nav } from '../../lib/router.js';
 import { SEED_STORES } from '../../lib/stores.js';
@@ -33,7 +33,7 @@ export default function Setup() {
     return (
       <div className="screen fade">
         <div className="scroll pad">
-          <div className="row" style={{ marginTop: 'calc(10px + var(--st))' }}><LogoBadge size={34} /><b style={{ fontFamily: 'Fredoka', fontSize: 20, color: 'var(--p600)' }}>Dear Cake</b><span className="tag dark">사장님</span></div>
+          <div className="row" style={{ marginTop: 'calc(10px + var(--st))' }}><Logo h={26} /><span className="tag dark">사장님</span></div>
           <h2 style={{ fontSize: 24, margin: '22px 0 6px', letterSpacing: -0.5 }}>3분이면 가게 등록 끝!</h2>
           <p className="muted" style={{ margin: '0 0 18px' }}>가격표만 한 번 넣으면 손님은 가격을 먼저 보고 주문하고, 사장님은 <b>승인</b>만 누르면 돼요.</p>
 
@@ -69,7 +69,7 @@ export default function Setup() {
       <div className="wiz-steps" style={{ paddingTop: 10, background: '#fff' }}>{STEPS.map((_, i) => <i key={i} className={i < step ? 'on' : ''} />)}</div>
       <div className="scroll pad" style={{ paddingBottom: 100 }}>
         {step === 1 && (<>
-          {draft.claimed && <div className="note ok" style={{ marginBottom: 12 }}>공개 정보로 미리 채웠어요. 저장하면 이 가게가 <b>⚡ 앱 주문 가능</b> 가게로 바뀌어요.</div>}
+          {draft.claimed && <div className="note ok" style={{ marginBottom: 12 }}>공개 정보로 미리 채웠어요. 저장하면 이 가게가 <b>앱 주문 가능</b> 가게로 바뀌어요.</div>}
           <InfoEditor shop={draft} set={set} />
           <div className="lbl">우리 가게가 만드는 케이크</div>
           <StylesEditor shop={draft} set={set} />
@@ -84,7 +84,7 @@ export default function Setup() {
           <div className="lbl">손님에게 이렇게 보여요</div>
           <div className="pv">
             <div style={{ ...heroBg(draft), height: 150, position: 'relative' }}><CakeView o={draft.hero} bg={false} fancy style={{ position: 'absolute', left: '50%', bottom: -4, width: 230, height: 'auto', transform: 'translateX(-50%)' }} /></div>
-            <div className="pad"><span className="tag dark">⚡ 디어 케이크 입점 · 앱 주문</span><div className="b" style={{ fontSize: 19, marginTop: 6 }}>{draft.name || '가게 이름'}</div><div className="small muted">{draft.gu} {draft.dong}</div><div className="small" style={{ marginTop: 6 }}>{draft.intro || '소개글을 써 주세요'}</div></div>
+            <div className="pad"><span className="tag pink">에이크 입점 · 앱 주문</span><div className="b" style={{ fontSize: 19, marginTop: 6 }}>{draft.name || '가게 이름'}</div><div className="small muted">{draft.gu} {draft.dong}</div><div className="small" style={{ marginTop: 6 }}>{draft.intro || '소개글을 써 주세요'}</div></div>
           </div>
           <div className="card pad row" style={{ marginTop: 12 }}><span className="grow"><b className="small">예시 주문 넣어서 둘러보기</b><div className="xs muted">주문·매출 화면이 어떻게 보이는지 미리 볼 수 있어요. 언제든 지울 수 있어요.</div></span><Toggle on={sample} onChange={setSample} label="예시 주문" /></div>
         </>)}

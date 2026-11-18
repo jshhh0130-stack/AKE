@@ -31,11 +31,11 @@ export default function InstallBanner() {
     else setHelp(true);
   };
   return (
-    <div style={{ position: 'absolute', left: 10, right: 10, top: 'calc(10px + var(--st))', zIndex: 80, background: '#fff', borderRadius: 18, boxShadow: '0 12px 34px rgba(142,29,74,.22)', padding: 12, border: '1px solid #f3dbe5' }} className="fadeup">
+    <div style={{ position: 'absolute', left: 10, right: 10, top: 'calc(10px + var(--st))', zIndex: 80, background: '#fff', borderRadius: 18, boxShadow: '0 12px 34px rgba(61,42,42,.16)', padding: 12, border: '1px solid #efe1cf' }} className="fadeup">
       <div className="row">
         <LogoBadge size={40} />
-        <div className="grow"><div className="b small">Dear Cake를 앱처럼 설치하세요</div><div className="xs muted">홈 화면에서 바로 열리고 전체 화면으로 보여요</div></div>
-        <button className="ib" onClick={hide} aria-label="닫기" style={{ width: 32, height: 32, display: 'grid', placeItems: 'center', color: '#a99ba2' }}><Icon n="close" size="sm" /></button>
+        <div className="grow"><div className="b small">에이크를 앱처럼 설치하세요</div><div className="xs muted">홈 화면에서 바로 열리고 전체 화면으로 보여요</div></div>
+        <button className="ib" onClick={hide} aria-label="닫기" style={{ width: 32, height: 32, display: 'grid', placeItems: 'center', color: 'var(--faint)' }}><Icon n="close" size="sm" /></button>
       </div>
       {!help && !ios && <button className="btn pri block sm" style={{ marginTop: 10 }} onClick={install}>{canPrompt ? '홈 화면에 설치' : '설치 방법 보기'}</button>}
       {(help || ios) && (

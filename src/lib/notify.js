@@ -32,7 +32,7 @@ export function notify(role, kind, title, body, link) {
   setState((x) => ({ ...x, notis: [n, ...(x.notis || [])].slice(0, 80) }));
   if (s.role !== roleName(role)) return; // 지금 그 모드가 아니면 알림함에만 쌓는다
   const here = link && location.hash.replace(/^#/, '').split('?')[0] === link;
-  if (!here || document.hidden) toast(`🔔 ${title}${body ? ' · ' + body : ''}`, 3200);
+  if (!here || document.hidden) toast(`${title}${body ? ' · ' + body : ''}`, 3200);
   if (set.sound !== false) { beep(); try { navigator.vibrate?.(60); } catch { /* 무시 */ } }
   if (set.browser && (document.hidden || !here)) systemNotify(title, body, link);
 }

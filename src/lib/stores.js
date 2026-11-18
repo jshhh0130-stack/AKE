@@ -109,16 +109,43 @@ export const pinPrice = (s) => { const h = headlinePrice(s); if (!h) return ''; 
 
 export const FILTERS = [
   { id: 'all', name: '전체' },
-  { id: 'app', name: '⚡ 앱 주문', f: (s) => canOrderInApp(s) },
+  { id: 'app', name: '앱 주문', f: (s) => canOrderInApp(s) },
+  { id: 'sameDay', name: '당일 픽업', f: (s) => s.sameDay === true },
   { id: 'lettering', name: '레터링', f: (s) => s.styles?.includes('lettering') },
   { id: 'character', name: '그림·캐릭터', f: (s) => s.styles?.includes('character') },
-  { id: 'photo', name: '포토', f: (s) => s.styles?.includes('photo') },
   { id: 'flower', name: '플라워', f: (s) => s.styles?.includes('flower') },
+  { id: 'photo', name: '포토', f: (s) => s.styles?.includes('photo') },
   { id: 'rice', name: '떡케이크', f: (s) => s.styles?.includes('rice') },
-  { id: 'sameDay', name: '당일 가능', f: (s) => s.sameDay === true },
   { id: 'price', name: '가격 공개', f: (s) => !!(s.menu || s.price) },
   { id: 'verified', name: '영업 확인', f: (s) => s.kind === 'partner' || s.verified || !!s.g },
 ];
+
+// 가게 이름 찾기: 띄어쓰기 무시 · 부분 일치 · 초성(ㅈㅇㄷㄹ) · 줄임말('제델' → '제이델링')
+const CHO = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
+export const chosung = (t) => [...String(t || '')].map((c) => { const k = c.charCodeAt(0) - 0xac00; return k >= 0 && k <= 11171 ? CHO[Math.floor(k / 588)] : c; }).join('');
+const norm = (t) => String(t || '').toLowerCase().replace(/[\s·.()\-_]+/g, '');
+export function nameScore(s, q) {
+  const n = norm(s.name), qq = norm(q);
+  if (!qq) return 0;
+  if (n === qq) return 4;
+  if (n.includes(qq)) return n.startsWith(qq) ? 3 : 2.5;
+  if (/^[ㄱ-ㅎ]+$/.test(qq) && chosung(n).includes(qq)) return 2;
+  if (qq.length >= 2) { let k = 0; for (const c of n) if (c === qq[k]) k++; if (k === qq.length) return 1.5; }
+  if (norm(`${s.dong || ''}${s.gu || ''}${s.addr || ''}`).includes(qq)) return 0.5;
+  return 0;
+}
+export function searchStores(list, q, loc) {
+  const out = [];
+  for (const s of list) {
+    if (s.lat == null) continue;
+    const sc = nameScore(s, q);
+    if (sc >= 1.5) out.push({ s, d: distKm(loc, s), score: sc });
+  }
+  return out.sort((a, b) => b.score - a.score || a.d - b.d);
+}
+// 가게 강점 칩 (최대 2개): 사장님이 고른 강점이 먼저, 없으면 스타일
+const STRONG = { lettering: '레터링', character: '그림', flower: '플라워', photo: '포토', rice: '떡케이크', '3d': '입체', tiered: '2단', custom: '주문제작' };
+export const strengths = (s) => (s.strong?.length ? s.strong : s.styles || []).filter((x) => STRONG[x]).slice(0, 2).map((x) => STRONG[x]);
 
 export const GUS = ['영통구', '권선구', '팔달구', '장안구'];
 export const BUDGETS = [
@@ -166,7 +193,7 @@ export function rankStores(list, { loc, radius = 5, find = null, filter = 'all',
   return rows.sort(by[sort] || by.rec);
 }
 
-export const kindLabel = (s) => (s.kind === 'partner' ? '디어 케이크 입점 · 앱 주문' : s.kind === 'public' ? (s.verified ? '영업 확인됨 · 공개 정보' : s.level === 'detail' ? '공개 정보 · 가격 확인' : '공개 목록 정보 · 영업 확인 필요') : s.kind === 'google' ? '구글 지도 검색 결과' : s.kind === 'kakao' ? '카카오 장소 검색 결과' : '지도 공개 데이터 · 커스텀 여부 확인 필요');
+export const kindLabel = (s) => (s.kind === 'partner' ? '에이크 입점 · 앱 주문' : s.kind === 'public' ? (s.verified ? '영업 확인됨 · 공개 정보' : s.level === 'detail' ? '공개 정보 · 가격 확인' : '공개 목록 정보 · 영업 확인 필요') : s.kind === 'google' ? '구글 지도 검색 결과' : s.kind === 'kakao' ? '카카오 장소 검색 결과' : '지도 공개 데이터 · 커스텀 여부 확인 필요');
 
 export const mapLinks = (s) => ({
   google: s.g?.url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${s.name} 수원 ${s.dong || ''}`.trim())}`,

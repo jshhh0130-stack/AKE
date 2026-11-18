@@ -48,6 +48,13 @@ const P = {
   receipt: <path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3" />,
   dots: <path d="M5 12h.01M12 12h.01M19 12h.01" />,
   gift: <path d="M4 10h16v11H4zM2 7h20v3H2zM12 7v14M12 7S10.5 3 8 3a2 2 0 0 0 0 4M12 7s1.5-4 4-4a2 2 0 0 1 0 4" />,
+  send: <path d="M21 3L10 14M21 3l-7 18-4-7-7-4z" />,
+  nav: <path d="M3 11l18-8-8 18-2-8z" />,
+  grid: <><rect x="3" y="3" width="7.5" height="10" rx="2" /><rect x="13.5" y="3" width="7.5" height="6" rx="2" /><rect x="13.5" y="12" width="7.5" height="9" rx="2" /><rect x="3" y="16" width="7.5" height="5" rx="2" /></>,
+  bookmark: <path d="M6 3h12v18l-6-4-6 4z" />,
+  ruler: <path d="M3 17L17 3l4 4L7 21zM7.5 12.5l2 2M10.5 9.5l2 2M13.5 6.5l2 2" />,
+  mobile: <><rect x="7" y="2.5" width="10" height="19" rx="2.2" /><path d="M11 18h2" /></>,
+  filter: <path d="M4 5h16l-6.5 7.5V19l-3 1.5v-8z" />,
 };
 
 export default function Icon({ n, size, className = '', fill = false, style }) {

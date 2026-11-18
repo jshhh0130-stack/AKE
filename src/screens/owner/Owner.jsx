@@ -18,7 +18,7 @@ function useShopOrders() {
   return { st, shop: st.shop, list };
 }
 function NoShop() {
-  return <div className="screen"><Empty icon="🏪">아직 등록한 가게가 없어요.<div style={{ marginTop: 14 }}><button className="btn pri" onClick={() => nav('/o/setup', { replace: true })}>가게 등록하기</button></div></Empty></div>;
+  return <div className="screen"><Empty icon="store">아직 등록한 가게가 없어요.<div style={{ marginTop: 14 }}><button className="btn pri" onClick={() => nav('/o/setup', { replace: true })}>가게 등록하기</button></div></Empty></div>;
 }
 
 export function OCard({ o, quick = true }) {
@@ -66,10 +66,10 @@ export function OwnerHome() {
       <div className="scroll with-tab">
         <div className="owner-top">
           <div className="sname"><Icon n="store" size="sm" /><span className="grow" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{shop.name}</span>
-            <button className="btn xs" style={{ background: shop.ops.paused ? '#E5484D' : '#ffffff22', color: '#fff' }} onClick={() => { patchShop((s) => ({ ops: { ...s.ops, paused: !s.ops.paused } })); toast(shop.ops.paused ? '주문을 다시 받아요' : '새 주문을 잠시 멈췄어요'); }}>{shop.ops.paused ? '주문 멈춤' : '주문 받는 중'}</button>
+            <button className={`btn xs ${shop.ops.paused ? 'danger' : 'line'}`} onClick={() => { patchShop((s) => ({ ops: { ...s.ops, paused: !s.ops.paused } })); toast(shop.ops.paused ? '주문을 다시 받아요' : '새 주문을 잠시 멈췄어요'); }}>{shop.ops.paused ? '주문 멈춤' : <><i style={{ width: 7, height: 7, borderRadius: 4, background: 'var(--ok)', display: 'inline-block' }} />주문 받는 중</>}</button>
             <NotiBell role="o" dark />
           </div>
-          <h2>{reqs.length ? `확인할 주문이 ${reqs.length}건 있어요` : talk.length ? `새 소식이 ${talk.length}건 있어요` : '오늘도 달콤한 하루 되세요 🍰'}</h2>
+          <h2>{reqs.length ? `확인할 주문이 ${reqs.length}건 있어요` : talk.length ? `새 소식이 ${talk.length}건 있어요` : '오늘도 달콤한 하루 되세요'}</h2>
           <div className="kpis">
             <button onClick={() => nav('/o/orders', { replace: true })}><small>새 요청</small><b>{reqs.length}</b></button>
             <div><small>오늘 픽업</small><b>{todays.filter((o) => o.status !== 'done').length}</b></div>
@@ -96,7 +96,7 @@ export function OwnerHome() {
             <div className="sec-t"><h3>가게 준비도</h3><span className="more">{rd.pct}% 완료</span></div>
             <div className="card pad">
               <div className="prog"><i style={{ width: rd.pct + '%' }} /></div>
-              <div className="chips wrap" style={{ marginTop: 10 }}>{rd.items.map(([k, n, ok]) => <button key={k} className={`chip sm ${ok ? 'soft on' : ''}`} onClick={() => nav(`/o/shop/${k}`)}>{ok ? '✓' : '+'} {n}</button>)}</div>
+              <div className="chips wrap" style={{ marginTop: 10 }}>{rd.items.map(([k, n, ok]) => <button key={k} className={`chip sm ${ok ? 'soft on' : ''}`} onClick={() => nav(`/o/shop/${k}`)}><Icon n={ok ? 'check' : 'plus'} /> {n}</button>)}</div>
             </div>
           </>)}
           <div className="btns" style={{ marginTop: 12 }}>
@@ -136,7 +136,7 @@ export function OwnerOrders() {
       {view === 'list' ? (<>
         <div className="pad" style={{ paddingBottom: 6 }}><div className="seg">{[['new', `새 요청 ${groups.new.length}`], ['doing', `진행 중 ${groups.doing.length}`], ['done', '완료·취소']].map(([k, l]) => <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}</div></div>
         <div className="scroll pad with-tab" style={{ paddingTop: 6 }}>
-          {cur.length === 0 && <Empty icon="📭">{tab === 'new' ? <>새로 온 요청이 없어요.<br /><span className="xs">주문 링크·QR을 인스타 프로필에 걸어 두면 손님이 바로 주문해요.</span><div style={{ marginTop: 12 }}><button className="btn sec sm" onClick={() => nav('/o/shop/share')}>주문 링크·QR 보기</button></div></> : tab === 'doing' ? '진행 중인 주문이 없어요.' : '완료된 주문이 없어요.'}</Empty>}
+          {cur.length === 0 && <Empty icon="box">{tab === 'new' ? <>새로 온 요청이 없어요.<br /><span className="xs">주문 링크·QR을 인스타 프로필에 걸어 두면 손님이 바로 주문해요.</span><div style={{ marginTop: 12 }}><button className="btn sec sm" onClick={() => nav('/o/shop/share')}>주문 링크·QR 보기</button></div></> : tab === 'doing' ? '진행 중인 주문이 없어요.' : '완료된 주문이 없어요.'}</Empty>}
           {Object.entries(byDate).map(([d, os]) => (
             <div key={d}><div className="sec-t" style={{ marginTop: 12 }}><h3 style={{ fontSize: 14.5 }}>{relDay(d)} · {fmtDate(d)}</h3><span className="more">{os.length}건</span></div>{os.map((o) => <OCard key={o.id} o={o} quick={tab !== 'done'} />)}</div>
           ))}
@@ -271,7 +271,7 @@ function SalesTab({ st, shop, list }) {
         <div className="row"><span className="grow b">이번 달 목표</span><button className="btn xs ghost" onClick={() => { const v = prompt('이번 달 목표 매출(원)을 적어 주세요', String(goal)); if (v && +v.replace(/[^\d]/g, '') > 0) setState({ goal: +v.replace(/[^\d]/g, '') }); }}><Icon n="edit" size="sm" />바꾸기</button></div>
         <div className="prog" style={{ marginTop: 8 }}><i style={{ width: Math.min(100, (monthTotal / goal) * 100) + '%' }} /></div>
         <div className="small" style={{ marginTop: 6 }}><b>{won(monthTotal)}</b> / {won(goal)} ({Math.round((monthTotal / goal) * 100)}%)</div>
-        <div className="xs muted">{monthTotal < goal && daysLeft > 0 ? `남은 ${daysLeft}일 동안 하루 ${won(Math.ceil((goal - monthTotal) / daysLeft / 1000) * 1000)}씩 팔면 달성해요` : '목표를 달성했어요 🎉'}</div>
+        <div className="xs muted">{monthTotal < goal && daysLeft > 0 ? `남은 ${daysLeft}일 동안 하루 ${won(Math.ceil((goal - monthTotal) / daysLeft / 1000) * 1000)}씩 팔면 달성해요` : '목표를 달성했어요. 축하해요!'}</div>
       </div>
       {focus.length > 0 && (
         <div className="card pad" style={{ marginTop: 10 }}>

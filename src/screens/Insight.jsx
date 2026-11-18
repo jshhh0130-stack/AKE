@@ -5,8 +5,8 @@ import { SEED_STORES, SEED_UPDATED } from '../lib/stores.js';
 import { BENCH, SIZES, STYLES, styleName } from '../data/catalog.js';
 import { man } from '../lib/util.js';
 
-const BAR = '#E04479';
-const INK = '#2A2126', MUTE = '#8D8288', GRID = '#F1E3E9';
+const BAR = '#E58A95'; // 에이크 핑크(막대) · 글자는 코코아
+const INK = '#3D2A2A', MUTE = '#84726F', GRID = '#F0EAE5';
 
 function HBars({ data, unit = '곳', title }) {
   const max = Math.max(...data.map((d) => d.v), 1);
@@ -19,7 +19,7 @@ function HBars({ data, unit = '곳', title }) {
         return (
           <g key={d.k} onPointerEnter={() => setHover(i)} onPointerLeave={() => setHover(null)}>
             <title>{`${d.k}: ${d.v}${unit}`}</title>
-            <rect x="0" y={y - 2} width={w} height={rowH - 2} fill={hover === i ? '#FFF5F8' : 'transparent'} />
+            <rect x="0" y={y - 2} width={w} height={rowH - 2} fill={hover === i ? '#FBF6EF' : 'transparent'} />
             <text x="0" y={y + 15} fontSize="12.5" fill={INK} fontWeight="600">{d.k}</text>
             <path d={`M${labelW} ${y + 4}h${bw - 4}a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4h-${bw - 4}z`} fill={BAR} opacity={hover == null || hover === i ? 1 : 0.55} />
             <text x={labelW + bw + 6} y={y + 15} fontSize="12" fill={MUTE} fontWeight="700">{d.v}{unit}</text>
@@ -43,7 +43,7 @@ function PriceStrip({ rows }) {
         return (
           <g key={r.id}>
             <text x="0" y={y + 4} fontSize="12.5" fill={INK} fontWeight="600">{r.name}</text>
-            <rect x={x(b0)} y={y - 9} width={x(b1) - x(b0)} height="18" rx="9" fill="#FFE7EF"><title>{`${r.name} 수원 평균 범위 ${man(b0)}~${man(b1)}원`}</title></rect>
+            <rect x={x(b0)} y={y - 9} width={x(b1) - x(b0)} height="18" rx="9" fill="#FDE8EA"><title>{`${r.name} 수원 평균 범위 ${man(b0)}~${man(b1)}원`}</title></rect>
             {r.pts.map((p, k) => <circle key={k} cx={x(p.v)} cy={y} r="5" fill={BAR} stroke="#fff" strokeWidth="2"><title>{`${p.name} ${r.name} ${p.v.toLocaleString()}원~`}</title></circle>)}
           </g>
         );
@@ -96,7 +96,7 @@ export default function Insight() {
         <div className="card pad">
           <div className="b small" style={{ color: MUTE }}>지금 (카톡 주문)</div>
           <div className="chips wrap" style={{ margin: '6px 0 12px' }}>{['인스타 캡처', '카톡 상담', '주문서 복붙', '가격 안내', '계좌이체', '입금 확인 톡', '확정'].map((t, i) => <span key={t} className="tag mute">{i + 1}. {t}</span>)}</div>
-          <div className="b small pink">Dear Cake</div>
+          <div className="b small pink">에이크</div>
           <div className="chips wrap" style={{ marginTop: 6 }}>{['지도·사진으로 찾기', '옵션 고르면 시안·가격 바로', '사장님 승인(규칙 안이면 자동)'].map((t, i) => <span key={t} className="tag">{i + 1}. {t}</span>)}</div>
           <div className="xs muted" style={{ marginTop: 10 }}>팀 직접 주문 체험(2026.11.13)과 리서치 리포트 기준</div>
         </div>
@@ -113,7 +113,7 @@ export default function Insight() {
         <div className="sec-t"><h3>비슷한 서비스와 빈자리</h3></div>
         <div className="card pad">
           {TOOLS.map(([n, p, d]) => <div key={n} className="kv"><span>{n}</span><b>{p} · <span className="muted" style={{ fontWeight: 600 }}>{d}</span></b></div>)}
-          <div className="note pink" style={{ marginTop: 10 }}>사장님용 관리 도구는 이미 여럿 있지만, <b>가게의 실제 옵션·가격과 연결된 미리보기를 손님이 보고 고르는 화면</b>은 비어 있어요. Dear Cake는 이 빈자리 + 사장님 승인만 남기는 구조예요.</div>
+          <div className="note pink" style={{ marginTop: 10 }}>사장님용 관리 도구는 이미 여럿 있지만, <b>가게의 실제 옵션·가격과 연결된 미리보기를 손님이 보고 고르는 화면</b>은 비어 있어요. 에이크는 이 빈자리 + 사장님 승인만 남기는 구조예요.</div>
         </div>
         <div className="xs muted" style={{ margin: '14px 2px 24px', lineHeight: 1.6 }}>※ 수치는 팀 조사 자료에서 옮겼어요. 발표 전에 원문을 한 번 더 확인해 주세요. 가게 정보는 공개 자료라 바뀌었을 수 있어요.</div>
       </div>

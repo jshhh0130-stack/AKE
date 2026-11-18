@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import qrcode from 'qrcode-generator';
 import Icon from './Icon.jsx';
+import { Candle } from './Logo.jsx';
 import { back, openSheetHistory, closeSheetHistory } from '../lib/router.js';
 import { cakeSVG } from '../lib/cake.js';
 import { STATUS } from '../lib/orders.js';
@@ -86,7 +87,7 @@ export function Sheet({ open, onClose, title, children, footer, height }) {
           onPointerDown={(e) => { start.current = e.clientY; e.currentTarget.setPointerCapture(e.pointerId); }}
           onPointerMove={(e) => { if (start.current != null) setDy(Math.max(0, e.clientY - start.current)); }}
           onPointerUp={() => { if (dy > 90) close(); setDy(0); start.current = null; }}><i /></div>
-        {title && <div className="sh-h"><h2>{title}</h2><button className="ib" onClick={close} aria-label="닫기" style={{ width: 36, height: 36, display: 'grid', placeItems: 'center', color: '#9b8e95' }}><Icon n="close" /></button></div>}
+        {title && <div className="sh-h"><h2>{title}</h2><button className="ib" onClick={close} aria-label="닫기" style={{ width: 36, height: 36, display: 'grid', placeItems: 'center', color: 'var(--faint)' }}><Icon n="close" /></button></div>}
         <div className="sh-b">{children}</div>
         {footer && <div className="sh-f">{footer}</div>}
       </div>
@@ -95,6 +96,23 @@ export function Sheet({ open, onClose, title, children, footer, height }) {
 }
 // 시트 안에서 다른 화면으로 갈 때: 시트 기록을 지우고 이동
 export function leaveSheet(go) { setTimeout(go, 0); }
+// 전체 화면 덮개(검색 등)도 휴대폰 '뒤로' 버튼으로 닫히게. 돌려주는 함수로 닫는다.
+export function useBackClose(onClose) {
+  const hid = useRef(null);
+  const closing = useRef(false);
+  const cb = useRef(onClose); cb.current = onClose;
+  useEffect(() => {
+    closing.current = false;
+    hid.current = openSheetHistory();
+    const onPop = () => { if (!closing.current && (history.state?.sheet || 0) < hid.current) { closing.current = true; cb.current?.(); } };
+    window.addEventListener('popstate', onPop);
+    return () => {
+      window.removeEventListener('popstate', onPop);
+      if (!closing.current && history.state?.sheet === hid.current) { closing.current = true; history.back(); }
+    };
+  }, []);
+  return () => { if (closing.current) return; closing.current = true; closeSheetHistory(hid.current); cb.current?.(); };
+}
 
 // ── 케이크 그림 ──
 export function CakeView({ o, fancy = false, bg = true, className, style }) {
@@ -109,10 +127,11 @@ export function StatusTag({ status, owner }) {
   return <span className={`tag ${s.tone}`}>{owner ? ({ requested: '새 요청', change: '고객 답 대기', proof: '시안 확인 중' }[status] || s.name) : s.name}</span>;
 }
 export function Stars({ n = 5, size = 14 }) {
-  return <span style={{ display: 'inline-flex', gap: 1, color: '#FFB400' }}>{[1, 2, 3, 4, 5].map((i) => <Icon key={i} n="star" fill={i <= n} style={{ width: size, height: size, fill: i <= n ? '#FFB400' : 'none', stroke: '#FFB400' }} />)}</span>;
+  return <span style={{ display: 'inline-flex', gap: 1, color: 'var(--candle)' }}>{[1, 2, 3, 4, 5].map((i) => <Icon key={i} n="star" fill={i <= n} style={{ width: size, height: size, fill: i <= n ? 'var(--candle)' : 'none', stroke: 'var(--candle)' }} />)}</span>;
 }
-export function Empty({ icon = '🎂', children }) {
-  return <div className="empty"><div className="big">{icon}</div>{children}</div>;
+// 빈 화면 안내: icon 은 Icon 이름 (없으면 로고의 생일초)
+export function Empty({ icon, children }) {
+  return <div className="empty"><div className="big">{icon ? <Icon n={icon} /> : <Candle h={40} />}</div>{children}</div>;
 }
 
 export function QR({ text, size = 140 }) {

@@ -21,7 +21,7 @@ export function NotiBell({ role, dark = false }) {
         {n > 0 && <span className="badge">{n > 9 ? '9+' : n}</span>}
       </button>
       <Sheet open={open} onClose={() => { setOpen(false); readAll(role); }} title="알림">
-        {list.length === 0 && <div className="empty"><div className="big">🔔</div>아직 알림이 없어요.<br />주문 소식과 메시지가 오면 여기에 모여요.</div>}
+        {list.length === 0 && <div className="empty"><div className="big"><Icon n="bell" /></div>아직 알림이 없어요.<br />주문 소식과 메시지가 오면 여기에 모여요.</div>}
         {list.map((x) => (
           <button key={x.id} className="list-row" onClick={() => { setOpen(false); readAll(role); if (x.link) navAfterSheet(x.link, {}); }}>
             <span className="setrow" style={{ all: 'unset', position: 'relative' }}><Icon n={KIND_ICON[x.kind] || 'bell'} />{!x.read && <i style={{ position: 'absolute', right: -3, top: -3, width: 8, height: 8, borderRadius: 4, background: 'var(--p500)' }} />}</span>

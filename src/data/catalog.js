@@ -2,14 +2,14 @@
 // 가격 범위 [최소, 최대] 는 수원 가게 공개 가격(2024~2026 후기·프로필, 팀 리서치)을 바탕으로 한 "추정" 값이다.
 
 export const STYLES = [
-  { id: 'lettering', name: '레터링', emoji: '✍️', desc: '케이크 위에 문구를 쓰는 기본 커스텀' },
-  { id: 'photo', name: '포토', emoji: '📷', desc: '사진을 먹는 종이에 인쇄해 올려요' },
-  { id: 'character', name: '그림·캐릭터', emoji: '🐻', desc: '크림으로 그림을 그려요' },
-  { id: 'flower', name: '플라워', emoji: '🌸', desc: '크림·앙금·생화 꽃 장식' },
-  { id: 'rice', name: '떡케이크', emoji: '🍡', desc: '설기 위에 앙금 장식' },
-  { id: '3d', name: '입체', emoji: '🧸', desc: '피규어·입체 장식' },
-  { id: 'tiered', name: '2단', emoji: '🎂', desc: '행사용 2단 케이크' },
-  { id: 'custom', name: '주문제작', emoji: '🎨', desc: '상담 후 자유 디자인' },
+  { id: 'lettering', name: '레터링', desc: '케이크 위에 문구를 쓰는 기본 커스텀' },
+  { id: 'photo', name: '포토', desc: '사진을 먹는 종이에 인쇄해 올려요' },
+  { id: 'character', name: '그림·캐릭터', desc: '크림으로 그림을 그려요' },
+  { id: 'flower', name: '플라워', desc: '크림·앙금·생화 꽃 장식' },
+  { id: 'rice', name: '떡케이크', desc: '설기 위에 앙금 장식' },
+  { id: '3d', name: '입체', desc: '피규어·입체 장식' },
+  { id: 'tiered', name: '2단', desc: '행사용 2단 케이크' },
+  { id: 'custom', name: '주문제작', desc: '상담 후 자유 디자인' },
 ];
 export const styleName = (id) => STYLES.find((s) => s.id === id)?.name || id;
 
