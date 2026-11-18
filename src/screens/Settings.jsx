@@ -63,6 +63,7 @@ export function Settings() {
           </div>
           <div className="xs muted" style={{ marginTop: 8 }}>키는 이 기기 안에만 저장돼요. 사용료는 키 주인 계정에 청구돼요. 모델: Claude Opus 5.5</div>
         </div>
+        <ImageAICard save={save} />
         <div className="card pad" style={{ marginTop: 12 }}>
           <div className="row"><Icon n="map" /><b className="grow">카카오 지도 (선택)</b>{st.settings.kakaoKey ? <span className="tag ok">{st.settings.googleKey ? '검색에 사용' : '사용 중'}</span> : <span className="tag mute">꺼짐</span>}</div>
           <div className="small muted" style={{ margin: '6px 0 10px' }}>구글 키가 없을 때 카카오 <b>JavaScript 키</b>를 넣으면 카카오 지도와 장소 검색을 써요.</div>
@@ -76,6 +77,57 @@ export function Settings() {
           <button className="list-row" onClick={() => { if (confirm('이 기기에 저장된 모든 데이터(주문·가게·설정)를 지울까요?')) { resetAll(); nav('/role', { replace: true }); toast('처음 상태로 돌아갔어요'); } }}><Icon n="trash" /><div className="grow"><div className="t" style={{ color: 'var(--danger)' }}>모든 데이터 지우기</div><div className="s">주문·가게·설정을 이 기기에서 지워요</div></div></button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// AI 실사 사진(이미지 AI) 연결: 없어도 무료로 동작하고, 키·토큰을 넣으면 더 빠르고 정확해져요
+function ImageAICard({ save }) {
+  const st = useApp();
+  const [gk, setGk] = useState(st.settings.geminiKey || '');
+  const [ht, setHt] = useState(st.settings.hfToken || '');
+  const [busy, setBusy] = useState('');
+  const testGemini = async () => {
+    setBusy('gm');
+    try {
+      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=50', { headers: { 'x-goog-api-key': gk } });
+      if (!r.ok) throw new Error(r.status === 400 || r.status === 403 ? '키가 맞지 않아요' : `확인 실패 (${r.status})`);
+      save({ geminiKey: gk }); toast('제미나이 연결 성공! AI 실사 사진을 제미나이가 만들어요');
+    } catch (e) { toast(`연결 실패: ${e.message}`, 4000); }
+    setBusy('');
+  };
+  const testHF = async () => {
+    setBusy('hf');
+    try {
+      const r = await fetch('https://huggingface.co/api/whoami-v2', { headers: { Authorization: `Bearer ${ht}` } });
+      if (r.status === 401) throw new Error('토큰이 맞지 않아요');
+      const j = await r.json().catch(() => ({}));
+      save({ hfToken: ht }); toast(`허깅페이스 연결 성공${j.name ? ` (${j.name})` : ''}! 무료 사용량이 늘어요`);
+    } catch (e) { if (/토큰/.test(e.message)) toast(`연결 실패: ${e.message}`, 4000); else { save({ hfToken: ht }); toast('토큰을 저장했어요'); } }
+    setBusy('');
+  };
+  return (
+    <div className="card pad" style={{ marginTop: 12 }}>
+      <div className="row"><Icon n="image" /><b className="grow">AI 실사 사진 (선택)</b>{st.settings.geminiKey ? <span className="tag ok">제미나이</span> : st.settings.hfToken ? <span className="tag ok">허깅페이스</span> : <span className="tag mute">무료로 사용 중</span>}</div>
+      <div className="small muted" style={{ margin: '6px 0 10px' }}>넣은 사진을 실사 케이크 사진으로 바꾸는 AI예요. <b>키가 없어도 무료 AI(FLUX)로 동작</b>해요. 무료는 인터넷 주소마다 하루 몇 번이라, 다 쓰면 무료 대기열(10~20분)로 만들어요.</div>
+      <div className="lbl" style={{ marginTop: 4 }}>구글 제미나이 키 <span className="xs muted">가장 정확 · 유료(1장 약 50~100원)</span></div>
+      <input className="inp" type="password" value={gk} onChange={(e) => setGk(e.target.value.trim())} placeholder="AIza… (Google AI Studio에서 발급)" autoComplete="off" />
+      <div className="btns" style={{ marginTop: 8 }}>
+        <button className="btn line sm" onClick={() => { setGk(''); save({ geminiKey: '' }); toast('제미나이 키를 지웠어요'); }}>지우기</button>
+        <button className="btn dark sm" disabled={!gk || busy === 'gm'} onClick={testGemini}>{busy === 'gm' ? '확인 중…' : '저장하고 확인'}</button>
+      </div>
+      <div className="lbl" style={{ marginTop: 16 }}>허깅페이스 토큰 <span className="xs muted">무료 계정 · 하루 사용량이 늘어요</span></div>
+      <input className="inp" type="password" value={ht} onChange={(e) => setHt(e.target.value.trim())} placeholder="hf_… (huggingface.co › Settings › Access Tokens)" autoComplete="off" />
+      <div className="btns" style={{ marginTop: 8 }}>
+        <button className="btn line sm" onClick={() => { setHt(''); save({ hfToken: '' }); toast('토큰을 지웠어요'); }}>지우기</button>
+        <button className="btn dark sm" disabled={!ht || busy === 'hf'} onClick={testHF}>{busy === 'hf' ? '확인 중…' : '저장하고 확인'}</button>
+      </div>
+      <details className="xs muted" style={{ marginTop: 10, lineHeight: 1.7 }}>
+        <summary style={{ cursor: 'pointer', fontWeight: 700 }}>받는 방법</summary>
+        <b>제미나이</b>: aistudio.google.com 에 구글 계정으로 로그인 → ‘Get API key’ → 키 만들기 → 결제 설정(이미지 모델은 무료 사용량이 없어요)<br />
+        <b>허깅페이스</b>: huggingface.co 무료 가입 → Settings › Access Tokens › ‘Create new token’(Read 권한이면 돼요)<br />
+        키·토큰은 이 기기 안에만 저장되고, 사진을 만들 때만 그 회사로 보내요.
+      </details>
     </div>
   );
 }
@@ -110,7 +162,7 @@ export function About() {
         <div className="sec-t"><h3>주문·대화는 어떻게 전달되나요?</h3></div>
         <div className="card pad small">입점 가게로 보낸 주문과 대화는 <b>기기에서 암호화</b>한 뒤 공개 중계 서비스(ntfy.sh)를 거쳐 사장님 폰으로 전달돼요. 중계 서버는 내용을 읽을 수 없고 12시간만 보관해요. 주문 기록은 각자 기기에 저장돼요. 정식 서비스에서는 자체 서버·로그인으로 바꾸면 돼요.</div>
         <div className="sec-t"><h3>사용한 공개 서비스</h3></div>
-        <div className="card pad xs muted">지도: Google Maps(키 연결 시) · Kakao Maps(키 연결 시) · © OpenStreetMap 기여자 · 주소 검색: Nominatim · 글꼴: Pretendard, Google Fonts · 메시지 중계: ntfy.sh · AI(선택): Claude API, pollinations.ai(실사 이미지 베타)</div>
+        <div className="card pad xs muted">지도: Google Maps(키 연결 시) · Kakao Maps(키 연결 시) · © OpenStreetMap 기여자 · 주소 검색: Nominatim · 글꼴: Pretendard, Google Fonts · 메시지 중계: ntfy.sh · AI(선택): Claude API · AI 실사 사진: FLUX.1 공개 모델(허깅페이스 데모 · AI Horde 무료 대기열), 구글 제미나이(키 연결 시) · 관심 탭 예시 사진: FLUX.1 [schnell]</div>
         <div style={{ height: 24 }} />
       </div>
     </div>

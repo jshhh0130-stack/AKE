@@ -4,12 +4,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import Icon from '../../components/Icon.jsx';
 import { CustomerTabBar } from '../../components/TabBar.jsx';
-import { Empty, toast, PhotoPick, Header, Loading } from '../../components/ui.jsx';
+import { Empty, toast, PhotoPick, Header, Loading, Portal } from '../../components/ui.jsx';
+import AIStudio from '../../components/AIStudio.jsx';
+import Sketch from '../../components/Sketch.jsx';
+import { removePic, saveEdited } from '../../lib/imagegen.js';
 import { useApp, setState } from '../../lib/state.js';
-import { nav, back, queryOf } from '../../lib/router.js';
+import { nav, back, queryOf, navAfterSheet } from '../../lib/router.js';
 import { getStores, rankStores } from '../../lib/stores.js';
 import { loadImage, toDataURL, analyzeImage, loadDataURL } from '../../lib/image.js';
-import { shareText } from '../../lib/util.js';
+import { shareText, ago } from '../../lib/util.js';
 import { SHAPES, creamOf, optName, sizeOf, designOf } from '../../data/catalog.js';
 import { StoreCard } from './Home.jsx';
 import G from '../../data/gallery.json';
@@ -57,7 +60,7 @@ function photoScore(it, an) {
 }
 const simScore = (a, b) => (a.d === b.d ? 3 : 0) + (a.cr === b.cr ? 2 : 0) + (a.sh === b.sh ? 1 : 0) + a.tags.filter((t) => b.tags.includes(t)).length * 0.8 + (a.st.some((x) => b.st.includes(x) && x !== 'lettering') ? 1 : 0);
 const CATS = [
-  { id: 'all', name: '전체' }, { id: 'liked', name: '저장한 케이크' },
+  { id: 'all', name: '전체' }, { id: 'liked', name: '저장한 케이크' }, { id: 'mine', name: '내가 만든 사진' },
   { id: '레터링', name: '레터링' }, { id: '빈티지', name: '빈티지' }, { id: '캐릭터', name: '그림·캐릭터' }, { id: '플라워', name: '플라워' },
   { id: '하트', name: '하트' }, { id: '미니', name: '미니' }, { id: '떡케이크', name: '떡케이크' }, { id: '초코', name: '초코' },
 ];
@@ -100,6 +103,7 @@ function WorkTile({ w }) {
 export function Interest({ path }) {
   const st = useApp();
   const q0 = queryOf(path).get('q') || '';
+  const cat0 = queryOf(path).get('cat') || 'all';
   const [tab, setTab] = useState(queryOf(path).get('tab') === 'store' ? 'store' : 'cake');
   const n = st.favs.length;
   return (
@@ -109,17 +113,18 @@ export function Interest({ path }) {
         <button className={tab === 'cake' ? 'on' : ''} onClick={() => setTab('cake')}>케이크 둘러보기</button>
         <button className={tab === 'store' ? 'on' : ''} onClick={() => setTab('store')}>찜한 가게{n > 0 && <small>{n}</small>}</button>
       </div>
-      {tab === 'cake' ? <CakeFeed q0={q0} /> : <SavedStores />}
+      {tab === 'cake' ? <CakeFeed q0={q0} cat0={cat0} /> : <SavedStores />}
       <CustomerTabBar current="/c/saved" />
     </div>
   );
 }
 
-function CakeFeed({ q0 }) {
+function CakeFeed({ q0, cat0 = 'all' }) {
   const st = useApp();
   const [likes, toggleLike] = useLike();
   const [q, setQ] = useState(q0);
-  const [cat, setCat] = useState('all');
+  const [cat, setCat] = useState(cat0);
+  const [studio, setStudio] = useState(false);
   const [photo, setPhoto] = useState(null); // { thumb, an }
   const [busy, setBusy] = useState(false);
   const qq = q.trim();
@@ -157,8 +162,9 @@ function CakeFeed({ q0 }) {
           {q && <button className="x" onClick={() => setQ('')} aria-label="지우기"><Icon n="close" size="sm" /></button>}
           <PhotoPick onPick={onPhoto} className="cam"><Icon n="camera" /></PhotoPick>
         </div>
-        <div className="chips">{CATS.map((c) => <button key={c.id} className={`chip sm ${cat === c.id ? 'on' : ''}`} onClick={() => setCat(cat === c.id && c.id !== 'all' ? 'all' : c.id)}>{c.name}{c.id === 'liked' && likes.length > 0 ? ` ${likes.length}` : ''}</button>)}</div>
+        <div className="chips">{CATS.map((c) => <button key={c.id} className={`chip sm ${cat === c.id ? 'on' : ''}`} onClick={() => setCat(cat === c.id && c.id !== 'all' ? 'all' : c.id)}>{c.name}{c.id === 'liked' && likes.length > 0 ? ` ${likes.length}` : ''}{c.id === 'mine' && (st.aiPics || []).length + (st.aiJobs || []).length > 0 ? ` ${(st.aiPics || []).length + (st.aiJobs || []).length}` : ''}</button>)}</div>
       </div>
+      {cat === 'mine' ? <MyPics onNew={() => setStudio(true)} /> : (<>
       {busy && <Loading text="사진을 보는 중…" />}
       {photo && (
         <div className="photo-q" style={{ margin: '0 16px 12px' }}>
@@ -184,8 +190,39 @@ function CakeFeed({ q0 }) {
         <a href={`https://www.instagram.com/explore/tags/${encodeURIComponent(`${(qq || '레터링').replace(/\s/g, '')}케이크`)}/`} target="_blank" rel="noreferrer"><Icon n="insta" size="sm" />인스타그램</a>
       </div>
       <div className="xs muted" style={{ padding: '8px 16px 0' }}>바깥 사이트는 링크로만 열어요. 다른 사람 사진을 앱에 옮겨 오지 않아요.</div>
+      </>)}
+      <AIStudio open={studio} onClose={() => setStudio(false)} onUse={(src) => findWithPhoto(src, {})} useLabel="이 사진으로 가게 찾기" />
     </div>
   );
+}
+
+// 내가 만든 사진 (AI 실사 · 그림판) — 만드는 중인 것도 함께
+function MyPics({ onNew }) {
+  const st = useApp();
+  const pics = st.aiPics || [], jobs = st.aiJobs || [];
+  return (<>
+    <div className="feedinfo"><Icon n="info" />AI 실사·그림판으로 만든 사진이에요. 이 기기에만 저장돼요(최근 8장).</div>
+    <div style={{ padding: '0 16px 14px' }}><button className="btn sec block sm" onClick={onNew}><Icon n="sparkle" size="sm" />새 AI 실사 사진 만들기</button></div>
+    {pics.length + jobs.length === 0 ? <Empty icon="image">아직 만든 사진이 없어요.<br />지도의 ‘AI로 케이크 가게 찾기’에서 사진을 넣거나<br />위 버튼으로 만들어 보세요.</Empty> : (
+      <div className="masonry">
+        {jobs.map((j) => <div key={j.id} className="mi"><div className="im mwait"><div className="loader" /><span>만드는 중<br />{j.queue != null ? `앞에 ${j.queue}명 · 약 ${Math.max(1, Math.round((j.wait || 60) / 60))}분` : '줄 서는 중'}</span></div><div className="t">AI 실사 사진</div></div>)}
+        {pics.map((p) => <div key={p.id} className="mi" role="button" tabIndex={0} onClick={() => nav(`/c/cake/${p.id}`)}><div className="im"><img src={p.src} alt="" /><span className="ai">{p.edited ? '그림판' : 'AI'}</span></div><div className="t">{p.edited ? '그림판으로 고친 사진' : 'AI 실사 사진'}</div><div className="s">{ago(new Date(p.at).toISOString())}</div></div>)}
+      </div>
+    )}
+  </>);
+}
+
+// 사진 한 장으로 가게 찾기: '사진으로 찾기' 조건으로 넣고 지도로 (가게를 고르면 주문서에도 미리 채워져요)
+export async function findWithPhoto(src, o = {}) {
+  try {
+    const el = await loadDataURL(src);
+    const an = analyzeImage(el);
+    const design = o.design || an.design;
+    const styles = (o.styles?.length ? o.styles : design === 'character' ? ['character'] : design === 'flower' ? ['flower'] : design === 'photo' ? ['photo'] : ['lettering']).filter((x) => x !== 'custom');
+    setState((s) => ({ ...s, find: { text: '', q: '', styles, budget: null, gu: null, sameDay: false, appOnly: false, src: 'ai', photo: { thumb: toDataURL(el, 360, 0.8, true), design, shape: o.shape || 'round', cream: o.cream || an.cream, palette: an.palette, made: true }, at: Date.now() } }));
+    navAfterSheet('/c', {});
+    toast('이 사진과 비슷한 케이크를 만드는 가게를 찾았어요');
+  } catch { toast('사진을 읽지 못했어요'); }
 }
 
 function SavedStores() {
@@ -200,49 +237,59 @@ function SavedStores() {
   );
 }
 
-// 케이크 사진 자세히: 큰 사진 · 비슷한 케이크 · 이 케이크를 만드는 가게
+// 케이크 사진 자세히: 큰 사진 · 그림판으로 고치기 · AI로 바꿔 보기 · 비슷한 케이크 · 이 케이크를 만드는 가게
+// 관심 탭 예시 사진(id)과 내가 만든 사진(my-…) 둘 다 연다.
 export function CakeDetail({ params }) {
   const st = useApp();
   const [likes, toggleLike] = useLike();
   const [going, setGoing] = useState(false);
-  const it = GALLERY.find((x) => x.id === params.id);
+  const [studio, setStudio] = useState(false);
+  const [sketch, setSketch] = useState(false);
+  const mine = params.id.startsWith('my-') ? (st.aiPics || []).find((p) => p.id === params.id) : null;
+  const it = mine ? null : GALLERY.find((x) => x.id === params.id);
   useEffect(() => { document.querySelector('.cdet .scroll')?.scrollTo(0, 0); }, [params.id]);
-  if (!it) return <div className="screen"><Header title="케이크" fallback="/c/saved" /><Empty icon="image">사진을 찾을 수 없어요.</Empty></div>;
-  const liked = likes.includes(it.id);
-  const similar = GALLERY.filter((x) => x.id !== it.id).map((x) => ({ it: x, sc: simScore(it, x) })).sort((a, b) => b.sc - a.sc).slice(0, 14);
-  const styles = it.st.filter((x) => x !== 'custom');
+  if (!it && !mine) return <div className="screen"><Header title="케이크" fallback="/c/saved" /><Empty icon="image">사진을 찾을 수 없어요.<br />내가 만든 사진은 최근 8장만 이 기기에 남아요.</Empty></div>;
+  // 내가 만든 사진은 옵션(모양·색·디자인)으로 예시 사진 정보처럼 맞춘다
+  const o = mine ? { d: mine.opts?.design || 'simple', sh: mine.opts?.shape || 'round', cr: mine.opts?.cream || 'white', st: mine.opts?.styles || [], tags: [], sz: mine.opts?.size || 'h1' } : it;
+  const src = mine ? mine.src : imgL(it.id);
+  const liked = it && likes.includes(it.id);
+  const similar = GALLERY.filter((x) => x.id !== it?.id).map((x) => ({ it: x, sc: simScore({ ...o, tags: o.tags || [] }, x) })).sort((a, b) => b.sc - a.sc).slice(0, 14);
+  const styles = (o.st || []).filter((x) => x !== 'custom');
   const ranked = rankStores(getStores(st), { loc: st.loc, radius: st.radius, find: styles.length ? { styles } : null });
   const near = (ranked.filter((r) => !r.partial).length ? ranked.filter((r) => !r.partial) : ranked).slice(0, 3);
-  const cream = creamOf(it.cr);
+  const cream = creamOf(o.cr);
+  const optsFor = { design: o.d, shape: o.sh, cream: o.cr, size: o.sz, styles };
   // 이 사진을 '사진으로 찾기' 조건으로 넣는다 → 가게를 고르면 주문서에 모양·색·장식이 미리 채워짐
-  const findStores = async () => {
-    setGoing(true);
-    let thumb = null;
-    try { thumb = toDataURL(await loadDataURL(imgS(it.id)), 360, 0.8, true); } catch { /* 사진 없이 조건만 */ }
-    setState((s) => ({ ...s, find: { text: '', q: '', styles, budget: null, gu: null, sameDay: false, appOnly: false, photo: { thumb, design: it.d, shape: it.sh, cream: it.cr, palette: [{ hex: cream.hex, cream: it.cr, name: cream.name, pct: 60 }], gallery: it.id }, at: Date.now() } }));
-    nav('/c');
-    toast('이 디자인을 만드는 가게를 찾았어요');
-  };
-  const share = async () => { const r = await shareText({ title: it.t, text: `${it.t} — 에이크 관심 케이크`, url: `${location.href.split('#')[0]}#/c/cake/${it.id}` }); if (r === 'copied') toast('링크를 복사했어요'); };
+  const findStores = async () => { setGoing(true); await findWithPhoto(mine ? mine.src : imgS(it.id), optsFor); setGoing(false); };
+  const share = async () => { if (mine) { toast('내가 만든 사진은 이 기기에만 있어요'); return; } const r = await shareText({ title: it.t, text: `${it.t} — 에이크 관심 케이크`, url: `${location.href.split('#')[0]}#/c/cake/${it.id}` }); if (r === 'copied') toast('링크를 복사했어요'); };
+  const del = () => { if (confirm('이 사진을 지울까요?')) { removePic(mine.id); back('/c/saved?cat=mine'); toast('사진을 지웠어요'); } };
+  const label = mine ? (mine.edited ? '그림판으로 고친 사진' : `AI 실사 사진 · ${{ gemini: '구글 제미나이', flux: '무료 AI (FLUX)', horde: '무료 대기열 AI' }[mine.engine] || 'AI'}`) : 'AI 예시 사진 · 실제 가게 작품이 아니에요';
   return (
     <div className="screen cdet">
       <div className="scroll">
-        <div className="cimg" style={{ aspectRatio: `${it.w} / ${it.h}`, background: it.c }}>
-          <img src={imgL(it.id)} alt={it.t} />
-          <span className="ai">AI 예시 사진 · 실제 가게 작품이 아니에요</span>
+        <div className="cimg" style={it ? { aspectRatio: `${it.w} / ${it.h}`, background: it.c } : undefined}>
+          <img src={src} alt={it ? it.t : '내가 만든 사진'} />
+          <span className="ai">{label}</span>
           <div className="floatbar">
-            <button onClick={() => back('/c/saved')} aria-label="뒤로"><Icon n="back" /></button>
-            <div className="row"><button onClick={share} aria-label="공유"><Icon n="share" /></button><button className={liked ? 'on' : ''} onClick={() => toggleLike(it.id)} aria-label="관심"><Icon n="heart" fill={liked} /></button></div>
+            <button onClick={() => back(mine ? '/c/saved?cat=mine' : '/c/saved')} aria-label="뒤로"><Icon n="back" /></button>
+            <div className="row">
+              {mine ? <button onClick={del} aria-label="지우기"><Icon n="trash" /></button> : <button onClick={share} aria-label="공유"><Icon n="share" /></button>}
+              {it && <button className={liked ? 'on' : ''} onClick={() => toggleLike(it.id)} aria-label="관심"><Icon n="heart" fill={liked} /></button>}
+            </div>
           </div>
         </div>
         <div className="chead">
-          <h2>{it.t}</h2>
-          <div className="spec"><span><i style={{ background: cream.hex }} />{cream.name}</span><span>{optName(SHAPES, it.sh)}</span><span>{designOf(it.d).name}</span><span>{sizeOf(it.sz).name} 크기</span></div>
-          <div className="hashes">{it.tags.slice(0, 6).map((t) => <button key={t} onClick={() => nav(`/c/saved?q=${encodeURIComponent(t)}`)}>#{t}</button>)}</div>
+          <h2>{it ? it.t : mine.edited ? '그림판으로 고친 사진' : 'AI 실사 사진'}</h2>
+          <div className="spec"><span><i style={{ background: cream.hex }} />{cream.name}</span><span>{optName(SHAPES, o.sh)}</span><span>{designOf(o.d).name}</span>{it && <span>{sizeOf(it.sz).name} 크기</span>}{mine && <span>{ago(new Date(mine.at).toISOString())}</span>}</div>
+          {it && <div className="hashes">{it.tags.slice(0, 6).map((t) => <button key={t} onClick={() => nav(`/c/saved?q=${encodeURIComponent(t)}`)}>#{t}</button>)}</div>}
         </div>
         <div className="pad" style={{ paddingTop: 16 }}>
           <button className="btn pri block" onClick={findStores} disabled={going}><Icon n="map" size="sm" />이 케이크 만드는 가게 찾기</button>
-          <div className="xs muted center" style={{ marginTop: 8 }}>가게를 고르면 주문서에 이 디자인이 미리 채워져요.</div>
+          <div className="btns" style={{ marginTop: 8 }}>
+            <button className="btn line sm" onClick={() => setSketch(true)}><Icon n="pen" size="sm" />그림판으로 고치기</button>
+            <button className="btn line sm" onClick={() => setStudio(true)}><Icon n="sparkle" size="sm" />AI로 바꿔 보기</button>
+          </div>
+          <div className="xs muted center" style={{ marginTop: 8 }}>가게를 고르면 주문서에 이 디자인이 미리 채워져요. ‘AI로 바꿔 보기’에서 “체리 많이”처럼 바꿀 점을 적어 보세요.</div>
           {near.length > 0 && (<>
             <div className="sec-t"><h3>가까운 가게</h3><span className="more">{styles.length ? '이 스타일을 만드는 곳' : '내 주변'}</span></div>
             <div className="mini-stores">{near.map((r) => <StoreCard key={r.s.id} r={r} fav={st.favs.includes(r.s.id)} onFav={() => setState((x) => ({ ...x, favs: x.favs.includes(r.s.id) ? x.favs.filter((i) => i !== r.s.id) : [...x.favs, r.s.id] }))} onClick={() => nav(`/store/${r.s.id}`)} />)}</div>
@@ -252,6 +299,8 @@ export function CakeDetail({ params }) {
         <div className="masonry">{similar.map(({ it: x }) => <Tile key={x.id} it={x} liked={likes.includes(x.id)} onLike={() => toggleLike(x.id)} />)}</div>
         <div style={{ height: 28 }} />
       </div>
+      <AIStudio open={studio} onClose={() => setStudio(false)} input={mine ? mine.src : imgL(it.id)} opts={optsFor} onUse={(s2, p) => (p?.id?.startsWith('my-') ? navAfterSheet(`/c/cake/${p.id}`, {}) : findWithPhoto(s2, optsFor))} useLabel="이 사진 자세히 보기" />
+      {sketch && <Portal><Sketch src={src} onClose={() => setSketch(false)} onSave={(out) => { const p = saveEdited(out, { opts: optsFor, from: mine?.id || it?.id }); toast('고친 사진을 저장했어요'); navAfterSheet(`/c/cake/${p.id}`, {}); }} /></Portal>}
     </div>
   );
 }

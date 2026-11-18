@@ -46,7 +46,7 @@ export function RoleSelect() {
       <div className="split">
         <button className="pick owner" onClick={() => choose('owner')}>
           <span className="go"><Icon n="right" /></span>
-          <span className="lbl">사장님</span>
+          <span className="lbl">사장님{st.role === 'owner' && <em className="last">지난번 선택</em>}</span>
           <h3>사장님용</h3>
           <p>가게 등록하고<br />주문 받기</p>
           <ul><Li>3분이면 가게 등록</Li><Li>주문이 실시간 도착</Li><Li>매출·장부·근무기록</Li></ul>
@@ -54,7 +54,7 @@ export function RoleSelect() {
         </button>
         <button className="pick cust" onClick={() => choose('customer')}>
           <span className="go"><Icon n="right" /></span>
-          <span className="lbl">고객</span>
+          <span className="lbl">고객{st.role === 'customer' && <em className="last">지난번 선택</em>}</span>
           <h3>고객용</h3>
           <p>내 주변 케이크<br />찾고 주문하기</p>
           <ul><Li>지도에서 바로 찾기</Li><Li>가격 먼저 확인</Li><Li>사장님과 바로 대화</Li></ul>

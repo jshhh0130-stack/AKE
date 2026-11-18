@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { createPortal } from 'react-dom';
 import qrcode from 'qrcode-generator';
 import Icon from './Icon.jsx';
 import { Candle } from './Logo.jsx';
@@ -96,6 +97,8 @@ export function Sheet({ open, onClose, title, children, footer, height }) {
 }
 // 시트 안에서 다른 화면으로 갈 때: 시트 기록을 지우고 이동
 export function leaveSheet(go) { setTimeout(go, 0); }
+// 다른 시트 안에서 열어도 핸드폰 화면 전체 위에 뜨게 (AI 사진 창 · 그림판)
+export const Portal = ({ children }) => createPortal(children, document.querySelector('.phone') || document.body);
 // 전체 화면 덮개(검색 등)도 휴대폰 '뒤로' 버튼으로 닫히게. 돌려주는 함수로 닫는다.
 export function useBackClose(onClose) {
   const hid = useRef(null);

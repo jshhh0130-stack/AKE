@@ -1,14 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../../components/Icon.jsx';
-import { CakeView, Header, Sheet, toast, PhotoPick, Empty, Toggle } from '../../components/ui.jsx';
+import { CakeView, Header, Sheet, toast, PhotoPick, Empty, Toggle, Portal } from '../../components/ui.jsx';
+import AIStudio from '../../components/AIStudio.jsx';
+import Sketch from '../../components/Sketch.jsx';
+import { fitImage, saveEdited } from '../../lib/imagegen.js';
 import { useApp, setState } from '../../lib/state.js';
 import { nav, queryOf, navAfterSheet } from '../../lib/router.js';
 import { getStores, dayStatus, slotsOf, canOrderInApp } from '../../lib/stores.js';
 import { estimate, ruleCheck, verdictOf, basisText } from '../../lib/price.js';
 import { createOrder } from '../../lib/orders.js';
-import { ruleParseOrder, aiParseOrder, photoToOptions, realisticImageURL, aiAnalyzePhoto } from '../../lib/ai.js';
+import { ruleParseOrder, aiParseOrder, photoToOptions, aiAnalyzePhoto } from '../../lib/ai.js';
 import { loadImage, toDataURL, analyzeImage } from '../../lib/image.js';
-import { storeLook } from '../../lib/cake.js';
+import { storeLook, cakeSVG } from '../../lib/cake.js';
+
+// 앱 시안(그림)을 사진 파일로 — AI 실사·그림판의 바탕으로 쓴다 (문구는 그림판에서 예쁜 글씨로 따로 얹음)
+async function sianPng(view) {
+  const svg = cakeSVG({ ...view, text: '' }, { uid: 'sx', fancy: true }).replace('<svg ', '<svg width="900" height="750" ');
+  const im = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('시안을 그림으로 바꾸지 못했어요')); i.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
+  const c = document.createElement('canvas'); c.width = 900; c.height = 750;
+  c.getContext('2d').drawImage(im, 0, 0, 900, 750);
+  return c.toDataURL('image/jpeg', 0.9);
+}
 import { range, won, today, addDays, ymd, DOW, fmtDate, textLen, parseYmd } from '../../lib/util.js';
 import { SIZES, SHAPES, DESIGNS, FLAVORS, RICE_FLAVORS, CREAMS, CREAM_ADD, TEXT_COLORS, FONTS, TOPPINGS, EXTRAS, QUICK_TEXTS, SIZE_MULT, sizeOf, optName, designOf, creamOf, fontOf, textColorOf } from '../../data/catalog.js';
 
@@ -66,7 +78,8 @@ export default function OrderForm({ params, path }) {
   const [mini, setMini] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [varOpen, setVarOpen] = useState(false);
-  const [realOpen, setRealOpen] = useState(false);
+  const [studio, setStudio] = useState(null); // AI 실사 창 { inputs }
+  const [sketchSrc, setSketchSrc] = useState(null); // 그림판 바탕
   const [aiText, setAiText] = useState('');
   const [aiBusy, setAiBusy] = useState(false);
   const scroller = useRef(null);
@@ -97,6 +110,22 @@ export default function OrderForm({ params, path }) {
   const v = verdictOf(checks);
   const view = { ...o, text: o.noText ? '' : o.text, photo: o.design === 'photo' ? o.refPhoto : undefined };
   const inApp = canOrderInApp(store);
+  // AI 실사 · 그림판: 결과는 주문서 '참고 사진'으로 들어가 사장님께 함께 전달돼요
+  const sketchTexts = !o.noText && o.text ? [{ t: o.text, font: o.font, color: textColorOf(o.textColor).hex }] : [];
+  const putRef = async (src) => {
+    try { set({ refPhoto: await fitImage(src, { max: 560, q: 0.82 }) }); toast('주문서 참고 사진으로 넣었어요. 사장님께 함께 보내져요', 3200); }
+    catch { toast('사진을 넣지 못했어요'); }
+  };
+  const openStudio = async () => {
+    let sian = null;
+    try { sian = await sianPng(view); } catch { /* 시안 없이 */ }
+    setStudio({ inputs: [o.refPhoto && { id: 'ref', label: '내 참고 사진', src: o.refPhoto }, sian && { id: 'sian', label: '앱 시안', src: sian }].filter(Boolean) });
+  };
+  const openSketch = async () => {
+    let src = o.refPhoto;
+    if (!src) { try { src = await sianPng(view); } catch (e) { toast(e.message); return; } }
+    setSketchSrc(src);
+  };
 
   const fillFromParsed = (got, unsure = []) => {
     const patch = {};
@@ -164,7 +193,8 @@ export default function OrderForm({ params, path }) {
           <span className="size-cmp"><Icon n="ruler" /> {sizeOf(o.size).name} · 지름 {sizeOf(o.size).cm}cm · {sizeOf(o.size).serves}</span>
           {!mini && <div className="tools">
             <button onClick={() => setVarOpen(true)}><Icon n="sparkle" size="sm" />시안 3가지</button>
-            <button onClick={() => setRealOpen(true)}><Icon n="wand" size="sm" />AI 실사</button>
+            <button onClick={openStudio}><Icon n="wand" size="sm" />AI 실사</button>
+            <button onClick={openSketch}><Icon n="pen" size="sm" />그림판</button>
           </div>}
           <span className="cap">참고 그림 · 실물과 조금 다를 수 있어요</span>
         </div>
@@ -301,7 +331,8 @@ export default function OrderForm({ params, path }) {
       </div>
 
       <VariantSheet open={varOpen} onClose={() => setVarOpen(false)} view={view} onPick={(k) => { set({ variant: k }); setVarOpen(false); toast(`시안 ${k + 1}로 바꿨어요`); }} current={o.variant} />
-      <RealSheet open={realOpen} onClose={() => setRealOpen(false)} o={o} />
+      <AIStudio open={!!studio} onClose={() => setStudio(null)} inputs={studio?.inputs} opts={o} onUse={putRef} useLabel="주문서 참고 사진으로 넣기" sketchTexts={sketchTexts} />
+      {sketchSrc && <Portal><Sketch src={sketchSrc} title="그림판 · 원하는 걸 그려 보세요" texts={sketchTexts} onClose={() => setSketchSrc(null)} onSave={(out) => { saveEdited(out, { opts: o }); putRef(out); }} /></Portal>}
       <ConfirmSheet open={confirm} onClose={() => setConfirm(false)} store={store} o={o} view={view} est={est} checks={checks} v={v} inApp={inApp} />
     </div>
   );
@@ -318,27 +349,6 @@ function VariantSheet({ open, onClose, view, onPick, current }) {
             <div className="row" style={{ padding: '8px 12px' }}><b className="grow">시안 {k + 1} · {['기본 배치', '셸 테두리 + 오른쪽 장식', '진주 링 + 하트 포인트'][k]}</b>{current === k && <span className="tag ok">선택됨</span>}</div>
           </button>
         ))}
-      </div>
-    </Sheet>
-  );
-}
-
-function RealSheet({ open, onClose, o }) {
-  const [seed, setSeed] = useState(1);
-  const [state, setStateL] = useState('load');
-  const url = useMemo(() => realisticImageURL(o, seed), [o.shape, o.size, o.design, o.cream, o.toppings.join(), seed]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { if (open) setStateL('load'); }, [url, open]);
-  return (
-    <Sheet open={open} onClose={onClose} title="AI 실사 이미지 (베타)">
-      <div className="small muted" style={{ marginBottom: 10 }}>고른 모양·색·장식을 바탕으로 무료 AI 이미지 서비스(pollinations.ai)가 그려요. <b>문구와 개인정보는 보내지 않아요.</b> 분위기 참고용이라 실제 케이크·문구와 다를 수 있어요.</div>
-      <div style={{ position: 'relative', borderRadius: 18, overflow: 'hidden', background: 'var(--p50)', aspectRatio: '1' }}>
-        {state === 'load' && <div className="shimmer" style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}><div className="col" style={{ alignItems: 'center' }}><div className="loader" /><span className="small muted">AI가 그리는 중… (10~30초)</span></div></div>}
-        {state === 'err' && <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', padding: 20, textAlign: 'center' }} className="small muted">지금은 AI 이미지 서버가 바빠요. 잠시 뒤 “다시 그리기”를 눌러 주세요.</div>}
-        {open && <img key={url} src={url} alt="AI 실사 케이크" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: state === 'ok' ? 1 : 0 }} onLoad={() => setStateL('ok')} onError={() => setStateL('err')} />}
-      </div>
-      <div className="btns" style={{ marginTop: 12 }}>
-        <button className="btn line" onClick={() => setSeed((x) => x + 1)}><Icon n="refresh" size="sm" />다시 그리기</button>
-        <button className="btn pri" onClick={onClose}>닫기</button>
       </div>
     </Sheet>
   );

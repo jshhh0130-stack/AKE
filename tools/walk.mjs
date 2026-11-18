@@ -47,7 +47,7 @@ await click('조건으로 찾기'); await sleep(1800); await snap('find-results'
 await page.evaluate(() => document.querySelectorAll('.mfab')[1]?.click()); await sleep(600); await snap('share-sheet');
 await page.evaluate(() => document.querySelector('.backdrop')?.click()); await sleep(500);
 // 사진으로 찾기 (예시 사진)
-await page.evaluate(() => document.querySelector('.msearch .cam')?.click()); await sleep(700);
+await page.evaluate(() => document.querySelector('.findbar .fc')?.click()); await sleep(700);
 await click('초기화'); await click('하트 빈티지'); await sleep(1500); await snap('find-photo');
 await click('보기'); await sleep(1800); await snap('find-photo-results');
 // 관심: 케이크 둘러보기 → 하트 → 자세히 → 이 케이크 만드는 가게 찾기
@@ -78,7 +78,7 @@ await click('앱 시안으로 확인받기'); await sleep(700);
 await setVal('.composer input.inp', '혹시 초는 몇 개 넣어 드릴까요?'); await page.evaluate(() => document.querySelector('.cbtn.send')?.click()); await sleep(600); await snap('owner-room-proof');
 // 손님으로 돌아가 대화방 확인
 await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('dearcake:v2')); s.role = 'customer'; localStorage.setItem('dearcake:v2', JSON.stringify(s)); });
-await page.goto(BASE + '#/c/orders', { waitUntil: 'networkidle2' }); await page.reload({ waitUntil: 'networkidle2' }); await sleep(2500); await snap('cust-orders');
+await page.goto(BASE, { waitUntil: 'networkidle2' }); await page.reload({ waitUntil: 'networkidle2' }); await sleep(2500); await hash('#/c/orders'); await sleep(900); await snap('cust-orders');
 await page.evaluate(() => document.querySelector('.ocard')?.click()); await sleep(900); await snap('cust-room-proof');
 await click('수정 요청', { exact: true }); await sleep(500); await click('문구 수정'); await setVal('.sheet textarea', '지민아를 조금 더 크게 해 주세요'); await sleep(200); await snap('cust-prooffix');
 await click('수정 요청 보내기'); await sleep(700);
@@ -89,7 +89,7 @@ await hash('#/c'); await sleep(2200); await page.evaluate(() => document.querySe
 await page.evaluate(() => document.querySelector('.backdrop')?.click()); await sleep(400);
 // 사장님: 예시 주문 넣고 매출·장부·근무기록
 await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('dearcake:v2')); s.role = 'owner'; localStorage.setItem('dearcake:v2', JSON.stringify(s)); });
-await page.goto(BASE + '#/o/shop', { waitUntil: 'networkidle2' }); await page.reload({ waitUntil: 'networkidle2' }); await sleep(2400);
+await page.goto(BASE, { waitUntil: 'networkidle2' }); await page.reload({ waitUntil: 'networkidle2' }); await sleep(2400); await hash('#/o/shop'); await sleep(900);
 await click('예시 주문 넣어 보기'); await sleep(600);
 await hash('#/o'); await sleep(900); await snap('owner-home');
 await hash('#/o/orders'); await sleep(800); await snap('owner-orders');
@@ -108,7 +108,7 @@ await hash('#/settings'); await sleep(700); await snap('settings');
 await hash('#/insight'); await sleep(900); await snap('insight');
 await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
 await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('dearcake:v2')); s.role = 'customer'; localStorage.setItem('dearcake:v2', JSON.stringify(s)); });
-await page.goto(BASE + '#/c', { waitUntil: 'networkidle2' }); await page.reload({ waitUntil: 'networkidle2' }); await sleep(2600); await snap('desktop');
+await page.goto(BASE, { waitUntil: 'networkidle2' }); await page.reload({ waitUntil: 'networkidle2' }); await sleep(2600); await snap('desktop-role'); await click('고객용'); await sleep(1500); await snap('desktop');
 await fs.writeFile(`${OUT}/errors.txt`, errors.join('\n') || 'no errors');
 console.log(errors.length ? 'ERRORS:\n' + errors.join('\n') : 'no errors');
 await browser.close();

@@ -11,7 +11,7 @@ page.on('pageerror', (e) => errors.push('page: ' + e.message));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 await page.goto(BASE, { waitUntil: 'networkidle2' });
 await page.evaluate((k) => { localStorage.clear(); localStorage.setItem('dearcake:v2', JSON.stringify({ role: 'customer', seenGuide: true, settings: { googleKey: k, claudeKey: '', kakaoKey: '' } })); }, KEY);
-await page.goto(BASE + '#/c', { waitUntil: 'networkidle2' }); await page.reload({ waitUntil: 'networkidle2' }); await sleep(6000);
+await page.goto(BASE, { waitUntil: 'networkidle2' }); await page.reload({ waitUntil: 'networkidle2' }); await sleep(2500); await page.evaluate(() => { location.hash = '#/c'; }); await sleep(6000);
 await page.screenshot({ path: 'tools/shots/g1-home.png' });
 const info = await page.evaluate(() => ({ gmap: !!document.querySelector('.gmap'), pins: document.querySelectorAll('.pin2').length, google: !!window.google?.maps }));
 console.log(JSON.stringify(info));

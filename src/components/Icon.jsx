@@ -55,6 +55,14 @@ const P = {
   ruler: <path d="M3 17L17 3l4 4L7 21zM7.5 12.5l2 2M10.5 9.5l2 2M13.5 6.5l2 2" />,
   mobile: <><rect x="7" y="2.5" width="10" height="19" rx="2.2" /><path d="M11 18h2" /></>,
   filter: <path d="M4 5h16l-6.5 7.5V19l-3 1.5v-8z" />,
+  eraser: <><path d="M8 20h12" /><path d="M5.6 16.6L15.2 7l4.2 4.2-8.8 8.8H7.2l-1.6-1.6a1.2 1.2 0 0 1 0-1.8z" /><path d="M10.4 11.8l4.2 4.2" /></>,
+  text: <path d="M5 7V5h14v2M12 5v14M9 19h6" />,
+  undo: <path d="M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />,
+  redo: <path d="M15 14l5-5-5-5M20 9H9.5a5.5 5.5 0 0 0 0 11H13" />,
+  pen: <path d="M4 20l1.2-4.6L15.6 5a2.1 2.1 0 0 1 3 0l.4.4a2.1 2.1 0 0 1 0 3L8.6 18.8zM13.5 7l3.5 3.5" />,
+  piping: <><path d="M6 3h12l-4.5 8.5V17l-3 2.5v-8z" /><path d="M10.5 22v-1" /></>,
+  bigger: <path d="M4 20l6-14 6 14M6.5 15h7M18 5v6M15 8h6" />,
+  smaller: <path d="M4 20l6-14 6 14M6.5 15h7M15 8h6" />,
 };
 
 export default function Icon({ n, size, className = '', fill = false, style }) {

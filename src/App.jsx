@@ -1,7 +1,8 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { usePath, match, nav } from './lib/router.js';
-import { useApp, setState, resetAll } from './lib/state.js';
+import { setState, getState, resetAll } from './lib/state.js';
 import { startLive } from './lib/live.js';
+import { resumeAIJobs } from './lib/imagegen.js';
 import { Toasts, QR, Loading, toast } from './components/ui.jsx';
 import { Logo } from './components/Logo.jsx';
 import Icon from './components/Icon.jsx';
@@ -42,16 +43,19 @@ const ROUTES = [
   ['/settings', Settings], ['/about', About], ['/s/:code', SharedOrder], ['/g/:code', GiftView], ['/j/:code', JoinShop], ['/insight', Insight],
 ];
 
+// 앱을 열 때마다 '사장님용 / 고객용' 고르기부터 보여 준다.
+// 가게 주문 링크·QR(#/j), 주문서·선물 링크, 알림으로 여는 주문 화면처럼 특정 화면으로 바로 가는 주소는 그대로 연다.
+const START_PAGES = ['/', '', '/c', '/o', '/role', '/guide', '/c/saved', '/c/orders', '/c/my', '/o/orders', '/o/sales', '/o/shop'];
+const BOOT_PATH = (location.hash.replace(/^#/, '') || '/').split('?')[0];
+let booted = false;
+
 function Router() {
   const path = usePath();
-  const st = useApp();
   const clean = path.split('?')[0];
   useEffect(() => {
-    if (clean === '/' || clean === '') {
-      const to = !st.role ? '/role' : st.role === 'owner' ? (st.shop ? '/o' : '/o/setup') : '/c';
-      nav(to, { replace: true });
-    }
-  }, [clean]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!booted) { booted = true; if (START_PAGES.includes(BOOT_PATH) && clean !== '/role') { nav('/role', { replace: true }); return; } }
+    if (clean === '/' || clean === '') nav('/role', { replace: true });
+  }, [clean]);
   for (const [pat, C] of ROUTES) {
     const p = match(clean, pat);
     if (p) {
@@ -81,7 +85,7 @@ function DemoSteps() {
         <button className="btn xs sec" onClick={go(() => { setState({ role: 'customer', seenGuide: true }); nav('/c'); })}>고객 지도</button>
         <button className="btn xs sec" onClick={go(() => { setState({ role: 'customer', seenGuide: true }); nav('/c/saved'); })}>관심 케이크</button>
         <button className="btn xs sec" onClick={go(() => { setState({ role: 'customer', seenGuide: true }); nav('/order/holiday-cake'); })}>주문서 예시</button>
-        <button className="btn xs sec" onClick={go(() => { setState({ role: 'owner' }); nav('/'); })}>사장님 화면</button>
+        <button className="btn xs sec" onClick={go(() => { setState({ role: 'owner' }); nav(getState().shop ? '/o' : '/o/setup'); })}>사장님 화면</button>
         <button className="btn xs ghost" onClick={go(() => { resetAll(); nav('/role', { replace: true }); toast('처음 상태로 돌렸어요'); })}>처음부터</button>
       </div>
     </details>
@@ -96,7 +100,7 @@ export default function App() {
     const b = setTimeout(() => setGone(true), 2200);
     return () => { clearTimeout(a); clearTimeout(b); };
   }, []);
-  useEffect(() => { startLive(); }, []);
+  useEffect(() => { startLive(); resumeAIJobs(); }, []); // 실시간 주문 연결 + 무료 대기열에서 만들던 AI 사진 이어서 기다리기
   const appUrl = location.href.split('#')[0];
   return (
     <div className="desk">

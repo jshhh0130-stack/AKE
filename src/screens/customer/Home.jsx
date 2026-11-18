@@ -4,7 +4,10 @@ import MapView, { loadKakao } from '../../components/MapView.jsx';
 import Coach from '../../components/Coach.jsx';
 import { LocShareSheet, myLocation } from '../../components/Share.jsx';
 import { CustomerTabBar } from '../../components/TabBar.jsx';
-import { Sheet, CakeView, toast, PhotoPick, Loading, Toggle, useBackClose } from '../../components/ui.jsx';
+import { Sheet, CakeView, toast, PhotoPick, Loading, Toggle, useBackClose, Portal } from '../../components/ui.jsx';
+import AIStudio from '../../components/AIStudio.jsx';
+import Sketch from '../../components/Sketch.jsx';
+import { saveEdited } from '../../lib/imagegen.js';
 import { NotiBell } from '../../components/Noti.jsx';
 import { useApp, setState, getState } from '../../lib/state.js';
 import { nav, navAfterSheet } from '../../lib/router.js';
@@ -14,7 +17,7 @@ import { range } from '../../lib/util.js';
 import { estimate } from '../../lib/price.js';
 import { PLACES, STYLES, DESIGNS, SHAPES, styleName, optName, creamOf } from '../../data/catalog.js';
 import { getGPS, searchPlace, reverseLabel, findNearbyOSM } from '../../lib/geo.js';
-import { loadImage, toDataURL, analyzeImage } from '../../lib/image.js';
+import { loadImage, loadDataURL, toDataURL, analyzeImage } from '../../lib/image.js';
 import { aiAnalyzePhoto, aiParseFind } from '../../lib/ai.js';
 import { enrich, googleFind, onPlaces } from '../../lib/gplaces.js';
 
@@ -95,8 +98,8 @@ export function CompareSheet({ open, onClose, rows }) {
 
 const SNAP = { mini: 0.12, half: 0.44, full: 0.92 };
 const TOUR = [
-  { sel: '[data-coach="search"]', title: '가게 이름이나 원하는 케이크를 검색해요', body: '“영통 4만원대 캐릭터”처럼 말로 써도 알아서 찾아요. 오른쪽 카메라로 사진 검색도 돼요.', pad: 4 },
-  { sel: '[data-coach="chips"]', title: '조건을 눌러 바로 골라요', body: '필터 · 동네 · 당일 픽업 · 앱 주문 가게만 골라 볼 수 있어요.', pad: 2, radius: 20 },
+  { sel: '[data-coach="find"]', title: 'AI로 케이크 가게를 찾아요', body: '원하는 케이크 사진을 넣거나 “영통 4만원대 캐릭터”처럼 말로 쓰면 맞는 가게를 찾아요. 사진을 AI 실사 사진으로 만들고 그림판으로 고칠 수도 있어요.', pad: 4 },
+  { sel: '[data-coach="chips"]', title: '조건을 눌러 바로 골라요', body: '위 검색창에는 가게 이름을 써요. 아래 칩으로 동네 · 앱 주문 · 당일 픽업 가게만 골라 봐요.', pad: 2, radius: 20 },
   { sel: '.bsheet .bl .scard', title: '가게마다 1호 가격이 먼저 보여요', body: '지도 핀에도 가격이 보여요. 분홍 핀은 앱으로 바로 주문되는 가게예요. 핀이나 카드를 누르면 가게를 자세히 봐요.', pad: 4, radius: 16 },
   { sel: '[data-coach="fabs"]', title: '내 위치 · 위치 공유', body: '내 주변 가게를 찾고, 가게 위치를 친구에게 카톡·문자로 보낼 수 있어요.', pad: 6, radius: 28 },
   { sel: '[data-coach="tab-saved"]', title: '관심에서 케이크를 모아 봐요', body: '케이크 사진을 둘러보고 하트를 눌러 모아요. 비슷한 케이크와 만드는 가게도 찾아 줘요.', pad: 2, radius: 14 },
@@ -190,6 +193,8 @@ export default function CustomerHome() {
   const exactN = ranked.filter((r) => !r.partial).length;
   const firstPartial = ranked.find((r) => r.partial);
   const nFind = findCount(find);
+  const bySearch = !!find && find.src === 'search' && !!find.text; // 위 검색창으로 찾은 것
+  const byAI = !!find && !bySearch && (nFind > 0 || !!find.text); // AI 찾기(사진·말·조건)로 찾은 것
   const clearFind = () => { setState({ find: null }); setFit(null); };
   const locLabel = find?.gu ? `수원 ${find.gu}` : st.loc.label;
   const selStore = sel ? ranked.find((r) => r.s.id === sel)?.s : null;
@@ -247,16 +252,20 @@ export default function CustomerHome() {
 
         <div className="mtop">
           <div className="mbar">
-            <button className={`msearch ${find?.text || nFind ? 'on' : ''}`} data-coach="search" onClick={() => setSearchOpen(true)}>
-              {find?.photo?.thumb ? <img src={find.photo.thumb} alt="" style={{ width: 26, height: 26, borderRadius: 7, objectFit: 'cover' }} /> : <Icon n="search" />}
-              <span className="q">{find?.text ? find.text : nFind ? [find.photo && '내 사진과 비슷한', ...(find.styles || []).map(styleName), find.budget && budgetName(find.budget), find.sameDay && '당일 픽업'].filter(Boolean).join(' · ') || `조건 ${nFind}개` : '가게 이름, 동네, 원하는 케이크'}</span>
-              {(find?.text || nFind > 0) && <span className="x" role="button" aria-label="검색 지우기" onClick={(e) => { e.stopPropagation(); clearFind(); toast('검색 조건을 지웠어요'); }}><Icon n="close" size="sm" /></span>}
-              <span className="cam" role="button" aria-label="사진으로 찾기" onClick={(e) => { e.stopPropagation(); setFindOpen('photo'); }}><Icon n="camera" /></span>
+            <button className={`msearch ${bySearch ? 'on' : ''}`} data-coach="search" onClick={() => setSearchOpen(true)}>
+              <Icon n="search" />
+              <span className="q">{bySearch ? find.text : '가게 이름, 동네로 검색'}</span>
+              {bySearch && <span className="x" role="button" aria-label="검색 지우기" onClick={(e) => { e.stopPropagation(); clearFind(); toast('검색을 지웠어요'); }}><Icon n="close" size="sm" /></span>}
             </button>
             <NotiBell role="c" />
           </div>
+          {/* AI로 케이크 가게 찾기: 사진을 넣거나 말로 (예전 '찾기' 그대로) */}
+          <button className={`findbar ${byAI ? 'on' : ''}`} data-coach="find" onClick={() => setFindOpen('all')}>
+            {byAI && find.photo?.thumb ? <img src={find.photo.thumb} alt="" /> : <span className="fi"><Icon n="sparkle" /></span>}
+            <span className="grow">{byAI ? <><b>조건 {nFind}개로 찾는 중</b><small>{[find.text, find.photo && '내 사진과 비슷한', ...(find.styles || []).map(styleName), find.budget && budgetName(find.budget), find.sameDay && '당일'].filter(Boolean).slice(0, 3).join(' · ') || '눌러서 조건 바꾸기'}</small></> : <><b>AI로 케이크 가게 찾기</b><small>사진을 넣거나 말로 찾아보세요 · AI 실사 사진도 만들어요</small></>}</span>
+            {byAI ? <span className="fx" role="button" aria-label="조건 지우기" onClick={(e) => { e.stopPropagation(); clearFind(); toast('찾기 조건을 지웠어요'); }}><Icon n="close" size="sm" /></span> : <span className="fc" role="button" aria-label="사진으로 찾기" onClick={(e) => { e.stopPropagation(); setFindOpen('photo'); }}><Icon n="camera" /></span>}
+          </button>
           <div className="mchips" data-coach="chips">
-            <button className={`mchip ${nFind ? 'on' : ''}`} onClick={() => setFindOpen('all')}><Icon n="sliders" />필터{nFind > 0 && <b>{nFind}</b>}</button>
             <button className="mchip loc" onClick={() => setLocOpen(true)}><Icon n="pin" /><span>{locLabel}</span><Icon n="down" /></button>
             {FILTERS.filter((f) => f.id !== 'all').map((f) => <button key={f.id} className={`mchip ${filter === f.id ? 'on' : ''}`} onClick={() => { setFilter(filter === f.id ? 'all' : f.id); setSel(null); }}>{f.name}</button>)}
           </div>
@@ -426,7 +435,7 @@ function SearchView({ stores, onClose, openPhoto }) {
   const applyText = (text) => {
     const p = parseFindText(text);
     const cond = !!(p.styles.length || p.budget || p.gu || p.place || p.sameDay);
-    const next = { text, styles: p.styles, budget: p.budget, gu: p.gu, sameDay: p.sameDay, q: cond ? '' : text, at: Date.now() };
+    const next = { text, styles: p.styles, budget: p.budget, gu: p.gu, sameDay: p.sameDay, q: cond ? '' : text, at: Date.now(), src: 'search' };
     setState((s) => ({ ...s, find: next, ...(p.place ? { loc: { ...p.place, src: 'find' }, radius: Math.min(s.radius, 3) } : {}) }));
     remember(text);
     close();
@@ -499,14 +508,24 @@ const SAMPLES = [
 const EXAMPLES = ['영통 근처 4만원대 캐릭터 케이크', '인계동 당일 가능한 레터링', '5만원 이하 꽃 케이크', '팔달구 사진 케이크'];
 const designStyles = (d) => (d === 'character' ? ['character'] : d === 'flower' ? ['flower'] : d === 'photo' ? ['photo'] : ['lettering']);
 
-// 필터 · 사진으로 찾기
+// AI로 케이크 가게 찾기: 말로 · 사진으로 · 조건으로 (예전 '찾기' 그대로)
+// 넣은 사진은 'AI 실사 사진'으로 만들거나 그림판으로 고친 뒤 그 사진으로 찾을 수 있어요.
+const EMPTY_FIND = { text: '', styles: [], budget: null, gu: null, sameDay: false, appOnly: false, photo: null };
 export function FindSheet({ open, onClose, stores, focus }) {
   const st = useApp();
-  const [f, setF] = useState({ text: '', styles: [], budget: null, gu: null, sameDay: false, appOnly: false, photo: null });
+  const [f, setF] = useState(EMPTY_FIND);
   const [place, setPlace] = useState(null);
   const [busy, setBusy] = useState('');
   const [aiNote, setAiNote] = useState('');
-  useEffect(() => { if (open) { setF({ text: '', styles: [], budget: null, gu: null, sameDay: false, appOnly: false, photo: null, ...(st.find || {}) }); setPlace(null); setAiNote(''); } }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [big, setBig] = useState(null); // 넣은 사진 원본(크게) — AI·그림판용, 저장하지 않음
+  const [studio, setStudio] = useState(false);
+  const [sketch, setSketch] = useState(false);
+  const photoRef = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    setF({ ...EMPTY_FIND, ...(st.find && st.find.src !== 'search' ? st.find : {}) }); setPlace(null); setAiNote(''); setBig(null);
+    if (focus === 'photo') setTimeout(() => photoRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 380);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
   const set = (p) => setF((x) => ({ ...x, ...p }));
   const toggleStyle = (id) => set({ styles: f.styles.includes(id) ? f.styles.filter((x) => x !== id) : [...f.styles, id] });
   const loc = place || st.loc;
@@ -538,6 +557,7 @@ export function FindSheet({ open, onClose, stores, focus }) {
     setBusy('photo');
     try {
       const thumb = toDataURL(el, 360, 0.8, true);
+      setBig(toDataURL(el, 1024, 0.9));
       const an = analyzeImage(el);
       let photo = { thumb, design: smp?.o.design || an.design, shape: smp?.o.shape || 'round', cream: smp?.o.cream || an.cream, palette: an.palette };
       let styles = smp ? designStyles(smp.o.design) : an.styles.filter((x) => x !== 'lettering').length ? an.styles.filter((x) => x !== 'lettering') : ['lettering'];
@@ -545,7 +565,7 @@ export function FindSheet({ open, onClose, stores, focus }) {
         try {
           const r = await aiAnalyzePhoto(st.settings.claudeKey, toDataURL(el, 900, 0.85));
           if (r.is_cake) { photo = { ...photo, ai: r, design: r.design || photo.design, shape: r.shape !== 'unknown' ? r.shape : photo.shape, cream: r.cream_colors?.[0] || photo.cream }; if (r.styles?.length) styles = r.styles.filter((x) => STYLES.some((s) => s.id === x)); setAiNote(r.summary_ko || ''); }
-          else setAiNote('케이크 사진이 아닌 것 같아요. 색만 참고했어요.');
+          else setAiNote('케이크 사진이 아닌 것 같아요. 색만 참고했어요. AI 실사 사진으로 케이크처럼 바꿔 볼 수 있어요.');
         } catch (e) { toast(e.message); }
       }
       set({ photo, styles: styles.length ? styles : ['lettering'] });
@@ -558,47 +578,59 @@ export function FindSheet({ open, onClose, stores, focus }) {
     const el = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
     await runPhoto(el, smp);
   };
+  // AI 실사 · 그림판으로 바꾼 사진으로 찾기
+  const usePhoto = async (src) => {
+    try {
+      const el = await loadDataURL(src);
+      const an = analyzeImage(el);
+      setF((x) => ({ ...x, photo: { ...(x.photo || { shape: 'round' }), thumb: toDataURL(el, 360, 0.8, true), palette: an.palette, design: x.photo?.design || an.design, cream: x.photo?.cream || an.cream, made: true }, styles: x.styles?.length ? x.styles : ['lettering'] }));
+      setBig(toDataURL(el, 1024, 0.9));
+      toast('이 사진으로 찾을게요. 아래 버튼을 누르면 가게가 나와요');
+    } catch { toast('사진을 읽지 못했어요'); }
+  };
   const apply = () => {
-    const next = { ...f, text: f.text.trim(), q: '', at: Date.now() };
+    const next = { ...f, text: f.text.trim(), q: '', at: Date.now(), src: 'ai' };
     setState((s) => ({ ...s, find: findCount(next) || next.text ? next : null, ...(place ? { loc: { ...place, src: 'find' }, radius: Math.min(s.radius, 3) } : {}) }));
     onClose();
     toast(count ? `조건에 맞는 가게 ${count}곳을 찾았어요` : near ? `딱 맞는 곳은 없지만 비슷한 가게 ${near}곳을 보여 드려요` : '맞는 가게가 없어요. 조건을 줄여 보세요');
   };
-  const reset = () => { setF({ text: '', styles: [], budget: null, gu: null, sameDay: false, appOnly: false, photo: null }); setPlace(null); setAiNote(''); };
+  const reset = () => { setF(EMPTY_FIND); setPlace(null); setAiNote(''); setBig(null); };
   const ph = f.photo;
-  const photoSec = (
-    <>
-      <div className="lbl" style={{ marginTop: focus === 'photo' ? 2 : 22 }}>사진으로 찾기</div>
-      {busy === 'photo' ? <Loading text={st.settings.claudeKey ? 'AI가 사진을 보고 있어요…' : '사진의 색과 스타일을 보는 중…'} /> : ph ? (
+  const studioOpts = { design: ph?.design || (f.styles.includes('character') ? 'character' : f.styles.includes('flower') ? 'flower' : 'simple'), shape: ph?.shape || 'round', cream: ph?.cream || 'white' };
+  return (
+    <Sheet open={open} onClose={onClose} title="케이크 가게 찾기" height="92%"
+      footer={<div className="btns"><button className="btn line" style={{ flex: 0.6 }} onClick={reset}>초기화</button><button className="btn pri" style={{ flex: 2 }} onClick={apply}>{count ? `가게 ${count}곳 보기` : near ? `비슷한 가게 ${near}곳 보기` : '맞는 가게가 없어요'}</button></div>}>
+      <div className="lbl">말로 찾기 {st.settings.claudeKey ? <span className="tag dark">AI</span> : <span className="tag mute">자동 해석</span>}</div>
+      <div className="row" style={{ alignItems: 'stretch' }}>
+        <input className="inp grow" value={f.text} onChange={(e) => onText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (st.settings.claudeKey ? askAI() : apply())} placeholder="예) 영통 근처 4만원대 캐릭터 케이크" />
+        {st.settings.claudeKey && <button className="btn dark sm" style={{ minHeight: 48 }} onClick={askAI} disabled={busy === 'ai'}>{busy === 'ai' ? '…' : 'AI 해석'}</button>}
+      </div>
+      <div className="chips" style={{ marginTop: 8 }}>{EXAMPLES.map((e) => <button key={e} className="chip sm" onClick={() => onText(e)}>{e}</button>)}</div>
+      {(place || aiNote) && <div className="note pink" style={{ marginTop: 8 }}>{place && <><b>{place.label}</b> 근처 3km에서 찾을게요. </>}{aiNote}</div>}
+
+      <div className="lbl" style={{ marginTop: 22 }} ref={photoRef}>사진으로 찾기 <span className="xs muted">AI 실사 사진 · 그림판</span></div>
+      {busy === 'photo' ? <Loading text={st.settings.claudeKey ? 'AI가 사진을 보고 있어요…' : '사진의 색과 스타일을 보는 중…'} /> : ph ? (<>
         <div className="photo-q">
           <img src={ph.thumb} alt="" />
           <div className="grow">
-            <div className="b small">{ph.ai ? 'AI가 사진을 분석했어요' : '사진을 분석했어요'} <span className="xs muted">아래 조건이 채워졌어요</span></div>
+            <div className="b small">{ph.made ? 'AI·그림판 사진으로 찾아요' : ph.ai ? 'AI가 사진을 분석했어요' : '사진을 분석했어요'} <span className="xs muted">아래 조건이 채워졌어요</span></div>
             <div className="row" style={{ marginTop: 4, gap: 4 }}>{(ph.palette || []).slice(0, 4).map((p, i) => <i key={i} title={p.name} style={{ width: 18, height: 18, borderRadius: 6, background: p.hex, border: '1px solid #0001' }} />)}<span className="xs muted">{optName(DESIGNS, ph.design)} · {optName(SHAPES, ph.shape)}</span></div>
           </div>
-          <button className="btn xs ghost" onClick={() => set({ photo: null })}>빼기</button>
+          <button className="btn xs ghost" onClick={() => { set({ photo: null }); setBig(null); }}>빼기</button>
         </div>
-      ) : (
+        <div className="ai-pick">
+          <button className="btn sec sm" onClick={() => setStudio(true)}><Icon n="sparkle" size="sm" />AI 실사 사진 만들기</button>
+          <button className="btn line sm" onClick={() => setSketch(true)}><Icon n="pen" size="sm" />그림판으로 고치기</button>
+        </div>
+      </>) : (
         <>
           <div className="btns"><PhotoPick onPick={onPick} className="btn sec"><Icon n="image" size="sm" /> 앨범에서 고르기</PhotoPick><PhotoPick onPick={onPick} capture className="btn line"><Icon n="camera" size="sm" /> 사진 찍기</PhotoPick></div>
           <div className="xs muted" style={{ margin: '10px 0 6px' }}>사진이 없으면 예시로 해 보세요</div>
           <div className="opts c3">{SAMPLES.map((s) => <button key={s.label} className="opt" onClick={() => trySample(s)}><div className="thumb"><CakeView o={s.o} /></div><small>{s.label}</small></button>)}</div>
+          <button className="btn ghost block sm" style={{ marginTop: 8 }} onClick={() => setStudio(true)}><Icon n="sparkle" size="sm" />사진 없이 AI 실사 사진 만들기</button>
         </>
       )}
-    </>
-  );
-  return (
-    <Sheet open={open} onClose={onClose} title={focus === 'photo' ? '사진으로 찾기' : '필터'} height="92%"
-      footer={<div className="btns"><button className="btn line" style={{ flex: 0.6 }} onClick={reset}>초기화</button><button className="btn pri" style={{ flex: 2 }} onClick={apply}>{count ? `가게 ${count}곳 보기` : near ? `비슷한 가게 ${near}곳 보기` : '맞는 가게가 없어요'}</button></div>}>
-      {focus === 'photo' && photoSec}
-      <div className="lbl" style={{ marginTop: focus === 'photo' ? 22 : 2 }}>말로 찾기 {st.settings.claudeKey ? <span className="tag dark">AI</span> : <span className="tag mute">자동 해석</span>}</div>
-      <div className="row" style={{ alignItems: 'stretch' }}>
-        <input className="inp grow" value={f.text} onChange={(e) => onText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (st.settings.claudeKey ? askAI() : apply())} placeholder="예) 영통 근처 4만원대 캐릭터 케이크" />
-        {st.settings.claudeKey && <button className="btn dark sm" style={{ minHeight: 48 }} onClick={askAI} disabled={busy === 'ai'}><Icon n="sparkle" size="sm" />{busy === 'ai' ? '…' : 'AI'}</button>}
-      </div>
-      <div className="chips" style={{ marginTop: 8 }}>{EXAMPLES.map((e) => <button key={e} className="chip sm" onClick={() => onText(e)}>{e}</button>)}</div>
-      {(place || aiNote) && <div className="note pink" style={{ marginTop: 8 }}>{place && <><b>{place.label}</b> 근처 3km에서 찾을게요. </>}{aiNote}</div>}
-      {focus !== 'photo' && photoSec}
+
       <div className="lbl" style={{ marginTop: 22 }}>케이크 종류 <span className="xs muted">여러 개 가능</span></div>
       <div className="chips wrap">{STYLES.filter((s) => s.id !== 'custom').map((s) => <button key={s.id} className={`chip ${f.styles.includes(s.id) ? 'on' : ''}`} onClick={() => toggleStyle(s.id)}>{s.name}</button>)}</div>
       <div className="lbl" style={{ marginTop: 20 }}>예산 <span className="xs muted">1호(2~4인) 기준</span></div>
@@ -610,6 +642,8 @@ export function FindSheet({ open, onClose, stores, focus }) {
         <div className="list-row"><div className="grow"><div className="t">당일 주문 되는 곳만</div></div><Toggle on={f.sameDay} onChange={(v) => set({ sameDay: v })} label="당일" /></div>
         <div className="list-row"><div className="grow"><div className="t">앱으로 바로 주문되는 곳만</div><div className="s">에이크 입점 가게</div></div><Toggle on={f.appOnly} onChange={(v) => set({ appOnly: v })} label="앱 주문" /></div>
       </div>
+      <AIStudio open={studio} onClose={() => setStudio(false)} input={big || ph?.thumb || null} opts={studioOpts} onUse={usePhoto} useLabel="이 사진으로 가게 찾기" />
+      {sketch && (big || ph?.thumb) && <Portal><Sketch src={big || ph.thumb} onClose={() => setSketch(false)} onSave={(out) => { saveEdited(out, { opts: studioOpts }); usePhoto(out); }} /></Portal>}
     </Sheet>
   );
 }

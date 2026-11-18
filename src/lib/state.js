@@ -15,6 +15,8 @@ export const initial = {
   favs: [], // 찜한 가게
   likes: [], // 관심 케이크 사진 (data/gallery.json id)
   recentQ: [], // 최근 검색어
+  aiPics: [], // 내가 만든 AI 실사·그림판 사진 { id:'my-…', src, at, mode, opts, engine, edited, job }
+  aiJobs: [], // 무료 대기열(AI Horde)에서 만드는 중인 사진 { id, hid, at, mode, opts, queue, wait }
   find: null, // 찾기 조건 { text, styles[], budget:[lo,hi], gu, sameDay, appOnly, photo:{thumb,...}, at }
   orders: [],
   shop: null, // 사장님이 등록한 내 가게
@@ -28,7 +30,7 @@ export const initial = {
   worklog: [], // 근무 기록 { id, date, name, start, end, memo }
   staff: [{ name: '사장님', wage: 0 }],
   outbox: [],
-  settings: { claudeKey: '', kakaoKey: '', googleKey: '' },
+  settings: { claudeKey: '', kakaoKey: '', googleKey: '', geminiKey: '', hfToken: '' },
 };
 
 function load() {
@@ -46,7 +48,7 @@ function persist() {
   try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {
     // 저장 공간 부족 → 사진부터 줄인다
     try {
-      const slim = { ...state, orders: state.orders.map((o) => ({ ...o, refThumb: null, imgs: {} })), find: state.find ? { ...state.find, photo: null } : null };
+      const slim = { ...state, orders: state.orders.map((o) => ({ ...o, refThumb: null, imgs: {} })), find: state.find ? { ...state.find, photo: null } : null, aiPics: (state.aiPics || []).slice(0, 2) };
       localStorage.setItem(KEY, JSON.stringify(slim));
     } catch { console.warn('save failed', e); }
   }

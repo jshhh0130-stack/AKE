@@ -215,15 +215,3 @@ export function photoToOptions(an) {
   }
   return o;
 }
-
-// AI 실사 이미지(베타) — 외부 무료 생성 서비스. 문구·개인정보는 보내지 않고 모양·색·장식만 보낸다.
-export function realisticImageURL(o, seed = 1) {
-  const cream = CREAMS.find((c) => c.id === o.cream)?.name || 'white';
-  const en = { white: 'white', 베이비핑크: 'baby pink', 피치: 'peach', 버터옐로: 'butter yellow', 민트: 'mint', 스카이: 'sky blue', 라벤더: 'lavender', 코코아: 'cocoa brown', 진핑크: 'hot pink', 네이비: 'navy', 화이트: 'white' }[cream] || 'white';
-  const shape = { round: 'round', heart: 'heart-shaped', square: 'square' }[o.shape || 'round'];
-  const size = o.size === 'mini' ? 'small mini cake' : 'cake';
-  const design = { simple: 'simple piped buttercream border', vintage: 'vintage lambeth frills and garlands', heartdots: 'small piped hearts on the side', flower: 'piped buttercream flowers', drip: 'chocolate ganache drip', character: 'a cute hand-piped bear drawing on top', photo: 'an edible photo print on top' }[o.design || 'simple'];
-  const tops = (o.toppings || []).map((t) => ({ cherry: 'cherries', strawberry: 'fresh strawberries', sprinkle: 'colorful sprinkles', pearl: 'sugar pearls', ribbon: 'a satin ribbon', freshflower: 'edible fresh flowers', macaron: 'macarons' }[t])).filter(Boolean);
-  const prompt = `Korean lettering cake bakery product photo, ${shape} ${size}, smooth ${en} buttercream, ${design}${tops.length ? ', decorated with ' + tops.join(', ') : ''}, 45 degree angle, soft natural light, pastel background, plain top surface without any text, high detail`;
-  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=640&height=640&seed=${seed}&nologo=true`;
-}
