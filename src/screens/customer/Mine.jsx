@@ -7,6 +7,7 @@ import { LogoBadge } from '../../components/Logo.jsx';
 import { useApp, setState } from '../../lib/state.js';
 import { nav } from '../../lib/router.js';
 import { getStores, mapLinks, shopToStore } from '../../lib/stores.js';
+import { kakaoKeyOf } from '../../lib/kakao.js';
 import { STATUS, ACTIVE, unreadOf, evText, applyEvent, mkEvent } from '../../lib/orders.js';
 import { estimate, ruleCheck } from '../../lib/price.js';
 import { orderLink, giftLink } from '../../lib/share.js';
@@ -131,7 +132,7 @@ export function My() {
         <div className="sec-t"><h3>설정</h3></div>
         <div className="card" style={{ padding: '0 14px' }}>
           <button className="list-row" onClick={() => { setState({ role: 'owner' }); nav(st.shop ? '/o' : '/o/setup', { replace: true }); }}><Icon n="swap" /><div className="grow"><div className="t">사장님 모드로 바꾸기</div><div className="s">가게 등록·주문 관리</div></div><Icon n="right" size="sm" /></button>
-          <button className="list-row" onClick={() => nav('/settings')}><Icon n="map" /><div className="grow"><div className="t">지도 · AI 연결</div><div className="s">{st.settings.googleKey ? '구글 지도' : st.settings.kakaoKey ? '카카오 지도' : '기본 지도'} · {st.settings.claudeKey ? 'AI 연결됨' : 'AI 키 없음'}</div></div><Icon n="right" size="sm" /></button>
+          <button className="list-row" onClick={() => nav('/settings')}><Icon n="map" /><div className="grow"><div className="t">지도 · AI 연결</div><div className="s">{kakaoKeyOf(st.settings) ? '카카오 지도' : st.settings.googleKey ? '구글 지도' : '기본 지도'} · {st.settings.claudeKey ? 'AI 연결됨' : 'AI 키 없음'}</div></div><Icon n="right" size="sm" /></button>
           <button className="list-row" onClick={() => { setState({ seenTour: false }); nav('/c', { replace: true }); }}><Icon n="info" /><div className="grow"><div className="t">사용법 다시 보기</div><div className="s">지도 화면에서 하나씩 짚어 드려요</div></div><Icon n="right" size="sm" /></button>
           <button className="list-row" onClick={() => nav('/insight')}><Icon n="chart" /><div className="grow"><div className="t">시장 데이터 · 인사이트</div><div className="s">수원 가게 분석 · 가격 분포 · 시장 근거</div></div><Icon n="right" size="sm" /></button>
           <button className="list-row" onClick={() => nav('/about')}><Icon n="receipt" /><div className="grow"><div className="t">앱 정보 · 데이터 출처</div><div className="s">가게 정보와 가격 추정 방법</div></div><Icon n="right" size="sm" /></button>

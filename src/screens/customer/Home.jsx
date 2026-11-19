@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../../components/Icon.jsx';
-import MapView, { loadKakao } from '../../components/MapView.jsx';
+import MapView from '../../components/MapView.jsx';
+import { loadKakao, kakaoKeyOf, sweepSuwon, onKakao, kakaoStatus, kakaoFind } from '../../lib/kakao.js';
 import Coach from '../../components/Coach.jsx';
 import { LocShareSheet, myLocation } from '../../components/Share.jsx';
 import { CustomerTabBar } from '../../components/TabBar.jsx';
@@ -27,8 +28,12 @@ export function StoreThumb({ s }) {
   if (photo) return <img src={photo} alt="" referrerPolicy="no-referrer" />;
   return <CakeView o={lookOf(s)} />;
 }
-// 구글 장소 정보가 바뀌면 다시 그리기
-export function usePlaces() { const [n, set] = useState(0); useEffect(() => onPlaces(() => set((x) => x + 1)), []); return n; }
+// 구글·카카오 장소 정보가 바뀌면 다시 그리기
+export function usePlaces() {
+  const [n, set] = useState(0);
+  useEffect(() => { const up = () => set((x) => x + 1); const a = onPlaces(up), b = onKakao(up); return () => { a(); b(); }; }, []);
+  return n;
+}
 
 const budgetName = (b) => BUDGETS.find((x) => x.r[0] === b[0] && x.r[1] === b[1])?.name || range(b[0] || 0, b[1] > 900000 ? null : b[1], true);
 
@@ -44,7 +49,7 @@ export function StoreCard({ r, sel, onClick, fav, onFav, picked, className = '' 
   const chips = [...strengths(s).map((t) => <span key={t} className="tag">{t}</span>)];
   if (s.sameDay) chips.splice(1, 1, <span key="sd" className="tag warn">당일 픽업</span>);
   if (unsure) chips.splice(1, 1, <span key="un" className="tag mute">확인 필요</span>);
-  if (s.kind !== 'public' && !inApp) chips.splice(1, 1, <span key="ext" className="tag blue">지도 검색</span>);
+  if (s.kind !== 'public' && !inApp) chips.splice(1, 1, <span key="ext" className="tag blue">{s.kind === 'kakao' ? '카카오맵' : '지도 검색'}</span>);
   return (
     <button className={`scard ${sel ? 'sel' : ''} ${className}`} onClick={onClick} id={className ? undefined : `card-${s.id}`}>
       <div className="th"><StoreThumb s={s} />{inApp && <span className="m">앱 주문</span>}</div>
@@ -139,7 +144,11 @@ export default function CustomerHome() {
   // 처음 들어오면 화면 위에서 짧게 사용법 안내
   useEffect(() => { if (!getState().seenTour) { const t = setTimeout(() => setTour(true), 900); return () => clearTimeout(t); } }, []);
   const gKey = mapBad === 'google' ? '' : st.settings.googleKey;
-  const kKey = mapBad === 'kakao' ? '' : st.settings.kakaoKey;
+  const kKey = mapBad === 'kakao' ? '' : kakaoKeyOf(st.settings);
+  // 카카오맵에서 수원 커스텀 케이크 가게 모으기 (3일에 한 번, 이 기기에 저장)
+  const kAny = kakaoKeyOf(st.settings); // 지도가 실패해도 가게 모으기 상태는 보여 준다
+  useEffect(() => { if (kAny) sweepSuwon(kAny); }, [kAny]);
+  const ks = kakaoStatus();
 
   const stores = getStores(st);
   const find = st.find;
@@ -223,8 +232,8 @@ export default function CustomerHome() {
     setFinding(true);
     try {
       let found = [];
-      if (gKey) { try { found = await googleFind(gKey, st.loc, Math.min(st.radius, 10)); } catch (e) { console.warn(e); } }
-      if (!found.length && kKey) { try { found = await kakaoFind(kKey, st.loc, st.radius); } catch (e) { console.warn(e); } }
+      if (kKey) { try { found = await kakaoFind(kKey, st.loc, st.radius); } catch (e) { console.warn(e); } }
+      if (!found.length && gKey) { try { found = await googleFind(gKey, st.loc, Math.min(st.radius, 10)); } catch (e) { console.warn(e); } }
       if (!found.length) found = await findNearbyOSM(st.loc, Math.min(st.radius, 6));
       const ids = new Set(stores.map((s) => s.id));
       const names = new Set(stores.map((s) => s.name.replace(/\s/g, '')));
@@ -248,7 +257,7 @@ export default function CustomerHome() {
       <div className="maphome">
         <MapView center={st.loc} zoom={st.radius > 6 ? 12 : 14} pins={pins} selected={sel} onSelect={select} me={st.loc} meKind={st.loc.src === 'gps' ? 'gps' : 'place'} radiusKm={find?.gu ? 0 : st.radius} fit={fit}
           padBottom={Math.min(Math.round(avail * 0.5), lower)} onMapClick={() => setSel(null)} onUserMove={(c) => setMoved(c)}
-          googleKey={gKey} kakaoKey={kKey} onMapFail={(w) => { setMapBad(w); toast(`${w === 'google' ? '구글' : '카카오'} 지도 키를 확인해 주세요. 기본 지도로 보여 드려요`, 3500); }} />
+          googleKey={gKey} kakaoKey={kKey} prefer="kakao" onMapFail={(w) => { setMapBad(w); toast(`${w === 'google' ? '구글' : '카카오'} 지도 키를 확인해 주세요. 기본 지도로 보여 드려요`, 3500); }} />
 
         <div className="mtop">
           <div className="mbar">
@@ -303,9 +312,18 @@ export default function CustomerHome() {
                 {r === firstPartial && <div className="sec-t" style={{ margin: '16px 0 4px' }}><h3 style={{ fontSize: 15 }}>{exactN ? '조건과 조금 다른 가게' : '딱 맞는 곳은 없어요 · 비슷한 가게'}</h3><span className="more">{ranked.length - exactN}곳</span></div>}
                 {card(r, { picked: cmpMode ? cmp.includes(r.s.id) : undefined })}
               </div>))}
+              {kAny && (
+                <div className="kstat">
+                  <span className="ki">K</span>
+                  <span className="grow">{ks.state === 'loading' ? <b>카카오맵에서 수원 케이크 가게 77곳을 찾는 중…</b>
+                    : ks.state === 'error' ? <><b>카카오맵 가게 정보를 못 불러왔어요</b><small>{ks.msg}</small></>
+                    : <><b>수원 케이크 가게 {stores.filter((s) => !s.hidden && (s.kind === 'public' || s.pick)).length}곳 · 카카오맵 정보 {stores.filter((s) => s.k && !s.hidden).length}곳</b><small>{ks.missing?.length ? `카카오맵에서 못 찾은 곳: ${ks.missing.join(', ')}` : '고른 가게를 모두 카카오맵에서 찾았어요'}</small></>}</span>
+                  {ks.state !== 'loading' && <button className="btn xs ghost" onClick={() => sweepSuwon(kAny, { force: true })}><Icon n="refresh" size="sm" />새로</button>}
+                </div>
+              )}
               <div className="card cream pad" style={{ marginTop: 12 }}>
                 <div className="b">다른 지역도 찾을 수 있어요</div>
-                <div className="small muted" style={{ margin: '4px 0 12px' }}>수원은 직접 조사한 실제 가게 {stores.filter((s) => s.kind === 'public' || s.kind === 'partner').length}곳이 들어 있어요. 다른 지역은 {gKey ? '구글 지도 검색' : kKey ? '카카오 장소 검색' : '공개 지도 데이터'}로 찾아요.</div>
+                <div className="small muted" style={{ margin: '4px 0 12px' }}>수원은 팀이 고른 커스텀 케이크 가게 {stores.filter((s) => !s.hidden && (s.kind === 'public' || s.kind === 'partner' || s.pick)).length}곳이 들어 있어요. 다른 지역은 {kKey ? '카카오 장소 검색' : gKey ? '구글 지도 검색' : '공개 지도 데이터'}로 찾아요.</div>
                 <button className="btn line block sm" onClick={findMore} disabled={finding}>{finding ? '찾는 중…' : <><Icon n="search" size="sm" /> 이 근처 케이크 가게 더 찾기</>}</button>
               </div>
             </div>
@@ -328,20 +346,6 @@ export default function CustomerHome() {
       {tour && <Coach steps={TOUR} onDone={() => { setTour(false); setState({ seenTour: true, seenGuide: true }); }} />}
     </div>
   );
-}
-
-async function kakaoFind(key, loc, radiusKm) {
-  const k = await loadKakao(key);
-  const ps = new k.maps.services.Places();
-  const out = [];
-  for (const q of ['레터링케이크', '주문제작케이크', '커스텀케이크']) {
-    const res = await new Promise((resolve) => ps.keywordSearch(q, (data, status) => resolve(status === k.maps.services.Status.OK ? data : []), { location: new k.maps.LatLng(loc.lat, loc.lng), radius: Math.min(20000, radiusKm * 1000), sort: k.maps.services.SortBy.DISTANCE }));
-    for (const p of res) {
-      if (out.some((x) => x.id === 'kakao-' + p.id)) continue;
-      out.push({ id: 'kakao-' + p.id, kind: 'kakao', level: 'kakao', name: p.place_name, lat: +p.y, lng: +p.x, geo: 'exact', addr: p.road_address_name || p.address_name, dong: (p.address_name || '').split(' ').slice(-2, -1)[0] || '', gu: '', styles: ['lettering'], note: `카카오 장소 검색 “${q}” 결과예요.`, src: [p.place_url] });
-    }
-  }
-  return out;
 }
 
 // 위치를 쓰기 전에 왜 필요한지 먼저 알려 주기 (그다음 휴대폰 허용 창)
@@ -369,9 +373,9 @@ export function LocationSheet({ open, onClose }) {
     setBusy(true);
     try {
       let list = [];
-      if (st.settings.kakaoKey) {
+      if (kakaoKeyOf(st.settings)) {
         try {
-          const k = await loadKakao(st.settings.kakaoKey);
+          const k = await loadKakao(kakaoKeyOf(st.settings));
           const ps = new k.maps.services.Places();
           list = await new Promise((r) => ps.keywordSearch(q, (d, s) => r(s === k.maps.services.Status.OK ? d.slice(0, 8).map((p) => ({ lat: +p.y, lng: +p.x, label: p.place_name, full: p.road_address_name || p.address_name })) : [])));
         } catch { /* 기본 검색으로 */ }

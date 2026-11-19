@@ -5,7 +5,7 @@ import { LogoBadge, Logo } from '../components/Logo.jsx';
 import { useApp, setState, resetAll, getState } from '../lib/state.js';
 import { nav } from '../lib/router.js';
 import { askClaude } from '../lib/ai.js';
-import { loadKakao } from '../components/MapView.jsx';
+import { loadKakao, KAKAO_BUILTIN } from '../lib/kakao.js';
 import { loadGoogle, googleFailed } from '../lib/gplaces.js';
 import { decodeOrder, decodeGift } from '../lib/share.js';
 import { joinPartner, refreshPartner, refresh as liveRefresh } from '../lib/live.js';
@@ -65,8 +65,8 @@ export function Settings() {
         </div>
         <ImageAICard save={save} />
         <div className="card pad" style={{ marginTop: 12 }}>
-          <div className="row"><Icon n="map" /><b className="grow">카카오 지도 (선택)</b>{st.settings.kakaoKey ? <span className="tag ok">{st.settings.googleKey ? '검색에 사용' : '사용 중'}</span> : <span className="tag mute">꺼짐</span>}</div>
-          <div className="small muted" style={{ margin: '6px 0 10px' }}>구글 키가 없을 때 카카오 <b>JavaScript 키</b>를 넣으면 카카오 지도와 장소 검색을 써요.</div>
+          <div className="row"><Icon n="map" /><b className="grow">카카오 지도</b>{st.settings.kakaoKey ? <span className="tag ok">내 키 사용 중</span> : KAKAO_BUILTIN ? <span className="tag ok">기본 키 사용 중</span> : <span className="tag mute">꺼짐</span>}</div>
+          <div className="small muted" style={{ margin: '6px 0 10px' }}>고객 지도는 카카오 지도를 먼저 써요. 수원 케이크 가게 정보도 카카오맵에서 받아 와요. 다른 카카오 <b>JavaScript 키</b>를 쓰려면 여기에 넣어 주세요.</div>
           <input className="inp" value={kk} onChange={(e) => setKk(e.target.value.trim())} placeholder="카카오 JavaScript 키" autoComplete="off" />
           <div className="btns" style={{ marginTop: 8 }}>
             <button className="btn line sm" onClick={() => { setKk(''); save({ kakaoKey: '' }); toast('카카오 키를 지웠어요'); }}>지우기</button>

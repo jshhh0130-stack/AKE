@@ -7,3 +7,5 @@ tools/shots/
 .env
 .env.*
 tools/gallery/raw/
+
+kakaomap_key.txt

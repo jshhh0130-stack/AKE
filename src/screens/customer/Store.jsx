@@ -14,6 +14,40 @@ import { SIZES, styleName } from '../../data/catalog.js';
 import { usePlaces } from './Home.jsx';
 import { enrich } from '../../lib/gplaces.js';
 import { refreshPartner } from '../../lib/live.js';
+import { kakaoKeyOf, kakaoLinks } from '../../lib/kakao.js';
+import { GALLERY, imgS } from './Interest.jsx';
+
+// 카카오맵 정보 카드: 카카오에 등록된 정보를 그대로(분류·주소·전화), 사진·후기는 카카오맵 화면으로 바로 이어 준다
+function KakaoCard({ s }) {
+  const k = s.k, L = kakaoLinks(k);
+  return (
+    <div className="kcard">
+      <div className="kh"><span className="ki">K</span><b className="grow">카카오맵 정보</b><a className="xs" href={L.place} target="_blank" rel="noreferrer">카카오맵에서 열기 <Icon n="right" size="sm" /></a></div>
+      {k.cat && <div className="kr"><Icon n="cake" size="sm" /><span>{k.cat}</span></div>}
+      <div className="kr"><Icon n="pin" size="sm" /><span>{k.road || k.addr}{k.road && k.addr && <small>지번 {k.addr.replace(/^경기\s*/, '')}</small>}</span></div>
+      {k.phone && <div className="kr"><Icon n="chat" size="sm" /><a href={`tel:${k.phone.replace(/[^\d]/g, '')}`}>{k.phone}</a></div>}
+      <div className="kbtns">
+        <a href={L.photos} target="_blank" rel="noreferrer"><Icon n="image" />사진 보기</a>
+        <a href={L.reviews} target="_blank" rel="noreferrer"><Icon n="star" />후기 보기</a>
+        {k.phone ? <a href={`tel:${k.phone.replace(/[^\d]/g, '')}`}><Icon n="chat" />전화</a> : <a href={L.route} target="_blank" rel="noreferrer"><Icon n="nav" />길찾기</a>}
+      </div>
+      <div className="xs muted" style={{ marginTop: 8 }}>사진과 후기는 작성한 분들의 것이라 카카오맵에서 바로 볼 수 있게 이어 드려요.</div>
+    </div>
+  );
+}
+
+// 이 가게 스타일과 비슷한 AI 예시 사진 (관심 탭 사진 · 실제 가게 작품 아님)
+function StyleShots({ s }) {
+  const want = s.styles?.length ? s.styles : ['lettering'];
+  const pick = GALLERY.map((g) => ({ g, sc: (g.st || []).filter((x) => want.includes(x)).length + ((g.id.charCodeAt(3) + s.id.length) % 7) / 10 }))
+    .filter((x) => x.sc >= 1).sort((a, b) => b.sc - a.sc).slice(0, 8).map((x) => x.g);
+  if (!pick.length) return null;
+  return (<>
+    <div className="sec-t"><h3>이런 느낌으로 주문해요</h3><span className="more">AI 예시 사진</span></div>
+    <div className="shots">{pick.map((g) => <button key={g.id} onClick={() => nav(`/c/cake/${g.id}`)}><img src={imgS(g.id)} alt={g.t} loading="lazy" /><span>{g.t}</span></button>)}</div>
+    <div className="xs muted" style={{ marginTop: 6 }}>이 가게가 만드는 {want.map(styleName).join('·')} 스타일 예시예요. 실제 작품은 {s.k ? '카카오맵 사진' : s.insta ? '가게 인스타그램' : '가게 SNS'}에서 확인해 주세요.</div>
+  </>);
+}
 
 // ── 가게에 물어보기: 가게 정보만 근거로 답한다 (키 없으면 규칙 기반) ──
 function ruleAnswer(s, q) {
@@ -102,7 +136,9 @@ export default function StoreDetail({ params }) {
   const toggleFav = () => { setState((x) => ({ ...x, favs: fav ? x.favs.filter((i) => i !== s.id) : [...x.favs, s.id] })); if (!fav) toast('찜한 가게에 담았어요'); };
   const rating = s.g?.rating ? [s.g.rating, s.g.n, '구글 리뷰'] : reviews.length ? [reviews.reduce((a, o) => a + o.review.stars, 0) / reviews.length, reviews.length, '앱 후기'] : null;
   const unsure = s.kind === 'public' && !s.verified;
-  const kindTag = inApp ? <span className="tag pink">앱으로 바로 주문</span> : s.verified ? <span className="tag ok"><Icon n="check" />영업 확인</span> : s.kind === 'public' ? <span className="tag mute">영업 확인 필요</span> : <span className="tag blue">지도 검색 결과</span>;
+  const kindTag = inApp ? <span className="tag pink">앱으로 바로 주문</span> : s.verified ? <span className="tag ok"><Icon n="check" />영업 확인</span> : s.kind === 'public' ? <span className="tag mute">영업 확인 필요</span> : <span className="tag blue">{s.kind === 'kakao' ? '카카오맵 등록 가게' : '지도 검색 결과'}</span>;
+  const kKey = kakaoKeyOf(st.settings);
+  const kl = s.k ? kakaoLinks(s.k) : null;
   const chips = strengths(s);
   return (
     <div className="screen">
@@ -149,6 +185,7 @@ export default function StoreDetail({ params }) {
             <div>{s.ops ? '픽업 시간' : '영업 시간'}<b>{s.ops ? `${s.ops.pickupStart}~${s.ops.pickupEnd}` : s.hours || '확인 필요'}</b></div>
             <div>휴무<b>{closed.length ? closed.map((x) => DOW[x]).join('·') + '요일' : s.closed || (s.ops ? '없음' : '확인 필요')}</b></div>
           </div>
+          {s.k && <KakaoCard s={s} />}
           {!inApp && <div className="note" style={{ marginTop: 10 }}>아직 에이크 입점 전인 가게예요. 주문서를 완성하면 <b>가게 카톡·인스타로 그대로 보낼 수 있게</b> 정리해 드려요.{unsure && s.kind === 'public' ? <><br /><span className="xs">공개 목록 기준 정보예요. 방문 전에 영업 여부를 확인해 주세요.</span></> : null}</div>}
         </div>
         <div className="band" />
@@ -165,10 +202,12 @@ export default function StoreDetail({ params }) {
           </div>
           {!s.portfolio?.some((p) => p.src) && !s.g?.photos?.length && (
             <div className="card cream pad row" style={{ marginTop: 12 }}>
-              <span className="grow small"><b>실제 케이크 사진 보기</b><div className="xs muted">{s.insta ? '가게 인스타그램에서 작품 사진을 볼 수 있어요' : '구글 지도에서 가게 사진과 리뷰를 볼 수 있어요'}</div></span>
-              <a className="btn sm line" href={s.insta ? links.insta : links.google} target="_blank" rel="noreferrer">{s.insta ? '인스타 열기' : '구글 지도'}</a>
+              <span className="grow small"><b>실제 케이크 사진 보기</b><div className="xs muted">{kl ? '카카오맵에 올라온 가게 사진을 볼 수 있어요' : s.insta ? '가게 인스타그램에서 작품 사진을 볼 수 있어요' : '구글 지도에서 가게 사진과 리뷰를 볼 수 있어요'}</div></span>
+              {kl && <a className="btn sm line" href={kl.photos} target="_blank" rel="noreferrer">카카오맵 사진</a>}
+              {(!kl || s.insta) && <a className="btn sm line" href={s.insta ? links.insta : links.google} target="_blank" rel="noreferrer">{s.insta ? '인스타' : '구글 지도'}</a>}
             </div>
           )}
+          {!s.portfolio?.some((p) => p.src) && <StyleShots s={s} />}
           {s.g?.hours && <details className="small" style={{ marginTop: 10 }}><summary className="muted" style={{ cursor: 'pointer' }}>구글에 등록된 영업시간 보기</summary>{s.g.hours.map((h) => <div key={h} className="xs muted">{h}</div>)}</details>}
         </div>
         <div className="band" />
@@ -209,10 +248,10 @@ export default function StoreDetail({ params }) {
 
         <div className="pad" style={{ paddingTop: 4 }}>
           <div className="sec-t"><h3>위치</h3><span className="more">{s.geo === 'exact' ? '' : '지도 위치는 대략이에요'}</span></div>
-          <div className="minimap"><MapView center={s} zoom={16} pins={[{ s, name: s.name, price: '' }]} selected={s.id} interactive={false} googleKey={st.settings.googleKey} kakaoKey={st.settings.kakaoKey} /></div>
-          <div className="small" style={{ marginTop: 10 }}>{s.addr}</div>
+          <div className="minimap"><MapView center={s} zoom={16} pins={[{ s, name: s.name, price: '' }]} selected={s.id} interactive={false} googleKey={st.settings.googleKey} kakaoKey={kKey} prefer="kakao" /></div>
+          <div className="small" style={{ marginTop: 10 }}>{s.k?.road || s.addr}</div>
           <div className="linkrow">
-            <a href={links.route} target="_blank" rel="noreferrer"><Icon n="nav" />길찾기</a>
+            <a href={kl ? kl.route : links.route} target="_blank" rel="noreferrer"><Icon n="nav" />길찾기</a>
             <button onClick={() => setShareOpen(true)}><Icon n="send" />위치 공유</button>
             {links.insta ? <a href={links.insta} target="_blank" rel="noreferrer"><Icon n="insta" />인스타</a> : <a href={links.kakao} target="_blank" rel="noreferrer"><Icon n="map" />카카오맵</a>}
           </div>
@@ -220,6 +259,13 @@ export default function StoreDetail({ params }) {
           <div className="sec-t"><h3>에이크 후기 {reviews.length > 0 && <span className="pink">{reviews.length}</span>}</h3></div>
           {reviews.length === 0 ? <div className="small muted">아직 앱 주문 후기가 없어요. 후기는 앱으로 주문하고 픽업한 손님만 쓸 수 있어요.</div> : (
             reviews.slice(0, 5).map((o) => <div key={o.id} style={{ padding: '8px 0', borderBottom: '1px solid var(--line)' }}><Stars n={o.review.stars} /> <span className="xs muted">{o.o.size && SIZES.find((x) => x.id === o.o.size)?.name}</span><div className="small">{o.review.text}</div></div>)
+          )}
+          {kl && (
+            <a className="kreview" href={kl.reviews} target="_blank" rel="noreferrer">
+              <span className="ki">K</span>
+              <span className="grow"><b>카카오맵 후기도 함께 보기</b><small>방문한 분들의 별점·후기·사진을 카카오맵에서 봐요</small></span>
+              <Icon n="right" size="sm" />
+            </a>
           )}
 
           {s.src?.length > 0 && (

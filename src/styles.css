@@ -782,3 +782,26 @@ textarea.inp { resize: none; min-height: 76px; line-height: 1.45; }
 .findbar small { display: block; font-size: 12.5px; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .findbar .fc { width: 38px; height: 38px; border-radius: 11px; background: var(--cream2); color: var(--rose2); display: grid; place-items: center; flex: none; }
 .findbar .fx { width: 34px; height: 34px; border-radius: 10px; color: var(--faint); display: grid; place-items: center; flex: none; }
+
+/* ── 카카오맵 정보 (에이크 크림·핑크 톤 · 카카오는 작은 K 배지로만) ── */
+.ki { flex: none; width: 22px; height: 22px; border-radius: 7px; background: #fee500; color: #3c1e1e; display: grid; place-items: center; font-size: 12px; font-weight: 800; letter-spacing: -0.5px; }
+.kcard { margin-top: 14px; background: var(--cream); border: 1px solid var(--line); border-radius: 18px; padding: 12px 14px; }
+.kcard .kh { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.kcard .kh a { color: var(--rose); display: inline-flex; align-items: center; gap: 2px; text-decoration: none; font-weight: 600; }
+.kcard .kr { display: flex; gap: 8px; align-items: flex-start; padding: 5px 0; font-size: 13.5px; color: var(--ink2); }
+.kcard .kr > svg { flex: none; margin-top: 2px; color: var(--rose); }
+.kcard .kr small { display: block; color: var(--faint); font-size: 12px; margin-top: 1px; }
+.kcard .kr a { color: var(--ink2); font-weight: 600; text-decoration: none; }
+.kbtns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
+.kbtns a { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 0 9px; border-radius: 14px; background: #fff; color: var(--rose2); font-size: 12.5px; font-weight: 600; text-decoration: none; box-shadow: 0 1px 0 var(--line); }
+.kbtns a:active { background: var(--pink50); }
+.kstat { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 12px; border-radius: 16px; background: var(--pink50); }
+.kstat b { display: block; font-size: 13.5px; }
+.kstat small { display: block; font-size: 12px; color: var(--ink2); margin-top: 2px; line-height: 1.45; }
+.kreview { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 12px 14px; border-radius: 16px; background: var(--cream); color: inherit; text-decoration: none; }
+.kreview b { display: block; font-size: 14px; }
+.kreview small { display: block; font-size: 12px; color: var(--ink2); margin-top: 2px; }
+.shots { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 4px; margin: 0 -2px; }
+.shots button { flex: none; width: 116px; scroll-snap-align: start; border: 0; padding: 0; background: none; text-align: left; cursor: pointer; }
+.shots img { width: 116px; height: 140px; object-fit: cover; border-radius: 14px; display: block; background: var(--cream2); }
+.shots span { display: block; font-size: 11.5px; color: var(--ink2); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -1,10 +1,12 @@
 // 지도: 구글 지도(키가 있으면) → 카카오 지도(키가 있으면) → 기본 지도(OpenStreetMap 데이터, 키 필요 없음)
+// 고객 화면은 prefer="kakao" 로 카카오 지도를 먼저 쓴다
 // 핀은 세 지도 모두 같은 모양: [케이크 아이콘·사진] [1호 가격] (선택하면 가게 이름까지)
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { esc } from '../lib/util.js';
 import { loadGoogle } from '../lib/gplaces.js';
+import { loadKakao } from '../lib/kakao.js';
 
 const CAKE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M5.5 20v-6a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v6M5.5 15.6c1.4.9 2.8.9 4.2 0s2.8-.9 4.2 0 2.8.9 4.1 0M12 12V8.6"/><path d="M12 3.6c1 1.1 1 2.2 0 2.8-1-.6-1-1.7 0-2.8z" fill="currentColor"/></svg>';
 
@@ -139,29 +141,17 @@ function GoogleMap({ googleKey, center, zoom = 14, pins = [], selected, onSelect
   return <div ref={el} className="mapbox gmap" />;
 }
 
-let kakaoP = null;
-export function loadKakao(key) {
-  if (window.kakao?.maps?.Map) return Promise.resolve(window.kakao);
-  if (kakaoP) return kakaoP;
-  kakaoP = new Promise((res, rej) => {
-    const s = document.createElement('script');
-    s.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(key)}&libraries=services&autoload=false`;
-    s.onload = () => { try { window.kakao.maps.load(() => res(window.kakao)); } catch (e) { rej(e); } };
-    s.onerror = () => rej(new Error('카카오 지도를 불러오지 못했어요'));
-    document.head.appendChild(s);
-    setTimeout(() => rej(new Error('카카오 지도 응답이 없어요')), 9000);
-  }).catch((e) => { kakaoP = null; throw e; });
-  return kakaoP;
-}
+export { loadKakao };
 
-function KakaoMap({ kakaoKey, center, zoom = 14, pins = [], selected, onSelect, me, meKind, radiusKm, fit, interactive = true, onFail, onMapClick, onUserMove }) {
+function KakaoMap({ kakaoKey, center, zoom = 14, pins = [], selected, onSelect, me, meKind, radiusKm, fit, interactive = true, onFail, padBottom = 0, onMapClick, onUserMove }) {
+  const pad = useRef(padBottom); pad.current = padBottom;
   const el = useRef(null), map = useRef(null), ovs = useRef([]), meOv = useRef([]);
   const [ready, setReady] = useState(false);
   const sel = useRef(onSelect); sel.current = onSelect;
   const cb = useRef({}); cb.current = { onMapClick, onUserMove };
   const level = Math.max(1, Math.min(14, 19 - zoom));
   useEffect(() => {
-    let dead = false;
+    let dead = false, ro = null;
     loadKakao(kakaoKey).then((k) => {
       if (dead) return;
       const m = new k.maps.Map(el.current, { center: new k.maps.LatLng(center.lat, center.lng), level, draggable: interactive, scrollwheel: interactive, disableDoubleClickZoom: !interactive });
@@ -169,11 +159,14 @@ function KakaoMap({ kakaoKey, center, zoom = 14, pins = [], selected, onSelect, 
       k.maps.event.addListener(m, 'idle', () => el.current?.classList.toggle('far', m.getLevel() > 5));
       k.maps.event.addListener(m, 'click', () => cb.current.onMapClick?.());
       k.maps.event.addListener(m, 'dragend', () => { const c = m.getCenter(); cb.current.onUserMove?.({ lat: c.getLat(), lng: c.getLng() }); });
+      // 화면 크기가 바뀌면 카카오 지도는 relayout을 불러야 빈칸 없이 다시 그려진다
+      ro = new ResizeObserver(() => m.relayout());
+      ro.observe(el.current);
       setReady(true);
     }).catch((e) => onFail?.(e));
-    return () => { dead = true; };
+    return () => { dead = true; ro?.disconnect(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { if (ready) map.current.setCenter(new window.kakao.maps.LatLng(center.lat, center.lng)); }, [ready, center.lat, center.lng]);
+  useEffect(() => { if (ready) { map.current.setCenter(new window.kakao.maps.LatLng(center.lat, center.lng)); if (pad.current) map.current.panBy(0, Math.round(pad.current / 2)); } }, [ready, center.lat, center.lng]);
   useEffect(() => {
     if (!ready) return;
     const k = window.kakao;
@@ -201,20 +194,30 @@ function KakaoMap({ kakaoKey, center, zoom = 14, pins = [], selected, onSelect, 
     if (!ready || !fit?.length) return;
     const k = window.kakao, b = new k.maps.LatLngBounds();
     fit.forEach((p) => b.extend(new k.maps.LatLng(p.lat, p.lng)));
-    map.current.setBounds(b, 120, 40, 160, 40);
+    map.current.setBounds(b, 150, 40, (pad.current || 140) + 20, 40);
   }, [ready, fit]);
   useEffect(() => {
     if (!ready || !selected) return;
     const p = pins.find((x) => x.s.id === selected);
-    if (p) map.current.panTo(new window.kakao.maps.LatLng(p.s.lat, p.s.lng));
+    if (!p) return;
+    const m = map.current, k = window.kakao;
+    // 핀이 아래 카드에 가리지 않게: 화면 밖(또는 카드 뒤)일 때만 옮긴다
+    const proj = m.getProjection(), pt = proj.containerPointFromCoords(new k.maps.LatLng(p.s.lat, p.s.lng));
+    const w = el.current.clientWidth, h = el.current.clientHeight;
+    if (pt.x < 50 || pt.x > w - 50 || pt.y < 150 || pt.y > h - pad.current - 20) {
+      m.panTo(proj.coordsFromContainerPoint(new k.maps.Point(pt.x, pt.y + pad.current / 2 - 30)));
+    }
   }, [selected]); // eslint-disable-line react-hooks/exhaustive-deps
-  return <div ref={el} className="mapbox" />;
+  return <div ref={el} className="mapbox kmap" />;
 }
 
+// prefer="kakao" : 카카오 키가 있으면 구글보다 카카오 지도를 먼저 (고객 화면)
 export default function MapView(props) {
   const [gFail, setGFail] = useState(false);
   const [kFail, setKFail] = useState(false);
+  const kakao = props.kakaoKey && !kFail ? <KakaoMap {...props} onFail={(e) => { console.warn(e); setKFail(true); props.onMapFail?.('kakao'); }} /> : null;
+  if (props.prefer === 'kakao' && kakao) return kakao;
   if (props.googleKey && !gFail) return <GoogleMap {...props} onFail={(e) => { console.warn(e); setGFail(true); props.onMapFail?.('google'); }} />;
-  if (props.kakaoKey && !kFail) return <KakaoMap {...props} onFail={(e) => { console.warn(e); setKFail(true); props.onMapFail?.('kakao'); }} />;
+  if (kakao) return kakao;
   return <LeafletMap {...props} />;
 }
