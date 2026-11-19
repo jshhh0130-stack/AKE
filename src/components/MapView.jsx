@@ -11,13 +11,33 @@ import { loadKakao } from '../lib/kakao.js';
 const CAKE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M5.5 20v-6a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v6M5.5 15.6c1.4.9 2.8.9 4.2 0s2.8-.9 4.2 0 2.8.9 4.1 0M12 12V8.6"/><path d="M12 3.6c1 1.1 1 2.2 0 2.8-1-.6-1-1.7 0-2.8z" fill="currentColor"/></svg>';
 
 // pin: { s, price, name, color, img, match }
-export const pinHTML = (p, sel) => {
+// 모양: [분홍 케이크 동그라미 + 가격] 말풍선 → 아래 뾰족 꼬리 → 그 밑에 가게 이름(카카오맵 글씨처럼 흰 테두리)
+// 앱 주문 가게는 분홍으로 꽉 채우고, 정보가 적은 가게는 회색. 멀리 보면 이름·가격을 숨기고 동그라미만.
+// 겹치는 가게 이름 숨기기: 고른 가게 → 추천 순위(r) 순으로 이름을 놓고, 앞에 놓인 이름·다른 핀과 겹치면 숨긴다
+const overlap = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+export function declutter(root) {
+  if (!root) return;
+  const pins = [...root.querySelectorAll('.pin2')];
+  pins.forEach((p) => p.classList.remove('nolabel'));
+  if (root.classList.contains('far')) return;
+  const boxes = pins.map((p) => ({ p, r: p.querySelector('.pb')?.getBoundingClientRect() })).filter((x) => x.r);
+  pins.sort((a, b) => (b.classList.contains('sel') - a.classList.contains('sel')) || (+a.dataset.r || 0) - (+b.dataset.r || 0));
+  const kept = [];
+  for (const p of pins) {
+    const n = p.querySelector('.pn'); if (!n) continue;
+    const r = n.getBoundingClientRect();
+    if (kept.some((k) => overlap(r, k)) || boxes.some((b) => b.p !== p && overlap(r, b.r))) p.classList.add('nolabel');
+    else kept.push(r);
+  }
+}
+const declutterSoon = (el) => requestAnimationFrame(() => requestAnimationFrame(() => declutter(el)));
+
+export const pinHTML = (p, sel, r = 0) => {
   const s = p.s;
-  const cls = s.kind === 'partner' ? 'app' : s.kind === 'public' ? (s.verified || s.price ? 'pub' : 'pub dimmed') : 'ext';
+  const cls = s.kind === 'partner' ? 'app' : s.kind === 'public' && !s.verified && !s.price && !s.k ? 'dimmed' : 'pub';
   const thumb = p.img ? `<img src="${esc(p.img)}" alt="" referrerpolicy="no-referrer"/>` : `<i>${CAKE}</i>`;
-  const dim = cls.includes('dimmed') && !sel;
-  const tag = p.match != null ? `<em>${p.match}%</em>` : p.price && !dim ? `<b>${esc(p.price)}</b>` : '';
-  return `<div class="pin2 ${cls}${sel ? ' sel' : ''}" title="${esc(s.name)}"><div class="pb">${thumb}${tag}<span class="pn">${esc(p.name)}</span></div><div class="tip"></div></div>`;
+  const tag = p.match != null ? `<em>${p.match}%</em>` : p.price && cls !== 'dimmed' ? `<b>${esc(p.price)}</b>` : '';
+  return `<div class="pin2 ${cls}${tag ? '' : ' solo'}${sel ? ' sel' : ''}" data-r="${r}" title="${esc(s.name)}"><div class="pb">${thumb}${tag}</div><div class="tip"></div><span class="pn">${esc(p.name)}</span></div>`;
 };
 const meHTML = (kind) => `<div class="me-dot ${kind === 'gps' ? '' : 'place'}"></div>`;
 
@@ -34,7 +54,7 @@ function LeafletMap({ center, zoom = 14, pins = [], selected, onSelect, me, meKi
     layer.current = L.layerGroup().addTo(m);
     meL.current = L.layerGroup().addTo(m);
     map.current = m;
-    const setFar = () => el.current?.classList.toggle('far', m.getZoom() < 14);
+    const setFar = () => { el.current?.classList.toggle('far', m.getZoom() < 14); declutterSoon(el.current); };
     setFar();
     m.on('zoomend', setFar);
     m.on('click', () => cb.current.onMapClick?.());
@@ -47,12 +67,13 @@ function LeafletMap({ center, zoom = 14, pins = [], selected, onSelect, me, meKi
   useEffect(() => {
     const g = layer.current; if (!g) return;
     g.clearLayers();
-    pins.forEach((p) => {
+    pins.forEach((p, i) => {
       const isSel = selected === p.s.id;
-      const mk = L.marker([p.s.lat, p.s.lng], { icon: L.divIcon({ className: '', html: pinHTML(p, isSel), iconSize: [0, 0] }), zIndexOffset: isSel ? 1000 : p.s.kind === 'partner' ? 300 : p.s.price ? 100 : 0, keyboard: false });
+      const mk = L.marker([p.s.lat, p.s.lng], { icon: L.divIcon({ className: '', html: pinHTML(p, isSel, i), iconSize: [0, 0] }), zIndexOffset: isSel ? 1000 : p.s.kind === 'partner' ? 300 : p.s.price ? 100 : 0, keyboard: false });
       mk.on('click', (e) => { L.DomEvent.stopPropagation(e); sel.current?.(p.s.id); });
       mk.addTo(g);
     });
+    declutterSoon(el.current);
   }, [pins, selected]);
   useEffect(() => {
     const g = meL.current; if (!g || !me) return;
@@ -100,6 +121,7 @@ function GoogleMap({ googleKey, center, zoom = 14, pins = [], selected, onSelect
       };
       const setFar = () => el.current?.classList.toggle('far', (m.getZoom() || 14) < 14);
       m.addListener('zoom_changed', setFar); setFar();
+      m.addListener('idle', () => declutter(el.current));
       m.addListener('click', () => cb.current.onMapClick?.());
       m.addListener('dragend', () => { const c = m.getCenter(); cb.current.onUserMove?.({ lat: c.lat(), lng: c.lng() }); });
       setReady(true);
@@ -111,12 +133,13 @@ function GoogleMap({ googleKey, center, zoom = 14, pins = [], selected, onSelect
     if (!ready) return;
     const g = window.google;
     ovs.current.forEach((o) => o.setMap(null));
-    ovs.current = pins.map((p) => {
+    ovs.current = pins.map((p, i) => {
       const isSel = selected === p.s.id;
-      const ov = new PinCls.current(new g.maps.LatLng(p.s.lat, p.s.lng), pinHTML(p, isSel), isSel ? 1000 : p.s.kind === 'partner' ? 300 : p.s.price ? 100 : 1, () => sel.current?.(p.s.id));
+      const ov = new PinCls.current(new g.maps.LatLng(p.s.lat, p.s.lng), pinHTML(p, isSel, i), isSel ? 1000 : p.s.kind === 'partner' ? 300 : p.s.price ? 100 : 1, () => sel.current?.(p.s.id));
       ov.setMap(map.current);
       return ov;
     });
+    setTimeout(() => declutter(el.current), 120);
   }, [ready, pins, selected]);
   useEffect(() => {
     if (!ready || !me) return;
@@ -156,7 +179,7 @@ function KakaoMap({ kakaoKey, center, zoom = 14, pins = [], selected, onSelect, 
       if (dead) return;
       const m = new k.maps.Map(el.current, { center: new k.maps.LatLng(center.lat, center.lng), level, draggable: interactive, scrollwheel: interactive, disableDoubleClickZoom: !interactive });
       map.current = m;
-      k.maps.event.addListener(m, 'idle', () => el.current?.classList.toggle('far', m.getLevel() > 5));
+      k.maps.event.addListener(m, 'idle', () => { el.current?.classList.toggle('far', m.getLevel() > 5); declutter(el.current); });
       k.maps.event.addListener(m, 'click', () => cb.current.onMapClick?.());
       k.maps.event.addListener(m, 'dragend', () => { const c = m.getCenter(); cb.current.onUserMove?.({ lat: c.getLat(), lng: c.getLng() }); });
       // 화면 크기가 바뀌면 카카오 지도는 relayout을 불러야 빈칸 없이 다시 그려진다
@@ -171,14 +194,15 @@ function KakaoMap({ kakaoKey, center, zoom = 14, pins = [], selected, onSelect, 
     if (!ready) return;
     const k = window.kakao;
     ovs.current.forEach((o) => o.setMap(null));
-    ovs.current = pins.map((p) => {
+    ovs.current = pins.map((p, i) => {
       const div = document.createElement('div');
-      div.innerHTML = pinHTML(p, selected === p.s.id);
+      div.innerHTML = pinHTML(p, selected === p.s.id, i);
       div.onclick = (e) => { e.stopPropagation(); sel.current?.(p.s.id); };
       const ov = new k.maps.CustomOverlay({ position: new k.maps.LatLng(p.s.lat, p.s.lng), content: div, yAnchor: 0, xAnchor: 0, zIndex: selected === p.s.id ? 10 : 1, clickable: true });
       ov.setMap(map.current);
       return ov;
     });
+    declutterSoon(el.current);
   }, [ready, pins, selected]);
   useEffect(() => {
     if (!ready || !me) return;

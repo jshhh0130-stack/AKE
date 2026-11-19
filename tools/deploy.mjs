@@ -5,7 +5,7 @@ import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const REMOTE = 'https://github.com/jshhh0130-stack/dear-cake.git';
+const REMOTE = 'https://github.com/jshhh0130-stack/AKE.git';
 const run = (cmd, cwd = '.') => { console.log('>', cmd); return execSync(cmd, { cwd, stdio: 'inherit' }); };
 
 run('node node_modules/vite/bin/vite.js build');
@@ -18,4 +18,4 @@ run(`git -c user.name="${execSync('git config user.name').toString().trim()}" -c
 run(`git push -q -f ${REMOTE} gh-pages`, 'dist');
 fs.rmSync(path.join('dist', '.git'), { recursive: true, force: true });
 run('git push -q -u origin main');
-console.log('배포 완료: https://jshhh0130-stack.github.io/dear-cake/');
+console.log('배포 완료: https://jshhh0130-stack.github.io/AKE/');

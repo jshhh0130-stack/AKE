@@ -53,14 +53,14 @@ jobs:
       - run: npx cap sync android
       - name: APK 빌드
         run: cd android && chmod +x gradlew && ./gradlew assembleDebug --no-daemon -q
-      - run: cp android/app/build/outputs/apk/debug/app-debug.apk dear-cake.apk
+      - run: cp android/app/build/outputs/apk/debug/app-debug.apk ake.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: dear-cake-apk
-          path: dear-cake.apk
+          name: ake-apk
+          path: ake.apk
       - name: 다운로드 페이지(릴리스)에 올리기
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release view app-latest >/dev/null 2>&1 || gh release create app-latest --title "Dear Cake 안드로이드 앱 (최신)" --notes "안드로이드 폰에서 dear-cake.apk 를 내려받아 설치하세요. 설치 화면에서 '출처를 알 수 없는 앱' 허용이 필요할 수 있어요. 앱 내용은 웹 주소에서 불러오므로 앱을 다시 설치하지 않아도 자동으로 최신 버전이 보여요."
-          gh release upload app-latest dear-cake.apk --clobber
+          gh release view app-latest >/dev/null 2>&1 || gh release create app-latest --title "에이크 AKE 안드로이드 앱 (최신)" --notes "안드로이드 폰에서 ake.apk 를 내려받아 설치하세요. 설치 화면에서 '출처를 알 수 없는 앱' 허용이 필요할 수 있어요. 앱 내용은 웹 주소에서 불러오므로 앱을 다시 설치하지 않아도 자동으로 최신 버전이 보여요."
+          gh release upload app-latest ake.apk --clobber

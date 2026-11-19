@@ -1,9 +1,9 @@
 {
   "appId": "com.dearcake.app",
-  "appName": "Dear Cake",
+  "appName": "에이크",
   "webDir": "dist",
   "server": {
-    "url": "https://jshhh0130-stack.github.io/dear-cake/",
+    "url": "https://jshhh0130-stack.github.io/AKE/",
     "androidScheme": "https",
     "errorPath": "offline.html"
   },

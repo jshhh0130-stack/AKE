@@ -120,7 +120,7 @@ export default function App() {
         <DemoSteps />
         <div className="row">
           <button className="btn line sm" onClick={() => nav('/insight')}><Icon n="chart" size="sm" />시장 데이터 보기</button>
-          <a className="btn line sm" href="https://github.com/jshhh0130-stack/dear-cake" target="_blank" rel="noreferrer">GitHub</a>
+          <a className="btn line sm" href="https://github.com/jshhh0130-stack/AKE" target="_blank" rel="noreferrer">GitHub</a>
         </div>
       </aside>
       <div className="phone">

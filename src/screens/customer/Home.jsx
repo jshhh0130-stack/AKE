@@ -302,7 +302,7 @@ export default function CustomerHome() {
               </select>
               <button className={`btn xs ${cmpMode ? 'dark' : 'ghost'}`} onPointerDown={(e) => e.stopPropagation()} onClick={() => { setCmpMode(!cmpMode); setCmp([]); if (!cmpMode) toast('비교할 가게를 2~3곳 눌러 주세요'); }}>{cmpMode ? '비교 취소' : '비교'}</button>
             </div>
-            <div className="legendrow"><span><i className="l1" />앱 주문</span><span><i className="l2" />가격 공개</span><span><i className="l3" />확인 필요</span>{!gKey && !kKey && <a className="osm" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">지도 © OpenStreetMap</a>}</div>
+            <div className="legendrow"><span><i className="l1" />앱 주문</span><span><i className="l2" />케이크 가게</span><span><i className="l3" />정보 확인 필요</span>{!gKey && !kKey && <a className="osm" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">지도 © OpenStreetMap</a>}</div>
             <div className="bl">
               {ranked.length === 0 && (
                 <div className="empty">이 조건에 맞는 가게가 없어요.<br />조건을 줄이거나 범위를 넓혀 보세요.

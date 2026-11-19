@@ -1,8 +1,8 @@
 {
-  "name": "dear-cake",
+  "name": "ake",
   "private": true,
   "version": "0.1.0",
-  "description": "Dear Cake (디어 케이크) — 커스텀·레터링 케이크 손님과 사장님을 잇는 모바일 앱 프로토타입",
+  "description": "에이크 AKE — 커스텀·레터링 케이크 손님과 사장님을 잇는 모바일 앱 프로토타입",
   "type": "module",
   "scripts": {
     "dev": "vite --host",
