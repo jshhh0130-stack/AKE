@@ -31,23 +31,24 @@ export function OwnerShop() {
   const rd = readiness(shop);
   const done = Object.fromEntries(rd.items.map(([k, , ok]) => [k, ok]));
   const hasSample = st.orders.some((o) => o.sample);
+  const photo = shop.portfolio?.find((p) => p.src)?.src;
   return (
     <div className="screen fade">
-      <div className="hdr"><h1 style={{ paddingLeft: 10 }}>내 가게</h1><button className="ib" onClick={() => nav(`/store/${shop.id}`)} aria-label="손님 화면"><Icon n="eye" /></button></div>
+      <div className="hdr big"><h1 style={{ paddingLeft: 12 }}>내 가게</h1><button className="more" style={{ marginRight: 14 }} onClick={() => nav(`/store/${shop.id}`)}>손님 화면 ›</button></div>
       <div className="scroll pad with-tab">
-        <div className="pv">
-          <div style={{ ...heroBg(shop), height: 140, position: 'relative' }}><CakeView o={shop.hero} bg={false} fancy style={{ position: 'absolute', left: '50%', bottom: -4, width: 220, height: 'auto', transform: 'translateX(-50%)' }} /></div>
+        <div className="pv shopcard">
+          {photo ? <div className="ph" style={{ backgroundImage: `url(${photo})` }} />
+            : <div style={{ ...heroBg(shop), height: 160, position: 'relative' }}><CakeView o={shop.hero} bg={false} fancy style={{ position: 'absolute', left: '50%', bottom: -4, width: 220, height: 'auto', transform: 'translateX(-50%)' }} /></div>}
           <div className="pad">
-            <div className="b" style={{ fontSize: 18 }}>{shop.name}</div>
-            <div className="small muted">{shop.gu} {shop.dong} · {shop.styles.map(styleName).join(', ')}</div>
-            <div className="small" style={{ marginTop: 6 }}>{shop.intro || '소개글이 아직 없어요'}</div>
-            <div className="row" style={{ marginTop: 10 }}>
-              <button className="btn sm line grow" onClick={() => nav(`/store/${shop.id}`)}><Icon n="eye" size="sm" />손님 화면 보기</button>
-              <button className="btn sm pri grow" onClick={() => nav('/o/shop/share')}><Icon n="qr" size="sm" />주문 링크·QR</button>
+            <div className="row" style={{ gap: 8 }}><b className="nm">{shop.name}</b><span className="tag pink">{shop.ops.paused ? '잠시 쉬는 중' : '주문 받는 중'}</span></div>
+            <div className="sub">{shop.dong || shop.gu} · {shop.styles.map(styleName).join(' · ')}</div>
+            <div className="intro">{shop.intro || '소개글이 아직 없어요. ‘가게 꾸미기’에서 적어 보세요.'}</div>
+            <div className="g2" style={{ marginTop: 14 }}>
+              <button className="btn sm line" onClick={() => nav(`/store/${shop.id}`)}>손님 화면 보기</button>
+              <button className="btn sm sec" onClick={() => nav('/o/shop/share')}>주문 링크·QR</button>
             </div>
           </div>
         </div>
-        {rd.pct < 100 && <div className="card pad" style={{ marginTop: 12 }}><div className="row"><b className="grow">가게 준비도</b><b className="pink">{rd.pct}%</b></div><div className="prog" style={{ marginTop: 8 }}><i style={{ width: rd.pct + '%' }} /></div></div>}
         <div className="sec-t"><h3>꼭 필요한 설정</h3></div>
         {['info', 'menu', 'ops'].map((k) => <SetRow key={k} k={k} ok={done[k]} shop={shop} />)}
         <div className="sec-t"><h3>더 꾸미기</h3></div>
@@ -71,10 +72,10 @@ function SetRow({ k, ok, shop }) {
   let s = S.s;
   if (k === 'menu') { const v = Object.entries(shop.menu.sizes).filter(([, p]) => p != null); s = v.length ? v.slice(0, 3).map(([z, p]) => `${{ mini: '미니', h1: '1호', h2: '2호', h3: '3호' }[z]} ${won(p)}`).join(' · ') : S.s; }
   if (k === 'ops') s = `${shop.ops.closedDays.length ? shop.ops.closedDays.map((d) => DOW[d]).join('·') + ' 휴무' : '휴무 없음'} · ${shop.ops.sameDay ? '당일 가능' : `${shop.ops.leadDays}일 전 마감`} · 하루 ${shop.ops.dailyMax}건${shop.ops.autoConfirm ? ' · 자동 확정' : ''}`;
-  if (k === 'portfolio') s = `${shop.portfolio.length}개 · 3개 이상 올리면 좋아요`;
+  if (k === 'portfolio') s = `${shop.portfolio.length}개 · 손님이 가장 많이 보는 곳이에요`;
   return (
     <button className={`setrow ${ok ? 'done' : ''}`} onClick={() => nav(`/o/shop/${k}`)}>
-      <span className="ic"><Icon n={ok && !['noti', 'form'].includes(k) ? 'check' : S.icon} /></span>
+      <span className="ic">{['noti', 'form'].includes(k) ? <Icon n={S.icon} /> : ok ? '✓' : '+'}</span>
       <div className="grow"><div className="t">{S.t}</div><div className="s">{s}</div></div>
       <Icon n="right" size="sm" />
     </button>

@@ -5,9 +5,10 @@ import { NotiBell } from '../../components/Noti.jsx';
 import { CakeView, Empty, StatusTag, toast, Seg, Sheet, Field } from '../../components/ui.jsx';
 import { useApp, setState, patchShop } from '../../lib/state.js';
 import { nav } from '../../lib/router.js';
-import { act, nextStatus, NEXT_LABEL, ACTIVE, SALES, ordersCSV, downloadText, unreadOf, evText, removeSampleOrders } from '../../lib/orders.js';
+import { act, nextStatus, NEXT_LABEL, OWNER_NAME, ACTIVE, SALES, ordersCSV, downloadText, unreadOf, evText, removeSampleOrders } from '../../lib/orders.js';
+import { flavorName } from '../../lib/ordertext.js';
 import { orderView } from '../../lib/ordertext.js';
-import { won, range, fmtDate, relDay, ymd, today, addDays, parseYmd, DOW, ago, maskName, man, pad } from '../../lib/util.js';
+import { won, range, fmtDate, mdDate, relDay, ymd, today, addDays, parseYmd, DOW, ago, maskName, man, pad } from '../../lib/util.js';
 import { SIZES, DESIGNS, sizeOf, designOf } from '../../data/catalog.js';
 import { readiness } from './Editors.jsx';
 import OrderThumb from '../../components/OrderThumb.jsx';
@@ -19,10 +20,10 @@ const GREET = {
   day: ['오늘도 달콤한 하루 되세요', '점심은 꼭 챙겨 드세요!', '오후 픽업 전, 잠깐 숨 돌려요', '누군가의 생일이 완성되는 중!'],
   pm: ['늦은 밤까지 화이팅하시네요!', '오늘 하루도 수고 많으셨어요', '내일 픽업, 미리 체크해 볼까요?', '오늘 케이크로 누군가 웃고 있어요', '마감까지 조금만 더 힘내요!'],
 };
-function greeting(d = new Date()) {
+function greeting(d = new Date(), k = 0) {
   const h = d.getHours();
   const list = h >= 5 && h < 11 ? GREET.am : h >= 11 && h < 17 ? GREET.day : GREET.pm;
-  return list[(d.getDate() * 24 + h) % list.length];
+  return list[k % list.length]; // 처음엔 무작위, 누르면 다음 인사말
 }
 function useShopOrders() {
   const st = useApp();
@@ -33,27 +34,55 @@ function NoShop() {
   return <div className="screen"><Empty icon="store">아직 등록한 가게가 없어요.<div style={{ marginTop: 14 }}><button className="btn pri" onClick={() => nav('/o/setup', { replace: true })}>가게 등록하기</button></div></Empty></div>;
 }
 
-export function OCard({ o, quick = true }) {
+export function OCard({ o, quick = true, list = false }) {
   const st = useApp();
   const n = nextStatus(o.status);
   const needDeposit = (st.shop?.ops?.deposit || 0) > 0 && ['confirmed', 'proof', 'making', 'ready'].includes(o.status);
   const un = unreadOf(o, 'o');
   const last = [...(o.ev || [])].reverse().find((e) => e.t !== 'img' && e.by !== 'o');
+  const req = o.status === 'requested';
+  const price = o.finalPrice != null ? o.finalPrice : o.est?.lo;
+  const decline = () => { if (confirm('이 주문을 거절할까요?')) { act(o.id, 'o', 'decline'); toast('주문을 거절했어요'); } };
+  const approve = () => { act(o.id, 'o', 'approve', { price: o.est.lo }); toast(`수락했어요 · ${won(o.est.lo)} 확정`); nav(`/o/order/${o.id}`); };
+  // 주문·대화 목록: [이름 · 픽업 시간] / [사진] 크기·맛 “문구” 금액 / [거절][수락하고 금액 보내기]
+  if (list) {
+    return (
+      <div className={`ocard oc3 ${['declined', 'canceled'].includes(o.status) ? 'dim' : ''}`} role="button" onClick={() => nav(`/o/order/${o.id}`)}>
+        <div className="top"><b>{maskName(o.customer?.name)}{o.sample && <span className="tag mute">예시</span>}</b><span>{mdDate(o.o.date)} {o.o.time} 픽업</span></div>
+        <div className="mid">
+          <div className="th round"><OrderThumb order={o} /></div>
+          <div className="grow" style={{ minWidth: 0 }}><small>{sizeOf(o.o.size).name} · {flavorName(o.o)}</small><div className="tx">{o.o.noText ? '문구 없음' : `“${o.o.text}”`}</div></div>
+          <b className="pr">{man(price || 0)}</b>
+        </div>
+        {un > 0 && last && !req && <div className="lastmsg"><span className="un">{un}</span><span>{evText(last, o).split('\n')[0]}</span></div>}
+        {quick && req && (
+          <div className="acts2" onClick={(e) => e.stopPropagation()}>
+            <button className="btn sm ghost" onClick={decline}>거절</button>
+            <button className="btn sm ok2" onClick={approve}>수락하고 금액 보내기</button>
+          </div>
+        )}
+        {!req && <div className={`stline ${['declined', 'canceled'].includes(o.status) ? 'no' : ''}`}>{o.status === 'declined' ? '거절함' : o.status === 'canceled' ? '손님이 취소했어요' : o.status === 'done' ? '✓ 픽업 완료' : `✓ ${OWNER_NAME[o.status] || ''}${needDeposit ? (o.paid ? ' · 입금 완료' : ' · 입금 전') : ''}`}</div>}
+        {quick && n && !req && (
+          <div className="acts2" onClick={(e) => e.stopPropagation()}><button className="btn sm ok2" onClick={() => { act(o.id, 'o', 'advance', { to: n }); toast(`${NEXT_LABEL[o.status]} 처리했어요`); }}>{NEXT_LABEL[o.status]} →</button></div>
+        )}
+      </div>
+    );
+  }
   return (
     <div className="ocard oc2" role="button" onClick={() => nav(`/o/order/${o.id}`)}>
       <div className="oc-top">
         <div className="th round"><OrderThumb order={o} /></div>
         <div className="grow" style={{ minWidth: 0 }}>
-          <div className="t1"><span className="grow">{maskName(o.customer?.name)}{o.sample && <span className="tag mute" style={{ marginLeft: 4 }}>예시</span>}</span>{o.status === 'requested' ? <small className="when">{fmtDate(o.o.date, true)} {o.o.time}</small> : <StatusTag status={o.status} owner />}</div>
+          <div className="t1"><span className="grow">{maskName(o.customer?.name)}{o.sample && <span className="tag mute" style={{ marginLeft: 4 }}>예시</span>}</span>{req ? <small className="when">{mdDate(o.o.date)} {o.o.time}</small> : <StatusTag status={o.status} owner />}</div>
           <div className="t2">{sizeOf(o.o.size).name} · {o.o.noText ? '문구 없음' : `“${o.o.text}”`}</div>
-          <div className="t2">{o.status === 'requested' ? (o.o.pickName || designOf(o.o.design).name) : `${relDay(o.o.date)} ${o.o.time}`} · <b style={{ color: 'var(--ink)' }}>{o.finalPrice != null ? won(o.finalPrice) : range(o.est?.lo, o.est?.hi, true)}</b>{needDeposit && <> · <span className={`tag ${o.paid ? 'ok' : 'warn'}`}>{o.paid ? '입금 완료' : '입금 전'}</span></>}</div>
-          {un > 0 && last && <div className="lastmsg"><span className="un">{un}</span><span>{evText(last, o).split('\n')[0]}</span></div>}
+          {!req && <div className="t2">{relDay(o.o.date)} {o.o.time} · <b style={{ color: 'var(--ink)' }}>{won(price || 0)}</b>{needDeposit && <> · <span className={`tag ${o.paid ? 'pink' : 'warn'}`}>{o.paid ? '입금 완료' : '입금 전'}</span></>}</div>}
+          {un > 0 && last && !req && <div className="lastmsg"><span className="un">{un}</span><span>{evText(last, o).split('\n')[0]}</span></div>}
         </div>
       </div>
-      {quick && o.status === 'requested' && (
+      {quick && req && (
         <div className="acts2" onClick={(e) => e.stopPropagation()}>
-          <button className="btn sm ghost" onClick={() => { if (confirm('이 주문을 거절할까요?')) { act(o.id, 'o', 'decline'); toast('주문을 거절했어요'); } }}>거절</button>
-          <button className="btn sm ok2" onClick={() => { act(o.id, 'o', 'approve', { price: o.est.lo }); toast(`수락했어요 · ${won(o.est.lo)} 확정`); }}>수락 · {man(o.est.lo)}</button>
+          <button className="btn sm ghost" onClick={decline}>거절</button>
+          <button className="btn sm ok2" onClick={approve}>수락 · {man(o.est.lo)}</button>
         </div>
       )}
       {quick && n && (
@@ -61,8 +90,7 @@ export function OCard({ o, quick = true }) {
       )}
     </div>
   );
-}
-// 오늘 픽업 한 줄: [시간] 이름 · 크기 / “문구” [다음 단계]
+}// 오늘 픽업 한 줄: [시간] 이름 · 크기 / “문구” [다음 단계]
 function PickRow({ o }) {
   const n = nextStatus(o.status);
   return (
@@ -76,6 +104,7 @@ function PickRow({ o }) {
 
 export function OwnerHome() {
   const { st, shop, list } = useShopOrders();
+  const [gi, setGi] = useState(() => Math.floor(Math.random() * 4));
   if (!shop) return <NoShop />;
   const t = ymd(today());
   const reqs = list.filter((o) => o.status === 'requested').sort((a, b) => a.o.date.localeCompare(b.o.date));
@@ -91,10 +120,10 @@ export function OwnerHome() {
       <div className="scroll with-tab">
         <div className="owner-top">
           <div className="sname"><Icon n="store" size="sm" /><span className="grow" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{shop.name}</span>
-            <button className={`btn xs ${shop.ops.paused ? 'danger' : 'line'}`} onClick={() => { patchShop((s) => ({ ops: { ...s.ops, paused: !s.ops.paused } })); toast(shop.ops.paused ? '주문을 다시 받아요' : '새 주문을 잠시 멈췄어요'); }}>{shop.ops.paused ? '주문 멈춤' : <><i style={{ width: 7, height: 7, borderRadius: 4, background: 'var(--ok)', display: 'inline-block' }} />주문 받는 중</>}</button>
+            <button className={`openpill ${shop.ops.paused ? 'off' : ''}`} onClick={() => { patchShop((s) => ({ ops: { ...s.ops, paused: !s.ops.paused } })); toast(shop.ops.paused ? '주문을 다시 받아요' : '새 주문을 잠시 멈췄어요'); }}><i />{shop.ops.paused ? '잠시 쉬는 중' : '주문 받는 중'}</button>
             <NotiBell role="o" dark />
           </div>
-          <h2>{reqs.length ? `확인할 주문이 ${reqs.length}건 있어요` : talk.length ? `새 소식이 ${talk.length}건 있어요` : greeting()}</h2>
+          <h2 className="greet" onClick={() => setGi((g) => g + 1)} title="누르면 다른 인사말">{greeting(new Date(), gi)}</h2>
           <div className="kpis">
             <button onClick={() => nav('/o/orders', { replace: true })}><small>새 요청</small><b>{reqs.length}</b></button>
             <div><small>오늘 픽업</small><b>{todays.filter((o) => o.status !== 'done').length}</b></div>
@@ -103,10 +132,10 @@ export function OwnerHome() {
         </div>
         <div className="pad">
           {samples && <div className="note row" style={{ marginBottom: 12 }}><span className="grow">예시 주문이 들어 있어요. 실제로 쓰기 전에 지워 주세요.</span><button className="btn xs line" onClick={() => { removeSampleOrders(); toast('예시 주문을 지웠어요'); }}>예시 지우기</button></div>}
-          <div className="sec-t"><h3>① 확인이 필요한 주문</h3><button className="more" onClick={() => nav('/o/orders', { replace: true })}>전체 ›</button></div>
+          <div className="sec-t"><h3><i className="num">1</i>확인이 필요한 주문</h3><button className="more" onClick={() => nav('/o/orders', { replace: true })}>전체 ›</button></div>
           {reqs.length === 0 ? <div className="card pad small muted">새로 온 요청이 없어요.</div> : reqs.map((o) => <OCard key={o.id} o={o} />)}
-          {talk.length > 0 && (<><div className="sec-t"><h3>② 새 소식 (자동 확정 · 손님 메시지)</h3></div>{talk.map((o) => <OCard key={o.id} o={o} quick={false} />)}</>)}
-          <div className="sec-t"><h3>{talk.length ? '③' : '②'} 오늘 픽업 · {fmtDate(t)}</h3></div>
+          {talk.length > 0 && (<><div className="sec-t"><h3><i className="num">2</i>새 소식 (자동 확정 · 손님 메시지)</h3></div>{talk.map((o) => <OCard key={o.id} o={o} quick={false} />)}</>)}
+          <div className="sec-t"><h3><i className="num">{talk.length ? 3 : 2}</i>오늘 픽업 · {fmtDate(t)}</h3></div>
           {todays.length === 0 ? <div className="card pad small muted">오늘 픽업 예정이 없어요.</div> : todays.map((o) => <PickRow key={o.id} o={o} />)}
           {week.length > 0 && (<>
             <div className="sec-t"><h3>이번 주 일정</h3></div>
@@ -118,7 +147,7 @@ export function OwnerHome() {
               </button>))}</div>
           </>)}
           {rd.pct < 100 && (<>
-            <div className="sec-t"><h3>가게 준비도</h3><span className="more">{rd.pct}% 완료</span></div>
+            <div className="sec-t"><h3>가게 준비도</h3></div>
             <div className="card pad">
               <div className="prog"><i style={{ width: rd.pct + '%' }} /></div>
               <div className="chips wrap" style={{ marginTop: 10 }}>{rd.items.map(([k, n, ok]) => <button key={k} className={`chip sm ${ok ? 'soft on' : ''}`} onClick={() => nav(`/o/shop/${k}`)}><Icon n={ok ? 'check' : 'plus'} /> {n}</button>)}</div>
@@ -148,26 +177,29 @@ export function OwnerOrders() {
     done: list.filter((o) => ['done', 'declined', 'canceled'].includes(o.status)),
   };
   const cur = (groups[tab] || []).slice().sort((a, b) => (tab === 'done' ? (b.o.date + b.o.time).localeCompare(a.o.date + a.o.time) : (a.o.date + a.o.time).localeCompare(b.o.date + b.o.time)));
-  const byDate = {};
-  cur.forEach((o) => { (byDate[o.o.date] = byDate[o.o.date] || []).push(o); });
   const first = month, startDow = first.getDay(), dim = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
   const cnt = {};
   list.filter((o) => !['declined', 'canceled'].includes(o.status)).forEach((o) => { cnt[o.o.date] = (cnt[o.o.date] || 0) + 1; });
   const dayList = list.filter((o) => o.o.date === selDay && !['declined', 'canceled'].includes(o.status)).sort((a, b) => a.o.time.localeCompare(b.o.time));
   return (
     <div className="screen fade">
-      <div className="hdr"><h1 style={{ paddingLeft: 10 }}>주문·대화</h1>
+      <div className="hdr big"><h1 style={{ paddingLeft: 12 }}>주문·대화</h1>
         <div style={{ width: 140, marginRight: 8 }}><Seg value={view} onChange={setView} items={[['list', '목록'], ['cal', '달력']]} /></div></div>
       {view === 'list' ? (<>
         <div className="pad gingham" style={{ paddingBottom: 6 }}><div className="seg">{[['new', `새 요청 ${groups.new.length}`], ['doing', `진행 중 ${groups.doing.length}`], ['done', '완료·취소']].map(([k, l]) => <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}</div></div>
         <div className="scroll pad with-tab gingham" style={{ paddingTop: 6 }}>
-          {cur.length === 0 && <Empty icon="box">{tab === 'new' ? <>새로 온 요청이 없어요.<br /><span className="xs">주문 링크·QR을 인스타 프로필에 걸어 두면 손님이 바로 주문해요.</span><div style={{ marginTop: 12 }}><button className="btn sec sm" onClick={() => nav('/o/shop/share')}>주문 링크·QR 보기</button></div></> : tab === 'doing' ? '진행 중인 주문이 없어요.' : '완료된 주문이 없어요.'}</Empty>}
-          {Object.entries(byDate).map(([d, os]) => (
-            <div key={d}><div className="sec-t" style={{ marginTop: 12 }}><h3 style={{ fontSize: 14.5 }}>{relDay(d)} · {fmtDate(d)}</h3><span className="more">{os.length}건</span></div>{os.map((o) => <OCard key={o.id} o={o} quick={tab !== 'done'} />)}</div>
-          ))}
+          {cur.length === 0 && (
+            <div className="oempty">
+              <i><Icon n="box" /></i>
+              <b>{tab === 'new' ? '새로 온 요청이 없어요.' : tab === 'doing' ? '진행 중인 주문이 없어요.' : '완료·취소된 주문이 없어요.'}</b>
+              <span>주문 링크·QR을 인스타 프로필에 걸어 두면 손님이 바로 주문해요.</span>
+              <button className="btn sec sm" onClick={() => nav('/o/shop/share')}>주문 링크·QR 보기</button>
+            </div>
+          )}
+          {cur.map((o) => <OCard key={o.id} o={o} quick={tab !== 'done'} list />)}
         </div>
       </>) : (
-        <div className="scroll pad with-tab">
+        <div className="scroll pad with-tab gingham">
           <div className="row" style={{ marginBottom: 10 }}>
             <button className="btn xs line" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))} aria-label="이전 달"><Icon n="back" size="sm" /></button>
             <b className="grow center">{month.getFullYear()}년 {month.getMonth() + 1}월</b>
@@ -179,11 +211,11 @@ export function OwnerOrders() {
             {Array.from({ length: dim }, (_, i) => {
               const key = ymd(new Date(first.getFullYear(), first.getMonth(), i + 1));
               const off = shop.ops.closedDays.includes(new Date(first.getFullYear(), first.getMonth(), i + 1).getDay()) || shop.ops.holidays.includes(key);
-              return <button key={key} className={`d ${off ? 'off' : ''} ${key === ymd(today()) ? 'today' : ''} ${key === selDay ? 'sel' : ''}`} onClick={() => setSelDay(key)}>{i + 1}{cnt[key] ? <small>{cnt[key]}건</small> : off ? <small style={{ color: '#c7b9bf' }}>휴무</small> : null}</button>;
+              return <button key={key} className={`d ${off ? 'off' : ''} ${key === ymd(today()) ? 'today' : ''} ${key === selDay ? 'sel' : ''}`} onClick={() => setSelDay(key)}>{i + 1}{off ? <small>휴무</small> : cnt[key] ? <small>{cnt[key]}건</small> : null}{off && cnt[key] ? <i className="dot" /> : null}</button>;
             })}
           </div>
           <div className="sec-t"><h3>{fmtDate(selDay)} · {dayList.length}건</h3><span className="more">하루 최대 {shop.ops.dailyMax}건</span></div>
-          {dayList.length === 0 ? <div className="card pad small muted">이 날은 주문이 없어요.</div> : dayList.map((o) => <OCard key={o.id} o={o} />)}
+          {dayList.length === 0 ? <div className="card pad small muted">이 날은 주문이 없어요.</div> : dayList.map((o) => <OCard key={o.id} o={o} list />)}
         </div>
       )}
       <OwnerTabBar current="/o/orders" />
@@ -227,7 +259,7 @@ export function Sales() {
   if (!shop) return <NoShop />;
   return (
     <div className="screen fade">
-      <div className="hdr"><h1 style={{ paddingLeft: 10 }}>매출·장부</h1></div>
+      <div className="hdr big"><h1 style={{ paddingLeft: 12 }}>매출·장부</h1></div>
       <div className="pad" style={{ paddingBottom: 0 }}><Seg value={tab} onChange={setTab} items={[['sales', '매출'], ['book', '월별 장부'], ['work', '근무기록']]} /></div>
       <div className="scroll pad with-tab">
         {list.some((o) => o.sample) && <div className="note" style={{ marginBottom: 10 }}>예시 주문이 포함된 숫자예요.</div>}
@@ -364,16 +396,20 @@ function BookTab({ shop, list }) {
           {Array.from({ length: dim }, (_, i) => {
             const dt = new Date(month.getFullYear(), month.getMonth(), i + 1), key = ymd(dt), x = byDay[key];
             const off = shop.ops.closedDays.includes(dt.getDay()) || shop.ops.holidays.includes(key);
+            // 매출 많을수록 진한 초록 5단계 · 휴무는 점선 · 앞으로 올 날은 옅은 회색
+            const lv = x ? Math.min(4, 1 + Math.floor((x.v / maxV) * 3.999)) : 0;
+            const future = key > ymd(today());
             return (
-              <button key={key} className={`d ${off && !x ? 'off' : ''} ${key === ymd(today()) ? 'today' : ''} ${key === selDay ? 'sel' : ''}`} onClick={() => setSelDay(selDay === key ? null : key)}
-                style={x && key !== selDay ? { background: `rgba(247,92,141,${0.08 + 0.3 * (x.v / maxV)})` } : undefined}>
+              <button key={key} className={`d hv${x ? lv : off ? 'off' : future ? 'f' : '0'} ${key === selDay ? 'sel' : ''}`} onClick={() => setSelDay(selDay === key ? null : key)}>
                 <span className="dn">{i + 1}</span>
-                {x ? <><b>{x.n}건</b><small>{man(x.v)}</small></> : off ? <small className="offt">휴무</small> : null}
+                {x ? <small>{man(x.v)}</small> : off ? <small className="offt">휴무</small> : null}
               </button>
             );
+
           })}
         </div>
-        <div className="xs muted" style={{ marginTop: 8 }}>칸이 진할수록 매출이 많은 날이에요. 날짜를 누르면 그날 주문을 하나씩 볼 수 있어요.{best ? ` 가장 많이 판 날: ${fmtDate(best)} (${won(byDay[best].v)})` : ''}</div>
+        <div className="heatlegend"><span>적음</span><i className="hv1" /><i className="hv2" /><i className="hv3" /><i className="hv4" /><i className="hv5" /><span>많음</span><span className="grow" style={{ textAlign: 'right' }}>날짜를 누르면 그날 주문</span></div>
+        {best && <div className="xs muted" style={{ marginTop: 6 }}>가장 많이 판 날: {fmtDate(best)} ({won(byDay[best].v)})</div>}
       </div>
       <div className="card pad" style={{ marginTop: 10 }}>
         <div className="b small">주차별 합계</div>

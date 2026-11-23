@@ -8,13 +8,13 @@ import { Logo } from './components/Logo.jsx';
 import Icon from './components/Icon.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import InstallBanner from './components/InstallBanner.jsx';
-import { Splash, RoleSelect, Guide } from './screens/Start.jsx';
+import { Splash, SPLASH_MS, RoleSelect, Guide } from './screens/Start.jsx';
 import CustomerHome from './screens/customer/Home.jsx';
 import StoreDetail from './screens/customer/Store.jsx';
 import OrderForm from './screens/customer/Order.jsx';
 import { OrderDone, MyOrders, My } from './screens/customer/Mine.jsx';
 import { Interest, CakeDetail } from './screens/customer/Interest.jsx';
-import { CustomerOrder } from './screens/OrderRoom.jsx';
+import { CustomerOrder, PayScreen } from './screens/OrderRoom.jsx';
 
 // 사장님·설정·데이터 화면은 필요할 때 불러와서 첫 화면을 빠르게
 const owner = () => import('./screens/owner/Owner.jsx');
@@ -37,7 +37,7 @@ const Insight = lazy(() => import('./screens/Insight.jsx'));
 
 const ROUTES = [
   ['/role', RoleSelect], ['/guide', Guide],
-  ['/c', CustomerHome], ['/c/saved', Interest], ['/c/cake/:id', CakeDetail], ['/c/orders', MyOrders], ['/c/order/:id', CustomerOrder], ['/c/my', My],
+  ['/c', CustomerHome], ['/c/saved', Interest], ['/c/cake/:id', CakeDetail], ['/c/orders', MyOrders], ['/c/order/:id', CustomerOrder], ['/c/pay/:id', PayScreen],['/c/my', My],
   ['/store/:id', StoreDetail], ['/order/:id', OrderForm], ['/done/:id', OrderDone],
   ['/o', OwnerHome], ['/o/orders', OwnerOrders], ['/o/order/:id', OwnerOrderDetail], ['/o/shop', OwnerShop], ['/o/shop/:sec', ShopEdit], ['/o/sales', Sales], ['/o/setup', Setup],
   ['/settings', Settings], ['/about', About], ['/s/:code', SharedOrder], ['/g/:code', GiftView], ['/j/:code', JoinShop], ['/insight', Insight],
@@ -106,17 +106,18 @@ export default function App() {
   const [splash, setSplash] = useState(true);
   const [gone, setGone] = useState(false);
   useEffect(() => {
-    const a = setTimeout(() => setSplash(false), 1600);
-    const b = setTimeout(() => setGone(true), 2200);
+    const a = setTimeout(() => setSplash(false), SPLASH_MS);
+    const b = setTimeout(() => setGone(true), SPLASH_MS + 500);
     return () => { clearTimeout(a); clearTimeout(b); };
   }, []);
+  const skipSplash = () => { setSplash(false); setTimeout(() => setGone(true), 500); };
   useEffect(() => { startLive(); resumeAIJobs(); }, []); // 실시간 주문 연결 + 무료 대기열에서 만들던 AI 사진 이어서 기다리기
   const appUrl = location.href.split('#')[0];
   return (
     <div className="desk">
       <aside className="desk-info">
         <Logo h={64} />
-        <p className="sub">C는 비워 뒀어요. 당신이 채우는 순간, CAKE가 됩니다.<br /><span style={{ fontSize: 15 }}>손님과 사장님이 한 앱에서 찾기부터 주문까지 끝내요.</span></p>
+        <p className="sub">당신이 채우는 순간, CAKE가 됩니다.<br /><span style={{ fontSize: 15 }}>손님과 사장님이 한 앱에서 찾기부터 주문까지 끝내요.</span></p>
         <div className="qr">
           <QR text={appUrl} size={112} />
           <div className="small"><b>핸드폰으로 열어 보세요</b><br /><span className="muted">카메라로 QR을 찍으면 앱이 열려요. 홈 화면에 추가하면 앱처럼 설치돼요.</span></div>
@@ -137,7 +138,7 @@ export default function App() {
         <Router />
         <Toasts />
         {gone && <InstallBanner />}
-        {!gone && <Splash out={!splash} />}
+        {!gone && <Splash out={!splash} onSkip={skipSplash} />}
       </div>
     </div>
   );

@@ -10,7 +10,8 @@ const BASE = { size: 'h1', shape: 'round', design: 'simple', cream: 'white', fla
 
 export function storeDesigns(s) {
   if (!s) return [];
-  const own = (s.portfolio || []).filter((p) => p.src || p.design).map((p, i) => ({ id: p.id || `p${i}`, name: p.caption || '대표 디자인', src: p.src || null, design: p.design || null, real: true }));
+  // 작품 사진(work)은 위쪽 사진·관심에만, 대표 디자인은 나머지. opt 가 있으면 그 크기·디자인으로 가격을 계산
+  const own = (s.portfolio || []).filter((p) => (p.src || p.design) && !p.work).map((p, i) => ({ id: p.id || `p${i}`, name: p.caption || '대표 디자인', src: p.src || null, design: p.design || null, opt: p.opt || null, real: true, sample: !!p.sample }));
   const seen = {};
   const list = own.length ? own : Array.from({ length: 5 }, (_, k) => {
     const d = storeLook(s, k);
@@ -20,7 +21,7 @@ export function storeDesigns(s) {
     return { id: `g${k}`, name, design: d, gen: true };
   });
   return list.map((x) => {
-    const o = { ...BASE, ...(x.design || {}) };
+    const o = { ...BASE, ...(x.design || x.opt || {}) };
     return { ...x, size: o.size, price: estimate(s, o).lo };
   });
 }

@@ -23,6 +23,12 @@ export const fmtDate = (s, withDow = true) => {
   const d = parseYmd(s);
   return `${d.getMonth() + 1}월 ${d.getDate()}일${withDow ? ` (${DOW[d.getDay()]})` : ''}`;
 };
+// 짧은 날짜: 11/25(수) — 카드·목록용 (iAKE v2)
+export const mdDate = (s) => {
+  if (!s) return '';
+  const d = parseYmd(s);
+  return `${d.getMonth() + 1}/${String(d.getDate()).padStart(2, '0')}(${DOW[d.getDay()]})`;
+};
 export const relDay = (s) => {
   const diff = Math.round((parseYmd(s) - today()) / 864e5);
   if (diff === 0) return '오늘';

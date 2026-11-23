@@ -140,7 +140,7 @@ export function h1Range(s) {
   if (s.price?.h1) return [s.price.h1[0], s.price.h1[1] ?? Math.round(s.price.h1[0] * 1.12)];
   return BENCH.h1;
 }
-export const pinPrice = (s) => { const h = headlinePrice(s); if (!h) return ''; const v = h.lo / 10000; return `${Number.isInteger(v) ? v : v.toFixed(1)}만${h.exact ? '' : '~'}`; };
+export const pinPrice = (s) => { const h = headlinePrice(s); if (!h) return ''; const v = h.lo / 10000; return `${Number.isInteger(v) ? v : v.toFixed(1)}만~`; };
 
 export const FILTERS = [
   { id: 'all', name: '전체' },

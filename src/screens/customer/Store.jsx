@@ -114,7 +114,7 @@ export default function StoreDetail({ params }) {
   const closed = closedDaysOf(s);
   const links = mapLinks(s);
   const reviews = st.orders.filter((o) => o.storeId === s.id && o.review);
-  const realPhotos = [...(s.g?.photos || []).map((p) => ({ src: p.src, by: p.by, g: true })), ...(s.portfolio || []).filter((p) => p.src).map((p) => ({ src: p.src, cap: p.caption }))];
+  const realPhotos = [...(s.g?.photos || []).map((p) => ({ src: p.src, by: p.by, g: true })), ...(s.portfolio || []).filter((p) => p.src).map((p) => ({ src: p.src, cap: p.caption, sample: !!p.sample }))];
   // 대표 디자인 (주문서 1단계와 같은 목록) · 위쪽 큰 사진은 가게 사진들을, 없으면 대표 디자인들을 옆으로 넘겨 본다
   const gallery = storeDesigns(s).map((g) => ({ ...g, caption: g.name }));
   const slides = realPhotos.length ? realPhotos : gallery.filter((g) => g.design).map((g) => ({ design: g.design, cap: g.name }));
@@ -125,7 +125,7 @@ export default function StoreDetail({ params }) {
   const toggleFav = () => { setState((x) => ({ ...x, favs: fav ? x.favs.filter((i) => i !== s.id) : [...x.favs, s.id] })); if (!fav) toast('찜한 가게에 담았어요'); };
   const rating = s.g?.rating ? [s.g.rating, s.g.n, '구글 리뷰'] : reviews.length ? [reviews.reduce((a, o) => a + o.review.stars, 0) / reviews.length, reviews.length, '앱 후기'] : null;
   const unsure = s.kind === 'public' && !s.verified;
-  const kindTag = inApp ? <span className="tag pink">앱으로 바로 주문</span> : s.verified ? <span className="tag ok"><Icon n="check" />영업 확인</span> : s.kind === 'public' ? <span className="tag mute">영업 확인 필요</span> : <span className="tag blue">{s.kind === 'kakao' ? '카카오맵 등록 가게' : '지도 검색 결과'}</span>;
+  const kindTag = inApp ? <span className="tag pink">앱 주문</span> : s.verified ? <span className="tag ok"><Icon n="check" />영업 확인</span> : s.kind === 'public' ? <span className="tag mute">영업 확인 필요</span> : <span className="tag blue">{s.kind === 'kakao' ? '카카오맵 등록 가게' : '지도 검색 결과'}</span>;
   const kKey = kakaoKeyOf(st.settings);
   const kl = s.k ? kakaoLinks(s.k) : null;
   const chips = strengths(s);
@@ -139,7 +139,7 @@ export default function StoreDetail({ params }) {
                 : <div key={i} className="slide"><div className="cake"><CakeView o={p.design} bg={false} fancy /></div></div>))}
             </div>
             {slides.length > 1 && <span className="cnt">{Math.min(pi, slides.length - 1) + 1} / {slides.length}</span>}
-            {slides[pi]?.g ? <span className="hcap">사진: 구글 지도</span> : !realPhotos.length && <span className="hcap">스타일 예시 그림</span>}
+            {slides[pi]?.g ? <span className="hcap">사진: 구글 지도</span> : slides[pi]?.sample ? <span className="hcap">예시 사진</span> : !realPhotos.length && <span className="hcap">스타일 예시 그림</span>}
           </>) : (<>
             <div className="cake"><CakeView o={hero} bg={false} fancy /></div>
             <span className="hcap">스타일 예시 그림</span>
@@ -154,11 +154,11 @@ export default function StoreDetail({ params }) {
         </div>
 
         <div className="shead">
-          <div className="row" style={{ gap: 6 }}>{kindTag}{s.sameDay && <span className="tag warn">당일 픽업</span>}</div>
+          <div className="row" style={{ gap: 6 }}>{kindTag}{s.sameDay && <span className="tag pink">당일 픽업</span>}</div>
           <h2>{s.name}</h2>
           <div className="meta">
-            {rating && <><span className="star"><Icon n="star" fill />{rating[0].toFixed(1)}</span><span>{rating[2]} {rating[1]} ·</span></>}
-            <span>{[s.gu, s.dong].filter(Boolean).join(' ')} · 여기서 {fmtKm(d)}{s.geo === 'area' ? ' (위치 대략)' : ''}</span>
+            <span>{s.dong || s.gu} · 여기서 {fmtKm(d)}{s.geo === 'area' ? ' (위치 대략)' : ''}</span>
+            {rating && <span>{' · ★ '}{rating[0].toFixed(1)} ({rating[1]})</span>}
           </div>
           {chips.length > 0 && <div className="tags" style={{ marginTop: 10 }}>{chips.map((t) => <span key={t} className="tag">{t} 강점</span>)}</div>}
           {s.g?.closed && <div className="note warn" style={{ marginTop: 10 }}>구글 지도에는 ‘폐업’으로 표시돼 있어요. 방문 전에 꼭 확인해 주세요.</div>}

@@ -49,7 +49,7 @@ export function NotiSettings({ role }) {
       <div className="b small" style={{ marginBottom: 4 }}>알림 설정 <span className="xs muted">({role === 'o' ? '사장님' : '고객'})</span></div>
       <div className="card" style={{ padding: '0 14px' }}>
         {rows.map(([k, t, s]) => <div key={k} className="list-row"><div className="grow"><div className="t">{t}</div><div className="s">{s}</div></div><Toggle on={set[k] !== false} onChange={(v) => upd(k, v)} label={t} /></div>)}
-        <div className="list-row"><div className="grow"><div className="t">소리 · 진동</div></div><Toggle on={set.sound !== false} onChange={(v) => upd('sound', v)} label="소리" /></div>
+        <div className="list-row"><div className="grow"><div className="t">소리 · 진동</div><div className="s">알림 올 때 소리와 진동</div></div><Toggle on={set.sound !== false} onChange={(v) => upd('sound', v)} label="소리" /></div>
         <div className="list-row"><div className="grow"><div className="t">휴대폰 알림창에 띄우기</div><div className="s">앱이 열려 있거나 최근에 열어 둔 동안 알림창에 떠요</div></div>
           <Toggle on={!!set.browser} label="휴대폰 알림" onChange={async (v) => {
             if (!v) { upd('browser', false); return; }

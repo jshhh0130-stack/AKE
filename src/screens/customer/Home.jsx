@@ -46,18 +46,21 @@ export function StoreCard({ r, sel, onClick, fav, onFav, picked, className = '' 
   const rv = getState().orders.filter((o) => o.storeId === s.id && o.review);
   const rating = s.g?.rating ? [s.g.rating, s.g.n] : rv.length ? [rv.reduce((a, o) => a + o.review.stars, 0) / rv.length, rv.length] : null;
   const unsure = s.kind === 'public' && !s.verified && !s.price;
-  const chips = [...strengths(s).map((t) => <span key={t} className="tag">{t}</span>)];
-  if (s.sameDay) chips.splice(1, 1, <span key="sd" className="tag warn">당일 픽업</span>);
-  if (unsure) chips.splice(1, 1, <span key="un" className="tag mute">확인 필요</span>);
-  if (s.kind !== 'public' && !inApp) chips.splice(1, 1, <span key="ext" className="tag blue">{s.kind === 'kakao' ? '카카오맵' : '지도 검색'}</span>);
+  // 칩 2개: [잘하는 케이크(베이지)] [앱 주문·당일 픽업(분홍) 또는 정보 확인 필요(회색)]
+  const chips = strengths(s).slice(0, 1).map((t) => <span key={t} className="tag">{t}</span>);
+  if (s.sameDay && inApp) chips.push(<span key="sd" className="tag pink">당일 픽업</span>);
+  else if (inApp) chips.push(<span key="app" className="tag pink">앱 주문</span>);
+  else if (unsure) chips.push(<span key="un" className="tag mute">정보 확인 필요</span>);
+  else if (s.kind === 'kakao' || s.k) chips.push(<span key="ext" className="tag mute">카카오맵 정보</span>);
+  else if (s.kind !== 'public') chips.push(<span key="ext" className="tag mute">지도 검색</span>);
   return (
     <button className={`scard ${sel ? 'sel' : ''} ${className}`} onClick={onClick} id={className ? undefined : `card-${s.id}`}>
-      <div className="th"><StoreThumb s={s} />{inApp && <span className="m">앱 주문</span>}</div>
+      <div className="th"><StoreThumb s={s} /></div>
       <div className="grow">
         <div className="nm"><span>{s.name}</span>{match != null && <span className="match">{match}%</span>}</div>
         <div className="meta">
-          {rating && <><span className="star"><Icon n="star" fill />{rating[0].toFixed(1)}</span><span>({rating[1]}) ·</span></>}
           <span>{[s.dong || s.gu, d != null ? fmtKm(d) : null, s.geo === 'area' ? '위치 대략' : null].filter(Boolean).join(' · ')}</span>
+          {rating && <span>{' · ★ '}{rating[0].toFixed(1)}{rating[1] ? ` (${rating[1]})` : ''}</span>}
         </div>
         <div className="pr">
           {hp ? <>{hp.label} {range(hp.lo, hp.hi, true)}{!hp.exact && <small> {hp.bench ? '평균 추정' : '공개가'}</small>}</> : <small>가격 정보 없음</small>}
@@ -302,7 +305,7 @@ export default function CustomerHome() {
               </select>
               <button className={`btn xs ${cmpMode ? 'dark' : 'ghost'}`} onPointerDown={(e) => e.stopPropagation()} onClick={() => { setCmpMode(!cmpMode); setCmp([]); if (!cmpMode) toast('비교할 가게를 2~3곳 눌러 주세요'); }}>{cmpMode ? '비교 취소' : '비교'}</button>
             </div>
-            <div className="legendrow"><span><i className="l1" />앱 주문</span><span><i className="l2" />케이크 가게</span><span><i className="l3" />정보 확인 필요</span>{!gKey && !kKey && <a className="osm" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">지도 © OpenStreetMap</a>}</div>
+            <div className="legendrow"><span><i className="l1" />앱 주문</span><span><i className="l2" />케이크 가게</span>{!gKey && !kKey && <a className="osm" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">지도 © OpenStreetMap</a>}</div>
             <div className="bl">
               {ranked.length === 0 && (
                 <div className="empty">이 조건에 맞는 가게가 없어요.<br />조건을 줄이거나 범위를 넓혀 보세요.

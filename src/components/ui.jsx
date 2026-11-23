@@ -125,9 +125,14 @@ export function CakeView({ o, fancy = false, bg = true, className, style }) {
   return <div className={`cakev ${className || ''}`} style={style} dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
-export function StatusTag({ status, owner }) {
+// 상태 꼬리표 (iAKE v2): 손님 = 가게에 전달됨(회색) · 결제 완료·제작 중(분홍) / 사장님 = 새 요청(분홍) · 확정·제작·픽업 대기(초록) · 완료(회색)
+const C_TAG = { requested: ['가게에 전달됨', 'mute'], confirmed: ['주문 확정', 'pink'], making: ['제작 중', 'pink'], ready: ['픽업 대기', 'pink'], done: ['픽업 완료', 'mute'], declined: ['가게가 거절했어요', 'mute'] };
+const O_TAG = { requested: ['새 요청', 'newreq'], change: ['고객 답 대기', 'warn'], proof: ['시안 확인 중', 'warn'], confirmed: ['주문 확정', 'pink'], making: ['제작 중', 'pink'], ready: ['픽업 대기', 'pink'], done: ['픽업 완료', 'mute'], declined: ['거절함', 'mute'] };
+export function StatusTag({ status, owner, paid }) {
   const s = STATUS[status] || { name: status, tone: 'mute' };
-  return <span className={`tag ${s.tone}`}>{owner ? ({ requested: '새 요청', change: '고객 답 대기', proof: '시안 확인 중' }[status] || s.name) : s.name}</span>;
+  let [name, tone] = (owner ? O_TAG : C_TAG)[status] || [s.name, s.tone];
+  if (!owner && paid && ['confirmed', 'proof', 'making'].includes(status)) [name, tone] = ['결제 완료 · 제작 중', 'pink'];
+  return <span className={`tag ${tone}`}>{name}</span>;
 }
 export function Stars({ n = 5, size = 14 }) {
   return <span style={{ display: 'inline-flex', gap: 1, color: 'var(--candle)' }}>{[1, 2, 3, 4, 5].map((i) => <Icon key={i} n="star" fill={i <= n} style={{ width: size, height: size, fill: i <= n ? 'var(--candle)' : 'none', stroke: 'var(--candle)' }} />)}</span>;

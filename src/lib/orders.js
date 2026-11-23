@@ -5,6 +5,7 @@ import { setState, getState } from './state.js';
 import { orderNo, today, addDays, ymd, rng, pick, won, fmtDate } from './util.js';
 import { canOrderInApp, shopToStore } from './stores.js';
 import { QUICK_TEXTS, sizeOf, designOf, creamOf, optName, TEXT_COLORS, FONTS } from '../data/catalog.js';
+import { SAMPLE_PORTFOLIO } from '../data/examples.js';
 
 export const STATUS = {
   requested: { name: '사장님 확인 중', tone: 'warn', step: 1 },
@@ -155,6 +156,7 @@ const NAMES = ['김서연', '이도윤', '박지민', '최예린', '정하준', 
 export function makeSampleOrders(shop) {
   const store = shopToStore(shop, 'partner');
   const sizes = Object.entries(shop.menu.sizes).filter(([, p]) => p != null).map(([k]) => k);
+  const picks = (shop.portfolio || []).filter((p) => !p.work && (p.src || p.design)); // 가게 대표 디자인을 고른 주문처럼
   const r = rng(20261116);
   const t0 = today();
   const out = [];
@@ -168,7 +170,9 @@ export function makeSampleOrders(shop) {
       flavor: pick(['vanilla', 'choco', 'strawberry', 'earlgrey', 'vanilla'], r), text: pick(QUICK_TEXTS, r), noText: false,
       font: pick(['jua', 'pen', 'gaegu', 'melody'], r), textColor: pick(['berry', 'choco', 'navy'], r),
       toppings: r() > 0.55 ? [pick(['cherry', 'pearl', 'sprinkle', 'ribbon', 'strawberry'], r)] : [], extras: r() > 0.5 ? ['candle'] : [],
-      date: ymd(d), time: pick(['12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'], r), request: opts.request || '', allergy: '', ...opts.o,
+      date: ymd(d), time: pick(['12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'], r), request: opts.request || '', allergy: '',
+      ...(picks.length ? (() => { const p = pick(picks, r); const { size, ...rest } = p.opt || {}; return { pickId: p.id, pickName: p.caption, ...rest, ...(size && sizes.includes(size) ? { size } : {}) }; })() : {}),
+      ...opts.o,
     };
     const est = estimate(store, o);
     const created = addDays(d, -(2 + Math.floor(r() * 4))); created.setHours(9 + Math.floor(r() * 12), Math.floor(r() * 60));
@@ -201,5 +205,11 @@ export function makeSampleOrders(shop) {
   mk(6, 'change');
   return out;
 }
-export const addSampleOrders = () => setState((s) => (s.shop ? { ...s, orders: [...s.orders.filter((o) => !o.sample), ...makeSampleOrders(s.shop)] } : s));
-export const removeSampleOrders = () => setState((s) => ({ ...s, orders: s.orders.filter((o) => !o.sample) }));
+// 예시 주문을 넣을 때 가게 작품 사진이 하나도 없으면 예시 사진(대표 디자인·작품)도 같이 넣는다 — 지울 때 같이 지운다
+export const addSampleOrders = () => setState((s) => {
+  if (!s.shop) return s;
+  const pf = s.shop.portfolio || [];
+  const shop = pf.some((p) => !p.sample) ? s.shop : { ...s.shop, portfolio: [...pf.filter((p) => !p.sample), ...SAMPLE_PORTFOLIO] };
+  return { ...s, shop, orders: [...s.orders.filter((o) => !o.sample), ...makeSampleOrders(shop)] };
+});
+export const removeSampleOrders = () => setState((s) => ({ ...s, orders: s.orders.filter((o) => !o.sample), shop: s.shop ? { ...s.shop, portfolio: (s.shop.portfolio || []).filter((p) => !p.sample) } : s.shop }));

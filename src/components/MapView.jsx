@@ -8,7 +8,6 @@ import { esc } from '../lib/util.js';
 import { loadGoogle } from '../lib/gplaces.js';
 import { loadKakao } from '../lib/kakao.js';
 
-const CAKE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M5.5 20v-6a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v6M5.5 15.6c1.4.9 2.8.9 4.2 0s2.8-.9 4.2 0 2.8.9 4.1 0M12 12V8.6"/><path d="M12 3.6c1 1.1 1 2.2 0 2.8-1-.6-1-1.7 0-2.8z" fill="currentColor"/></svg>';
 
 // pin: { s, price, name, color, img, match }
 // 모양: [분홍 케이크 동그라미 + 가격] 말풍선 → 아래 뾰족 꼬리 → 그 밑에 가게 이름(카카오맵 글씨처럼 흰 테두리)
@@ -32,12 +31,12 @@ export function declutter(root) {
 }
 const declutterSoon = (el) => requestAnimationFrame(() => requestAnimationFrame(() => declutter(el)));
 
+// iAKE v2 핀: 흰 알약 [● 3.8만~] + 아래 꼬리. 앱 주문 가게는 분홍 점, 나머지는 회색 테두리 점. 고르면 분홍 바탕.
 export const pinHTML = (p, sel, r = 0) => {
   const s = p.s;
   const cls = s.kind === 'partner' ? 'app' : s.kind === 'public' && !s.verified && !s.price && !s.k ? 'dimmed' : 'pub';
-  const thumb = p.img ? `<img src="${esc(p.img)}" alt="" referrerpolicy="no-referrer"/>` : `<i>${CAKE}</i>`;
-  const tag = p.match != null ? `<em>${p.match}%</em>` : p.price && cls !== 'dimmed' ? `<b>${esc(p.price)}</b>` : '';
-  return `<div class="pin2 ${cls}${tag ? '' : ' solo'}${sel ? ' sel' : ''}" data-r="${r}" title="${esc(s.name)}"><div class="pb">${thumb}${tag}</div><div class="tip"></div><span class="pn">${esc(p.name)}</span></div>`;
+  const tag = p.match != null ? `<em>${p.match}%</em>` : p.price ?`<b>${esc(p.price)}</b>` : '';
+  return `<div class="pin2 v2 ${cls}${tag ? '' : ' solo'}${sel ? ' sel' : ''}" data-r="${r}" title="${esc(s.name)}"><div class="pb"><i></i>${tag}</div><div class="tip"></div><span class="pn">${esc(p.name)}</span></div>`;
 };
 const meHTML = (kind) => `<div class="me-dot ${kind === 'gps' ? '' : 'place'}"></div>`;
 

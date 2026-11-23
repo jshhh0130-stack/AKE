@@ -56,7 +56,7 @@ function initialOrder(store, from, photo) {
 }
 // 대표 디자인 고르기: 디자인 모양·색만 가져오고, 문구·날짜는 손님 것 그대로
 const applyPick = (o, d) => {
-  const { text, date, time, caption, ...look } = d.design || {}; // eslint-disable-line no-unused-vars
+  const { text, date, time, caption, ...look } = d.design || d.opt || {}; // eslint-disable-line no-unused-vars
   return { ...o, ...look, pickId: d.id, pickName: d.name, refPhoto: null, _fromPhoto: false };
 };
 
@@ -161,6 +161,7 @@ export default function OrderForm({ params, path }) {
       <Header title={`${store.name} 주문서`} fallback={`/store/${store.id}`} onBack={step === 2 ? () => setStep(1) : undefined} right={<span className="steptag">{step}/2</span>} />
       {step === 1 ? (
         <div className="scroll pad" ref={scroller} style={{ paddingBottom: 110 }}>
+          <h2 className="otitle">어떤 케이크로 할까요?</h2>
           <p className="olead">가게 대표 디자인을 고르거나, 원하는 사진을 올려 주세요.</p>
           <div className="dgrid">
             {/* 원하는 사진으로 */}
@@ -188,6 +189,7 @@ export default function OrderForm({ params, path }) {
             ))}
           </div>
           {designs[0]?.gen && <div className="xs muted" style={{ marginTop: 10 }}>아직 가게가 대표 디자인을 올리지 않아서, 가게 스타일로 그린 예시예요. 실물은 조금 달라요.</div>}
+          {designs.some((d) => d.sample) && <div className="xs muted" style={{ marginTop: 10 }}>‘예시 주문 넣어 보기’로 넣은 예시 사진이에요. 사장님이 작품 사진을 올리면 바뀌어요.</div>}
           {!sel && o.pickName && <div className="note" style={{ marginTop: 10 }}>{o.pickName}</div>}
         </div>
       ) : (
@@ -284,7 +286,7 @@ export default function OrderForm({ params, path }) {
       <div className="stickybar ordbar">
         <div className="pp">예상 금액 · 사장님이 확정해요<b>약 {won(est.lo)}</b></div>
         {step === 1
-          ? <button className="btn pri grow" disabled={!sel} onClick={() => setStep(2)}>{sel ? '다음' : '디자인을 골라 주세요'}</button>
+          ? <button className="btn pri grow" disabled={!sel} onClick={() => setStep(2)}>{sel ? '이 디자인으로 계속' : '디자인을 골라 주세요'}</button>
           : need.length ? <button className="btn pri grow" style={{ opacity: 0.85, fontSize: 14.5 }} onClick={goNeed}>{need[0][1]}{need.length > 1 ? ` 외 ${need.length - 1}개` : ''} 남았어요</button>
           : <button className="btn pri grow" onClick={send}>{inApp ? '요청서 보내기' : '주문서 완성하기'}</button>}
       </div>

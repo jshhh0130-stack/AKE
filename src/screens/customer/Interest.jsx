@@ -107,9 +107,9 @@ function useMakers(st) {
 function WorkTile({ w }) {
   return (
     <div className="mi" role="button" tabIndex={0} onClick={() => nav(`/store/${w.store.id}`)}>
-      <div className="im" style={{ aspectRatio: '1' }}><img src={w.src} alt={w.t} loading="lazy" /><span className="own">가게 작품</span></div>
+      <div className="im" style={{ aspectRatio: w.h || '1' }}><img src={w.src} alt={w.t} loading="lazy" /><span className="own">{w.sample ? '예시 사진' : '가게 작품'}</span></div>
       <div className="t">{w.t}</div>
-      <div className="s">{w.store.name}</div>
+      <button className="mk" onClick={(e) => { e.stopPropagation(); nav(`/store/${w.store.id}`); }}>{w.store.name} ›</button>
     </div>
   );
 }
@@ -145,7 +145,7 @@ function CakeFeed({ q0, cat0 = 'all' }) {
   usePlaces(); // 카카오 가게 목록이 도착하면 가게 이름도 다시
   const makers = useMakers(st);
   // 입점 가게 사장님이 올린 작품 사진 (진짜 사진)
-  const works = useMemo(() => getStores(st).filter((s) => s.kind === 'partner').flatMap((s) => (s.portfolio || []).filter((p) => p.src).map((p, k) => ({ id: `${s.id}-${k}`, src: p.src, t: p.caption || `${s.name} 작품`, store: s }))), [st.shop, st.partners]);
+  const works = useMemo(() => getStores(st).filter((s) => s.kind === 'partner').flatMap((s) => (s.portfolio || []).filter((p) => p.src).map((p, k) => ({ id: `${s.id}-${k}`, src: p.src, t: p.caption || `${s.name} 작품`, store: s, sample: !!p.sample, h: ['1 / 1.2', '1 / 1.3', '1 / 1', '1 / 1.05'][k % 4] }))), [st.shop, st.partners]);
   const list = useMemo(() => {
     let arr = GALLERY.map((it) => ({ it, sc: 0 }));
     if (cat === 'liked') arr = arr.filter((x) => likes.includes(x.it.id)).sort((a, b) => likes.indexOf(a.it.id) - likes.indexOf(b.it.id));
@@ -190,7 +190,7 @@ function CakeFeed({ q0, cat0 = 'all' }) {
         </div>
       )}
       {related.length > 0 && <div className="related">{related.map((t) => <button key={t} onClick={() => { setQ(t); setPhoto(null); }}><Icon n="search" />{t}</button>)}</div>}
-      <div className="feedinfo note2"><Icon n="info" />AI로 만든 예시 사진이에요. 사진 아래 가게 이름을 누르면 이런 케이크를 만드는 가게로 가요.</div>
+      <div className="feedinfo note2">{showWorks ? <>입점된 가게들의 포트폴리오 사진이에요! 사진을 누르면 가게 페이지로 갈 수 있어요. 그 아래 ‘예시’ 사진은 AI로 만든 사진이에요.</> : <><Icon n="info" />AI로 만든 예시 사진이에요. 사진 아래 가게 이름을 누르면 이런 케이크를 만드는 가게로 가요.</>}</div>
       {showWorks && (<>
         <div className="sec-t" style={{ margin: '4px 16px 10px' }}><h3 style={{ fontSize: 15 }}>입점 가게 작품</h3></div>
         <div className="masonry">{works.map((w) => <WorkTile key={w.id} w={w} />)}</div>
