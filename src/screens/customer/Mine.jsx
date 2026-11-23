@@ -17,6 +17,17 @@ import { SHAPES, sizeOf, designOf, creamOf, optName } from '../../data/catalog.j
 import { flavorName } from '../../lib/ordertext.js';
 import { fromSeed } from '../../lib/claim.js';
 
+// 제빵사 강아지 (손그림 느낌: 하얀 강아지 + 요리사 모자)
+const BAKER_DOG = `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" stroke="#4A3B39" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M13 10q-1-6 4-6 2-3 6 0 5 0 4 6z" fill="#fff"/><path d="M13 10h14v3H13z" fill="#fff"/>
+  <path d="M11 22q0-9 9-9t9 9q0 8-9 8t-9-8z" fill="#fff"/>
+  <path d="M11 18q-5 1-4 7 2 2 4-1M29 18q5 1 4 7-2 2-4-1" fill="#F3E3D3"/>
+  <circle cx="16.5" cy="21" r="1" fill="#4A3B39" stroke="none"/><circle cx="23.5" cy="21" r="1" fill="#4A3B39" stroke="none"/>
+  <path d="M19 24.5q1 1.2 2 0" fill="none"/><ellipse cx="20" cy="23.3" rx="1.3" ry=".9" fill="#4A3B39" stroke="none"/>
+  <circle cx="14.5" cy="24.5" r="1.4" fill="#F8C9D0" stroke="none"/><circle cx="25.5" cy="24.5" r="1.4" fill="#F8C9D0" stroke="none"/>
+  <path d="M14 30q-1 5 2 5h8q3 0 2-5" fill="#fff"/>
+</svg>`;
+
 export function OrderDone({ params }) {
   const st = useApp();
   const order = st.orders.find((x) => x.id === params.id);
@@ -42,15 +53,20 @@ export function OrderDone({ params }) {
     toast('체험: 이 가게 사장님 화면이에요. 공개 정보로 가게를 임시 등록했어요', 3800);
   };
   return (
-    <div className="screen">
+    <div className="screen donepage">
       <Header title={ext ? '주문서 완성' : '주문 요청 완료'} onBack={() => nav(`/store/${order.storeId}`, { replace: true })} />
-      <div className="scroll pad">
-        <div className={`okmark ${auto ? 'ok' : ''}`}><Icon n={ext ? 'receipt' : 'check'} size="lg" /></div>
-        <h2 className="center" style={{ margin: 0, fontSize: 22 }}>{ext ? '주문서가 완성됐어요' : auto ? '주문이 바로 확정됐어요!' : '사장님께 보냈어요!'}</h2>
-        <p className="center small muted" style={{ margin: '6px 0 16px' }}>
+      <div className="scroll pad gingham">
+        {/* 점선 동그라미 안에 케이크 + 그 둘레를 빙글빙글 도는 제빵사 강아지 (11/23 UI) */}
+        <div className="donehero">
+          <div className="ring"><div className="pic"><CakeView o={orderView(order)} /></div></div>
+          <div className="orbit"><span className="dog" dangerouslySetInnerHTML={{ __html: BAKER_DOG }} /></div>
+        </div>
+        <h2 className="center" style={{ margin: 0, fontSize: 20, lineHeight: 1.4 }}>{ext ? '주문서가 완성됐어요' : auto ? '주문이 바로 확정됐어요!' : <>{order.storeName} 사장님께<br />주문서를 전송했어요!</>}</h2>
+        <p className="center small muted" style={{ margin: '8px 0 16px' }}>
+          {!ext && <>마음을 담아 정성껏 준비할게요.<br /></>}
           {ext ? <>이 가게는 아직 에이크 입점 전이에요.<br />완성된 주문서를 가게 카톡·인스타로 그대로 보내 주세요.</>
-            : auto ? <>사장님이 정해 둔 규칙 안의 주문이라 자동 확정됐어요.<br />대화방에서 사장님과 바로 이야기할 수 있어요.</>
-            : <>{order.storeName} 사장님이 확인하고 최종 금액을 확정해요.<br />답이 오면 알림으로 알려 드려요.</>}
+            : auto ? <>사장님이 정해 둔 규칙 안의 주문이라 자동 확정됐어요.</>
+            : <>사장님이 확인하면 최종 금액을 알려드릴게요.</>}
         </p>
         <div className="ticket">
           <div className="stage"><CakeView o={orderView(order)} fancy /></div>
@@ -89,7 +105,7 @@ export function MyOrders() {
     <div className="screen fade">
       <div className="apphdr"><h1>주문·대화</h1></div>
       <div className="utabs"><button className={tab === 'now' ? 'on' : ''} onClick={() => setTab('now')}>진행 중</button><button className={tab === 'past' ? 'on' : ''} onClick={() => setTab('past')}>지난 주문</button></div>
-      <div className="scroll pad with-tab">
+      <div className="scroll pad with-tab gingham">
         {list.length === 0 && <Empty icon="chat">{tab === 'now' ? <>진행 중인 주문이 없어요.<br />지도에서 마음에 드는 가게를 찾아보세요.<div style={{ marginTop: 14 }}><button className="btn pri sm" onClick={() => nav('/c', { replace: true })}>케이크 가게 찾기</button></div></> : '지난 주문이 없어요.'}</Empty>}
         {list.map((o) => {
           const un = unreadOf(o, 'c');

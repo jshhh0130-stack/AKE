@@ -15,7 +15,6 @@ import { usePlaces } from './Home.jsx';
 import { enrich } from '../../lib/gplaces.js';
 import { refreshPartner } from '../../lib/live.js';
 import { kakaoKeyOf, kakaoLinks } from '../../lib/kakao.js';
-import { GALLERY, imgS } from './Interest.jsx';
 
 // 카카오맵 정보 카드: 카카오에 등록된 정보를 그대로(분류·주소·전화), 사진·후기는 카카오맵 화면으로 바로 이어 준다
 function KakaoCard({ s }) {
@@ -34,19 +33,6 @@ function KakaoCard({ s }) {
       <div className="xs muted" style={{ marginTop: 8 }}>사진과 후기는 작성한 분들의 것이라 카카오맵에서 바로 볼 수 있게 이어 드려요.</div>
     </div>
   );
-}
-
-// 이 가게 스타일과 비슷한 AI 예시 사진 (관심 탭 사진 · 실제 가게 작품 아님)
-function StyleShots({ s }) {
-  const want = s.styles?.length ? s.styles : ['lettering'];
-  const pick = GALLERY.map((g) => ({ g, sc: (g.st || []).filter((x) => want.includes(x)).length + ((g.id.charCodeAt(3) + s.id.length) % 7) / 10 }))
-    .filter((x) => x.sc >= 1).sort((a, b) => b.sc - a.sc).slice(0, 8).map((x) => x.g);
-  if (!pick.length) return null;
-  return (<>
-    <div className="sec-t"><h3>이런 느낌으로 주문해요</h3><span className="more">AI 예시 사진</span></div>
-    <div className="shots">{pick.map((g) => <button key={g.id} onClick={() => nav(`/c/cake/${g.id}`)}><img src={imgS(g.id)} alt={g.t} loading="lazy" /><span>{g.t}</span></button>)}</div>
-    <div className="xs muted" style={{ marginTop: 6 }}>이 가게가 만드는 {want.map(styleName).join('·')} 스타일 예시예요. 실제 작품은 {s.k ? '카카오맵 사진' : s.insta ? '가게 인스타그램' : '가게 SNS'}에서 확인해 주세요.</div>
-  </>);
 }
 
 // ── 가게에 물어보기: 가게 정보만 근거로 답한다 (키 없으면 규칙 기반) ──
@@ -191,14 +177,17 @@ export default function StoreDetail({ params }) {
         <div className="band" />
 
         <div className="pad" style={{ paddingTop: 4 }}>
-          <div className="sec-t"><h3>{s.portfolio?.some((p) => p.src) ? '이 가게 작품' : '이런 케이크를 만들어요'}</h3><span className="more">{gallery[0]?.gen ? '스타일 예시 그림' : `${gallery.length}개`}</span></div>
-          <div className="gal">
-            {gallery.map((g, i) => (
-              <button key={g.id} className="gi" onClick={() => setGalIdx(i)}>
-                <div className="im">{g.src ? <img src={g.src} alt={g.caption} /> : <CakeView o={g.design} />}</div>
-                <div>{g.caption}</div>
-              </button>
-            ))}
+          <div className="sec-t"><h3>이런 케이크를 만들어요</h3><span className="more">{gallery[0]?.gen ? '스타일 예시 그림' : '대표 디자인'}</span></div>
+          <div className="gal big">
+            {gallery.map((g, i) => {
+              const pr = g.design ? estimate(s, { flavor: 'vanilla', text: 'a', size: 'h1', ...g.design }) : null;
+              return (
+                <button key={g.id} className="gi" onClick={() => setGalIdx(i)}>
+                  <div className="im">{g.src ? <img src={g.src} alt={g.caption} /> : <CakeView o={g.design} />}</div>
+                  <div className="gt"><b>{g.caption}</b>{pr && <small>{(Math.round(pr.lo / 1000) / 10).toString()}만원~</small>}</div>
+                </button>
+              );
+            })}
           </div>
           {!s.portfolio?.some((p) => p.src) && !s.g?.photos?.length && (
             <div className="card cream pad row" style={{ marginTop: 12 }}>
@@ -207,7 +196,6 @@ export default function StoreDetail({ params }) {
               {(!kl || s.insta) && <a className="btn sm line" href={s.insta ? links.insta : links.google} target="_blank" rel="noreferrer">{s.insta ? '인스타' : '구글 지도'}</a>}
             </div>
           )}
-          {!s.portfolio?.some((p) => p.src) && <StyleShots s={s} />}
           {s.g?.hours && <details className="small" style={{ marginTop: 10 }}><summary className="muted" style={{ cursor: 'pointer' }}>구글에 등록된 영업시간 보기</summary>{s.g.hours.map((h) => <div key={h} className="xs muted">{h}</div>)}</details>}
         </div>
         <div className="band" />

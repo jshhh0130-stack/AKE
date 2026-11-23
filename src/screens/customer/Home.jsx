@@ -260,20 +260,20 @@ export default function CustomerHome() {
           googleKey={gKey} kakaoKey={kKey} prefer="kakao" onMapFail={(w) => { setMapBad(w); toast(`${w === 'google' ? '구글' : '카카오'} 지도 키를 확인해 주세요. 기본 지도로 보여 드려요`, 3500); }} />
 
         <div className="mtop">
+          {/* 검색창 + AI 찾기 한 줄 (11/23 UI): [돋보기 가게·동네 검색 | 사진 | + AI 찾기] [알림] */}
           <div className="mbar">
-            <button className={`msearch ${bySearch ? 'on' : ''}`} data-coach="search" onClick={() => setSearchOpen(true)}>
+            <div className={`msearch ${bySearch ? 'on' : ''}`} data-coach="search" role="button" tabIndex={0} onClick={() => setSearchOpen(true)}>
               <Icon n="search" />
-              <span className="q">{bySearch ? find.text : '가게 이름, 동네로 검색'}</span>
+              <span className="q">{bySearch ? find.text : '가게·동네 검색'}</span>
               {bySearch && <span className="x" role="button" aria-label="검색 지우기" onClick={(e) => { e.stopPropagation(); clearFind(); toast('검색을 지웠어요'); }}><Icon n="close" size="sm" /></span>}
-            </button>
+              {!bySearch && <span className="cam2" role="button" aria-label="사진으로 찾기" onClick={(e) => { e.stopPropagation(); setFindOpen('photo'); }}><Icon n="camera" /></span>}
+              <span className={`aibtn ${byAI ? 'on' : ''}`} data-coach="find" role="button" aria-label="AI로 케이크 가게 찾기" onClick={(e) => { e.stopPropagation(); setFindOpen('all'); }}>
+                {byAI && find.photo?.thumb ? <img src={find.photo.thumb} alt="" /> : <Icon n="sparkle" size="sm" />}{byAI ? `AI 조건 ${nFind || 1}` : 'AI 찾기'}
+                {byAI && <i role="button" aria-label="조건 지우기" onClick={(e) => { e.stopPropagation(); clearFind(); toast('찾기 조건을 지웠어요'); }}><Icon n="close" size="sm" /></i>}
+              </span>
+            </div>
             <NotiBell role="c" />
           </div>
-          {/* AI로 케이크 가게 찾기: 사진을 넣거나 말로 (예전 '찾기' 그대로) */}
-          <button className={`findbar ${byAI ? 'on' : ''}`} data-coach="find" onClick={() => setFindOpen('all')}>
-            {byAI && find.photo?.thumb ? <img src={find.photo.thumb} alt="" /> : <span className="fi"><Icon n="sparkle" /></span>}
-            <span className="grow">{byAI ? <><b>조건 {nFind}개로 찾는 중</b><small>{[find.text, find.photo && '내 사진과 비슷한', ...(find.styles || []).map(styleName), find.budget && budgetName(find.budget), find.sameDay && '당일'].filter(Boolean).slice(0, 3).join(' · ') || '눌러서 조건 바꾸기'}</small></> : <><b>AI로 케이크 가게 찾기</b><small>사진을 넣거나 말로 찾아보세요 · AI 실사 사진도 만들어요</small></>}</span>
-            {byAI ? <span className="fx" role="button" aria-label="조건 지우기" onClick={(e) => { e.stopPropagation(); clearFind(); toast('찾기 조건을 지웠어요'); }}><Icon n="close" size="sm" /></span> : <span className="fc" role="button" aria-label="사진으로 찾기" onClick={(e) => { e.stopPropagation(); setFindOpen('photo'); }}><Icon n="camera" /></span>}
-          </button>
           <div className="mchips" data-coach="chips">
             <button className="mchip loc" onClick={() => setLocOpen(true)}><Icon n="pin" /><span>{locLabel}</span><Icon n="down" /></button>
             {FILTERS.filter((f) => f.id !== 'all').map((f) => <button key={f.id} className={`mchip ${filter === f.id ? 'on' : ''}`} onClick={() => { setFilter(filter === f.id ? 'all' : f.id); setSel(null); }}>{f.name}</button>)}

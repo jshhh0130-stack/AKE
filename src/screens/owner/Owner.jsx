@@ -12,6 +12,17 @@ import { SIZES, DESIGNS, sizeOf, designOf } from '../../data/catalog.js';
 import { readiness } from './Editors.jsx';
 
 const amount = (o) => o.finalPrice ?? o.est?.lo ?? 0;
+// 시간대별 인사말 (11/23 UI): 아침 05~11시 · 낮 11~17시 · 저녁·밤 17~05시. 한 시간 동안은 같은 말을 보여 준다.
+const GREET = {
+  am: ['좋은 아침이에요, 사장님!', '오븐 예열 완료! 오늘도 화이팅', '오늘 첫 케이크, 기분 좋게!', '아침 크림이 제일 예쁘게 올라가요'],
+  day: ['오늘도 달콤한 하루 되세요', '점심은 꼭 챙겨 드세요!', '오후 픽업 전, 잠깐 숨 돌려요', '누군가의 생일이 완성되는 중!'],
+  pm: ['늦은 밤까지 화이팅하시네요!', '오늘 하루도 수고 많으셨어요', '내일 픽업, 미리 체크해 볼까요?', '오늘 케이크로 누군가 웃고 있어요', '마감까지 조금만 더 힘내요!'],
+};
+function greeting(d = new Date()) {
+  const h = d.getHours();
+  const list = h >= 5 && h < 11 ? GREET.am : h >= 11 && h < 17 ? GREET.day : GREET.pm;
+  return list[(d.getDate() * 24 + h) % list.length];
+}
 function useShopOrders() {
   const st = useApp();
   const list = st.shop ? st.orders.filter((o) => o.storeId === st.shop.id) : [];
@@ -69,7 +80,7 @@ export function OwnerHome() {
             <button className={`btn xs ${shop.ops.paused ? 'danger' : 'line'}`} onClick={() => { patchShop((s) => ({ ops: { ...s.ops, paused: !s.ops.paused } })); toast(shop.ops.paused ? '주문을 다시 받아요' : '새 주문을 잠시 멈췄어요'); }}>{shop.ops.paused ? '주문 멈춤' : <><i style={{ width: 7, height: 7, borderRadius: 4, background: 'var(--ok)', display: 'inline-block' }} />주문 받는 중</>}</button>
             <NotiBell role="o" dark />
           </div>
-          <h2>{reqs.length ? `확인할 주문이 ${reqs.length}건 있어요` : talk.length ? `새 소식이 ${talk.length}건 있어요` : '오늘도 달콤한 하루 되세요'}</h2>
+          <h2>{reqs.length ? `확인할 주문이 ${reqs.length}건 있어요` : talk.length ? `새 소식이 ${talk.length}건 있어요` : greeting()}</h2>
           <div className="kpis">
             <button onClick={() => nav('/o/orders', { replace: true })}><small>새 요청</small><b>{reqs.length}</b></button>
             <div><small>오늘 픽업</small><b>{todays.filter((o) => o.status !== 'done').length}</b></div>
@@ -134,8 +145,8 @@ export function OwnerOrders() {
       <div className="hdr"><h1 style={{ paddingLeft: 10 }}>주문·대화</h1>
         <div style={{ width: 140, marginRight: 8 }}><Seg value={view} onChange={setView} items={[['list', '목록'], ['cal', '달력']]} /></div></div>
       {view === 'list' ? (<>
-        <div className="pad" style={{ paddingBottom: 6 }}><div className="seg">{[['new', `새 요청 ${groups.new.length}`], ['doing', `진행 중 ${groups.doing.length}`], ['done', '완료·취소']].map(([k, l]) => <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}</div></div>
-        <div className="scroll pad with-tab" style={{ paddingTop: 6 }}>
+        <div className="pad gingham" style={{ paddingBottom: 6 }}><div className="seg">{[['new', `새 요청 ${groups.new.length}`], ['doing', `진행 중 ${groups.doing.length}`], ['done', '완료·취소']].map(([k, l]) => <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}</div></div>
+        <div className="scroll pad with-tab gingham" style={{ paddingTop: 6 }}>
           {cur.length === 0 && <Empty icon="box">{tab === 'new' ? <>새로 온 요청이 없어요.<br /><span className="xs">주문 링크·QR을 인스타 프로필에 걸어 두면 손님이 바로 주문해요.</span><div style={{ marginTop: 12 }}><button className="btn sec sm" onClick={() => nav('/o/shop/share')}>주문 링크·QR 보기</button></div></> : tab === 'doing' ? '진행 중인 주문이 없어요.' : '완료된 주문이 없어요.'}</Empty>}
           {Object.entries(byDate).map(([d, os]) => (
             <div key={d}><div className="sec-t" style={{ marginTop: 12 }}><h3 style={{ fontSize: 14.5 }}>{relDay(d)} · {fmtDate(d)}</h3><span className="more">{os.length}건</span></div>{os.map((o) => <OCard key={o.id} o={o} quick={tab !== 'done'} />)}</div>

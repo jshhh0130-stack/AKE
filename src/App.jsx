@@ -92,7 +92,17 @@ function DemoSteps() {
   );
 }
 
+// 대표 색: 사장님 화면(/o…)은 초록, 고객 화면은 분홍. 설정처럼 같이 쓰는 화면은 마지막으로 고른 역할을 따른다.
+const SHARED = ['/settings', '/about', '/insight'];
+function themeOf(path) {
+  const p = path.split('?')[0];
+  if (p.startsWith('/o')) return 'th-o';
+  if (SHARED.includes(p) && getState().role === 'owner') return 'th-o';
+  return 'th-c';
+}
+
 export default function App() {
+  const path = usePath();
   const [splash, setSplash] = useState(true);
   const [gone, setGone] = useState(false);
   useEffect(() => {
@@ -123,7 +133,7 @@ export default function App() {
           <a className="btn line sm" href="https://github.com/jshhh0130-stack/AKE" target="_blank" rel="noreferrer">GitHub</a>
         </div>
       </aside>
-      <div className="phone">
+      <div className={`phone ${themeOf(path)}`}>
         <Router />
         <Toasts />
         {gone && <InstallBanner />}
