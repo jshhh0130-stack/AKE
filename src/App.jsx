@@ -96,7 +96,7 @@ function DemoSteps() {
 const SHARED = ['/settings', '/about', '/insight'];
 function themeOf(path) {
   const p = path.split('?')[0];
-  if (p.startsWith('/o')) return 'th-o';
+  if (p === '/o' || p.startsWith('/o/')) return 'th-o'; // '/order/…'(손님 주문서)는 고객 색
   if (SHARED.includes(p) && getState().role === 'owner') return 'th-o';
   return 'th-c';
 }

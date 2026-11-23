@@ -15,6 +15,7 @@ import { orderLink, giftLink } from '../lib/share.js';
 import { loadImage, toDataURL } from '../lib/image.js';
 import { won, range, fmtDate, relDay, ago, maskName, maskPhone, shareText, copyText, today, addDays, ymd, DOW, textLen } from '../lib/util.js';
 import { SHAPES, CREAMS, TEXT_COLORS, FONTS, sizeOf, designOf, creamOf, fontOf, textColorOf, optName } from '../data/catalog.js';
+import OrderThumb from '../components/OrderThumb.jsx';
 
 const STEPS = ['요청', '확인', '확정', '제작', '픽업'];
 function Steps({ status }) {
@@ -37,9 +38,9 @@ function Summary({ order, role, open, setOpen }) {
   return (
     <div className="card room-sum">
       <button className="rs-top" onClick={() => setOpen(!open)}>
-        <div className="rs-th"><CakeView o={orderView(order)} /></div>
+        <div className="rs-th"><OrderThumb order={order} /></div>
         <div className="grow">
-          <div className="b">{role === 'o' ? `${maskName(order.customer?.name)} · ${sizeOf(x.size).name} ${designOf(x.design).name}` : `${sizeOf(x.size).name} ${designOf(x.design).name}`}</div>
+          <div className="b">{role === 'o' ? `${maskName(order.customer?.name)} · ${sizeOf(x.size).name} ${x.pickName || designOf(x.design).name}` : `${sizeOf(x.size).name} ${x.pickName || designOf(x.design).name}`}</div>
           <div className="small muted">{relDay(x.date)} · {fmtDate(x.date)} {x.time} 픽업</div>
           <div className="small"><b className="pink">{order.finalPrice != null ? won(order.finalPrice) : range(order.est?.lo, order.est?.hi)}</b> <span className="muted">{order.finalPrice != null ? '확정' : '예상'}</span>{order.paid && <span className="tag ok" style={{ marginLeft: 6 }}>입금 완료</span>}</div>
         </div>
@@ -54,7 +55,7 @@ function Summary({ order, role, open, setOpen }) {
             {role === 'o' && <div className="kv"><span>주문자</span><b>{maskName(order.customer?.name)} · {maskPhone(order.customer?.phone)}</b></div>}
             {role === 'c' && <div className="kv"><span>가게</span><b>{order.storeName}</b></div>}
             <div className="kv"><span>모양·크기</span><b>{optName(SHAPES, x.shape)} · {sizeOf(x.size).name} ({sizeOf(x.size).cm}cm)</b></div>
-            <div className="kv"><span>디자인</span><b>{designOf(x.design).name}{x.variant ? ` · 시안 ${x.variant + 1}` : ''}</b></div>
+            <div className="kv"><span>디자인</span><b>{x.pickName ? `${x.pickName} (가게 대표 디자인)` : ref ? '손님이 올린 사진으로' : designOf(x.design).name}{x.variant ? ` · 시안 ${x.variant + 1}` : ''}</b></div>
             <div className="kv"><span>맛·크림</span><b>{flavorName(x)} · {creamOf(x.cream).name}</b></div>
             <div className="kv"><span>문구</span><b>{x.noText ? '없음' : `“${x.text}”`}</b></div>
             {!x.noText && <div className="spell" style={{ marginTop: 4 }}>한 글자씩: <b>{[...x.text].map((c) => (c === ' ' ? '␣' : c)).join(' ')}</b><div className="xs muted">{fontOf(x.font).name}체 · {textColorOf(x.textColor).name} 글씨</div></div>}
@@ -180,7 +181,73 @@ function ProofFixSheet({ open, onClose, order }) {
   );
 }
 
+// ── 결제 (11/23 UI · 체험용 가상 결제): 사장님이 금액을 확정하면 예약금/전액 · 결제 수단을 골라 결제 ──
+// 실제 결제는 일어나지 않는다. 결제하면 '입금 완료'로 표시되고 사장님 화면에도 바로 보인다.
+const PAY_METHODS = [['kakao', '카카오페이', 'pay'], ['toss', '토스페이', 'toss']];
+function PayCard({ order, store, onPaid }) {
+  const total = order.finalPrice;
+  const dep = store?.ops?.deposit || 0;
+  const depAmt = dep ? Math.round((total * dep) / 100 / 100) * 100 : 0;
+  const [how, setHow] = useState(dep ? 'dep' : 'all');
+  const [m, setM] = useState('kakao');
+  const amt = how === 'dep' ? depAmt : total;
+  const lines = (order.est?.lines || []).filter((l) => l.lo);
+  const sum = lines.reduce((a, l) => a + l.lo, 0);
+  const rows = lines.map((l) => [l.label, l.lo]);
+  if (sum && sum !== total) rows.push(['사장님 조정', total - sum]);
+  const pay = () => {
+    const method = PAY_METHODS.find((x) => x[0] === m)[1];
+    act(order.id, 'c', 'paid', { paid: true, amount: amt, method, rest: total - amt, mock: true });
+    onPaid({ amt, method, rest: total - amt });
+  };
+  return (
+    <div className="paycard">
+      <div className="paynote"><span className="ck"><Icon n="check" size="sm" /></span><span><b>사장님이 금액을 확정했어요.</b><br />결제하면 바로 제작이 시작돼요.</span></div>
+      <div className="paybox">
+        {rows.length ? rows.map(([l, v], i) => <div key={i} className="kv"><span>{l}</span><span>{v < 0 ? '-' : ''}{won(Math.abs(v))}</span></div>) : <div className="kv"><span>케이크 ({sizeOf(order.o.size).name})</span><span>{won(total)}</span></div>}
+        <div className="kv"><span>픽업</span><span>무료</span></div>
+        <div className="kv tot"><span>최종 금액</span><b>{won(total)}</b></div>
+      </div>
+      <div className="flbl">얼마나 결제할까요?</div>
+      <div className="g2">
+        {dep > 0 && <button className={`payopt ${how === 'dep' ? 'on' : ''}`} onClick={() => setHow('dep')}><small>예약금 {dep}%</small><b>{won(depAmt)}</b><span>잔금 {won(total - depAmt)}은 픽업 때</span></button>}
+        <button className={`payopt ${how === 'all' ? 'on' : ''}`} onClick={() => setHow('all')}><small>전액 결제</small><b>{won(total)}</b><span>픽업 때 바로 받아 가요</span></button>
+      </div>
+      <div className="flbl">결제 수단</div>
+      <div className="g2">{PAY_METHODS.map(([id, nm, ic]) => <button key={id} className={`payopt row ${m === id ? 'on' : ''}`} onClick={() => setM(id)}><i className={`pm ${id}`}>{ic}</i><b>{nm}</b></button>)}</div>
+      <button className="btn pri block" style={{ marginTop: 12 }} onClick={pay}>{won(amt)} 결제하기</button>
+      <div className="xs muted center" style={{ marginTop: 6 }}>체험용 가상 결제예요. 실제로 돈이 나가지 않아요.{store?.ops?.account ? ` 실제 입금은 ${store.ops.account}` : ''}</div>
+    </div>
+  );
+}
+const PAID_ART = `<svg viewBox="0 0 140 120" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#4A3B39" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M30 70v30q0 6 8 6h64q8 0 8-6V70" fill="#fff"/><path d="M26 70q0-10 44-10t44 10q-3 7-8 2-5 8-11 1-6 8-12 0-6 8-12 0-6 8-12 0-6 8-11-1-5 6-8-2z" fill="#F8C9D0"/>
+  <path d="M42 88l6 5 6-5 6 5 6-5 6 5 6-5 6 5 6-5 6 5" stroke-width="1.6"/>
+  <path d="M52 58V44M70 56V40M88 58V44" stroke-width="3"/><path d="M52 38q-3 3 0 5 3-2 0-5zM70 34q-3 3 0 5 3-2 0-5zM88 38q-3 3 0 5 3-2 0-5z" fill="#F6B85C" stroke-width="1.4"/>
+</svg>`;
+function PaidOverlay({ info, order, onClose }) {
+  return (
+    <div className="paidov gingham" role="dialog" aria-label="결제 완료">
+      <div className="paidart">
+        {[0, 1, 2, 3, 4, 5].map((k) => <span key={k} className={`spark s${k}`}>★</span>)}
+        <div dangerouslySetInnerHTML={{ __html: PAID_ART }} />
+      </div>
+      <h2>결제가 완료됐어요!<br />{order.storeName}에서 곧 만들기 시작해요</h2>
+      <p className="small muted center" style={{ margin: '6px 0 16px' }}>시안이 오면 알림으로 알려드릴게요</p>
+      <div className="sumcard">
+        <div className="kv"><span>결제 금액</span><b>{won(info.amt)}</b></div>
+        <div className="kv"><span>결제 수단</span><b>{info.method}</b></div>
+        <div className="kv"><span>남은 금액</span><b>{info.rest > 0 ? `${won(info.rest)} (픽업 때)` : '없음'}</b></div>
+        <div className="kv"><span>픽업</span><b>{fmtDate(order.o.date)} {order.o.time}</b></div>
+      </div>
+      <button className="btn pri block" style={{ marginTop: 14 }} onClick={onClose}>확인</button>
+      <div className="xs muted center" style={{ marginTop: 6 }}>체험용 가상 결제예요. 실제로 돈이 나가지 않았어요.</div>
+    </div>
+  );
+}
+
 // ───────── 손님 화면 ─────────
+const C_QUICK = ['당일 픽업 되나요?', '사진 보낼게요', '문구 바꿀 수 있어요?'];
 export function CustomerOrder({ params }) {
   const st = useApp();
   const order = st.orders.find((x) => x.id === params.id);
@@ -189,6 +256,7 @@ export function CustomerOrder({ params }) {
   const [fix, setFix] = useState(false);
   const [stars, setStars] = useState(5);
   const [rv, setRv] = useState('');
+  const [paidInfo, setPaidInfo] = useState(null);
   const sc = useRef(null);
   const n = order?.ev?.length || 0;
   useEffect(() => { if (order) { markSeen(order.id, 'c'); readLink('c', `/c/order/${order.id}`); } sc.current?.scrollTo({ top: 1e6, behavior: 'smooth' }); }, [n]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -228,7 +296,8 @@ export function CustomerOrder({ params }) {
           </div>
         )}
         {s === 'requested' && <div className="note" style={{ marginTop: 10 }}>사장님이 확인하고 있어요. 확정되면 알림으로 알려 드려요.</div>}
-        {['confirmed', 'making', 'ready'].includes(s) && dep > 0 && !order.paid && <div className="note pink" style={{ marginTop: 10 }}>예약금 {store.ops.deposit}% <b>{won(dep)}</b>{store.ops.account ? <> → <b>{store.ops.account}</b></> : ''} 입금하면 제작을 시작해요. 사장님이 확인하면 알려 드려요.</div>}
+        {['confirmed', 'proof', 'making', 'ready'].includes(s) && order.finalPrice != null && !order.paid && canOrderInApp(store) && <PayCard order={order} store={store} onPaid={setPaidInfo} />}
+        {['confirmed', 'making', 'ready'].includes(s) && dep > 0 && !order.paid && !canOrderInApp(store) && <div className="note pink" style={{ marginTop: 10 }}>예약금 {store.ops.deposit}% <b>{won(dep)}</b>{store.ops.account ? <> → <b>{store.ops.account}</b></> : ''} 입금하면 제작을 시작해요. 사장님이 확인하면 알려 드려요.</div>}
         {s === 'ready' && <div className="note ok" style={{ marginTop: 10 }}>케이크가 준비됐어요! {fmtDate(order.o.date)} {order.o.time}에 픽업해 주세요.</div>}
         <Thread order={order} role="c" />
         {s === 'done' && !order.review && (
@@ -250,9 +319,10 @@ export function CustomerOrder({ params }) {
         </div>
         <div style={{ height: 12 }} />
       </div>
-      {s !== 'external' && !['declined', 'canceled'].includes(s) && <Composer order={order} role="c" />}
+      {s !== 'external' && !['declined', 'canceled'].includes(s) && <Composer order={order} role="c" quick={s === 'done' ? [] : C_QUICK} />}
       <ReviseSheet open={revise} onClose={() => setRevise(false)} order={order} store={store} />
       <ProofFixSheet open={fix} onClose={() => setFix(false)} order={order} />
+      {paidInfo && <PaidOverlay info={paidInfo} order={order} onClose={() => setPaidInfo(null)} />}
     </div>
   );
 }
@@ -265,6 +335,7 @@ export function OwnerOrderDetail({ params }) {
   const [open, setOpen] = useState(false);
   const [price, setPrice] = useState(null);
   const [msg, setMsg] = useState('');
+  const [adjust, setAdjust] = useState(false);
   const sc = useRef(null);
   const n = o?.ev?.length || 0;
   useEffect(() => { if (o) { markSeen(o.id, 'o'); readLink('o', `/o/order/${o.id}`); } sc.current?.scrollTo({ top: 1e6, behavior: 'smooth' }); }, [n]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -293,21 +364,25 @@ export function OwnerOrderDetail({ params }) {
       <div className="scroll pad room" ref={sc}>
         <Summary order={o} role="o" open={open} setOpen={setOpen} />
         {s === 'requested' && (
-          <div className="card pad todo">
-            <div className="b">{lastRevise ? '손님이 주문을 고쳤어요 — 다시 확인해 주세요' : '새 주문이에요 — 승인만 누르면 끝!'}</div>
+          <div className="card pad todo newreq">
+            <div className="b">{lastRevise ? '손님이 주문을 고쳤어요 — 다시 확인해 주세요' : '새 주문 요청이에요'}</div>
+            <div className="small muted" style={{ marginTop: 2 }}>손님이 보낸 요청서예요. 수락하면 금액이 확정되고 손님에게 결제 안내가 가요.</div>
             {lastRevise?.summary && <div className="note pink" style={{ marginTop: 6 }}>바뀐 점: <b>{lastRevise.summary}</b></div>}
-            <ul className="rules" style={{ marginTop: 8 }}>{checks.filter((c) => !c.ok).map((c, i) => <li key={i} className="w"><i>!</i><span>{c.t}</span></li>)}</ul>
-            <div className={`verdict ${v.ok ? 'ok' : 'w'}`}>{v.ok ? '가게 규칙 안이에요' : `! 확인할 항목 ${v.warn}개`}</div>
-            <div className="row" style={{ marginTop: 10 }}><span className="grow small muted">손님이 본 예상 금액</span><b>{range(o.est?.lo, o.est?.hi)}</b></div>
-            <div className="row" style={{ marginTop: 8 }}><span className="grow b">최종 금액</span><div className="pricerow" style={{ border: 0, padding: 0 }}><PriceInput value={price} onChange={(vv) => setPrice(vv ?? 0)} /></div></div>
-            <div className="chips" style={{ marginTop: 6 }}>{[-1000, 1000, 3000, 5000].map((d) => <button key={d} className="chip sm" onClick={() => setPrice((p) => Math.max(0, (p || 0) + d))}>{d > 0 ? '+' : ''}{d.toLocaleString()}</button>)}</div>
-            <input className="inp" style={{ marginTop: 8 }} value={msg} onChange={(e) => setMsg(e.target.value)} placeholder="손님에게 한마디 (선택)" maxLength={200} />
-            <div className="chips" style={{ marginTop: 6 }}>{TEMPLATES.map((t) => <button key={t} className="chip sm" onClick={() => setMsg(t)}>{t.slice(0, 13)}…</button>)}</div>
-            <div className="btns" style={{ marginTop: 10 }}>
-              <button className="btn line" onClick={() => { act(o.id, 'o', 'change', { price, msg: msg.trim() || '이렇게 바꾸면 가능해요. 확인 부탁드려요!' }); setMsg(''); toast('수정 제안을 보냈어요'); }}>수정 제안</button>
-              <button className="btn ok" style={{ flex: 2 }} onClick={() => { act(o.id, 'o', 'approve', { price, msg: msg.trim() || undefined }); setMsg(''); toast(`승인했어요 · ${won(price)}`); }}><Icon n="check" size="sm" /> {won(price)} 승인</button>
+            {!v.ok && <ul className="rules" style={{ marginTop: 8 }}>{checks.filter((c) => !c.ok).map((c, i) => <li key={i} className="w"><i>!</i><span>{c.t}</span></li>)}</ul>}
+            <div className="btns" style={{ marginTop: 12 }}>
+              <button className="btn ghost" onClick={() => { if (confirm('이 주문을 거절할까요?')) { act(o.id, 'o', 'decline', { msg: msg.trim() || undefined }); toast('주문을 거절했어요'); } }}>거절</button>
+              <button className="btn ok" style={{ flex: 2.2 }} onClick={() => { act(o.id, 'o', 'approve', { price, msg: msg.trim() || undefined }); setMsg(''); toast(`수락했어요 · ${won(price)} 확정`); }}>수락하고 {won(price)} 확정</button>
             </div>
-            <button className="btn xs ghost block" style={{ marginTop: 8 }} onClick={() => { if (confirm('이 주문을 거절할까요?')) { act(o.id, 'o', 'decline', { msg: msg.trim() || undefined }); toast('주문을 거절했어요'); } }}>이번 주문은 어려워요 (거절)</button>
+            <button className="morebtn" style={{ marginTop: 10 }} onClick={() => setAdjust(!adjust)}><span className="grow"><b>금액 바꾸기 · 수정 제안</b> <span className="xs muted">손님이 본 예상 {range(o.est?.lo, o.est?.hi, true)}</span></span><Icon n={adjust ? 'down' : 'right'} size="sm" /></button>
+            {adjust && (
+              <div className="fadeup">
+                <div className="row" style={{ marginTop: 8 }}><span className="grow b">최종 금액</span><div className="pricerow" style={{ border: 0, padding: 0 }}><PriceInput value={price} onChange={(vv) => setPrice(vv ?? 0)} /></div></div>
+                <div className="chips" style={{ marginTop: 6 }}>{[-1000, 1000, 3000, 5000].map((d) => <button key={d} className="chip sm" onClick={() => setPrice((p) => Math.max(0, (p || 0) + d))}>{d > 0 ? '+' : ''}{d.toLocaleString()}</button>)}</div>
+                <input className="inp" style={{ marginTop: 8 }} value={msg} onChange={(e) => setMsg(e.target.value)} placeholder="손님에게 한마디 (선택)" maxLength={200} />
+                <div className="chips" style={{ marginTop: 6 }}>{TEMPLATES.map((t) => <button key={t} className="chip sm" onClick={() => setMsg(t)}>{t.slice(0, 13)}…</button>)}</div>
+                <button className="btn line block sm" style={{ marginTop: 10 }} onClick={() => { act(o.id, 'o', 'change', { price, msg: msg.trim() || '이렇게 바꾸면 가능해요. 확인 부탁드려요!' }); setMsg(''); toast('수정 제안을 보냈어요'); }}>이 금액으로 수정 제안 보내기</button>
+              </div>
+            )}
           </div>
         )}
         {s === 'change' && <div className="note warn" style={{ marginTop: 10 }}>손님에게 수정 제안({won(o.proposedPrice)})을 보냈어요. 손님이 수락하면 확정돼요.</div>}

@@ -8,6 +8,7 @@ import { useApp, setState } from '../../lib/state.js';
 import { nav } from '../../lib/router.js';
 import { getStores, mapLinks, shopToStore } from '../../lib/stores.js';
 import { kakaoKeyOf } from '../../lib/kakao.js';
+import OrderThumb from '../../components/OrderThumb.jsx';
 import { STATUS, ACTIVE, unreadOf, evText, applyEvent, mkEvent } from '../../lib/orders.js';
 import { estimate, ruleCheck } from '../../lib/price.js';
 import { orderLink, giftLink } from '../../lib/share.js';
@@ -58,7 +59,7 @@ export function OrderDone({ params }) {
       <div className="scroll pad gingham">
         {/* 점선 동그라미 안에 케이크 + 그 둘레를 빙글빙글 도는 제빵사 강아지 (11/23 UI) */}
         <div className="donehero">
-          <div className="ring"><div className="pic"><CakeView o={orderView(order)} /></div></div>
+          <div className="ring"><div className="pic"><OrderThumb order={order} /></div></div>
           <div className="orbit"><span className="dog" dangerouslySetInnerHTML={{ __html: BAKER_DOG }} /></div>
         </div>
         <h2 className="center" style={{ margin: 0, fontSize: 20, lineHeight: 1.4 }}>{ext ? '주문서가 완성됐어요' : auto ? '주문이 바로 확정됐어요!' : <>{order.storeName} 사장님께<br />주문서를 전송했어요!</>}</h2>
@@ -68,24 +69,26 @@ export function OrderDone({ params }) {
             : auto ? <>사장님이 정해 둔 규칙 안의 주문이라 자동 확정됐어요.</>
             : <>사장님이 확인하면 최종 금액을 알려드릴게요.</>}
         </p>
-        <div className="ticket">
-          <div className="stage"><CakeView o={orderView(order)} fancy /></div>
-          <div className="tb">
-            <div className="row"><b className="grow">{order.storeName}</b><StatusTag status={order.status} /></div>
-            <div className="xs muted">{order.id} · {fmtDate(o.date)} {o.time} 픽업</div>
-            <div className="hr" />
-            <div className="kv"><span>케이크</span><b>{sizeOf(o.size).name} · {optName(SHAPES, o.shape)} · {designOf(o.design).name}</b></div>
-            <div className="kv"><span>맛·크림</span><b>{flavorName(o)} · {creamOf(o.cream).name}</b></div>
-            <div className="kv"><span>문구</span><b>{o.noText ? '문구 없음' : `“${o.text}”`}</b></div>
-            <div className="kv"><span>{order.finalPrice != null ? '확정 금액' : '예상 금액'}</span><b>{order.finalPrice != null ? won(order.finalPrice) : range(order.est?.lo, order.est?.hi)}</b></div>
-          </div>
+        <div className="sumcard">
+          <div className="kv"><span>가게</span><b>{order.storeName}</b></div>
+          <div className="kv"><span>디자인</span><b>{o.pickName || (order.imgs?.ref ? '원하는 사진으로' : designOf(o.design).name)}</b></div>
+          <div className="kv"><span>케이크</span><b>{sizeOf(o.size).name} · {flavorName(o)}</b></div>
+          <div className="kv"><span>레터링</span><b>{o.noText ? '문구 없음' : `“${o.text}”`}</b></div>
+          <div className="kv"><span>픽업</span><b>{fmtDate(o.date)} {o.time}</b></div>
+          <div className="kv"><span>{order.finalPrice != null ? '확정 금액' : '예상 금액'}</span><b>{order.finalPrice != null ? won(order.finalPrice) : `약 ${won(order.est?.lo)}`}</b></div>
         </div>
-        <div className="col" style={{ marginTop: 14 }}>
+        {!ext && (
+          <div className="btns" style={{ marginTop: 12 }}>
+            <button className="btn line" onClick={() => nav('/c/orders', { replace: true })}>주문 내역</button>
+            <button className="btn pri" onClick={() => nav(`/c/order/${order.id}`, { replace: true })}>사장님과 대화</button>
+          </div>
+        )}
+        <div className="col" style={{ marginTop: 10 }}>
           {ext ? (<>
             <button className="btn pri block" onClick={async () => { const l = await getLink(); const ok = await copyText(orderText(order, l)); toast(ok ? '주문서를 복사했어요. 가게 채팅창에 붙여 넣으세요' : '복사하지 못했어요'); }}><Icon n="copy" size="sm" /> 주문서 글 복사하기</button>
             <button className="btn line block" onClick={async () => { const l = await getLink(); const r = await shareText({ title: '케이크 주문서', text: orderText(order), url: l }); if (r === 'copied') toast('공유 대신 복사했어요'); }}><Icon n="share" size="sm" /> 카톡·문자로 보내기</button>
             {store && <div className="linkrow" style={{ marginTop: 0 }}>{store.insta && <a href={mapLinks(store).insta} target="_blank" rel="noreferrer"><Icon n="insta" />인스타 열기</a>}<a href={mapLinks(store).kakao} target="_blank" rel="noreferrer"><Icon n="chat" />카카오맵</a><a href={mapLinks(store).naver} target="_blank" rel="noreferrer"><Icon n="search" />네이버지도</a></div>}
-          </>) : <button className="btn pri block" onClick={() => nav(`/c/order/${order.id}`, { replace: true })}><Icon n="chat" size="sm" /> 대화방 열기</button>}
+          </>) : null}
           {order.gift && <button className="btn sec block" onClick={async () => { const url = await giftLink(order); const r = await shareText({ title: '케이크 선물이 도착했어요', text: `${order.gift.to}님, ${order.gift.from || '친구'}님이 보낸 케이크 선물이 도착했어요!`, url }); if (r === 'copied') toast('선물 카드 링크를 복사했어요. 받는 분께 보내 주세요'); }}><Icon n="gift" size="sm" /> {order.gift.to}님께 선물 카드 보내기</button>}
           {store && (local || store.kind === 'public') && <button className="btn sec block" onClick={tryOwner}><Icon n="swap" size="sm" /> (체험) 이 가게 사장님 화면에서 받아 보기</button>}
           <button className="btn ghost block" onClick={() => nav('/c', { replace: true })}>지도로 돌아가기</button>
@@ -112,7 +115,7 @@ export function MyOrders() {
           const last = [...(o.ev || [])].reverse().find((e) => e.t !== 'img');
           return (
             <button key={o.id} className="ocard" onClick={() => nav(`/c/order/${o.id}`)}>
-              <div className="th"><CakeView o={orderView(o)} /></div>
+              <div className="th"><OrderThumb order={o} badge /></div>
               <div className="grow">
                 <div className="t1"><span className="grow">{o.storeName}</span><StatusTag status={o.status} /></div>
                 <div className="t2">{fmtDate(o.o.date)} {o.o.time} · {sizeOf(o.o.size).name} {designOf(o.o.design).name} · <b style={{ color: 'var(--ink)' }}>{o.finalPrice != null ? won(o.finalPrice) : range(o.est?.lo, o.est?.hi, true)}</b></div>

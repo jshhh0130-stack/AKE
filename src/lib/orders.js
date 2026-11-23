@@ -66,7 +66,7 @@ export function evText(ev, o) {
     case 'proofok': return '시안 좋아요! 이대로 만들어 주세요';
     case 'prooffix': return `시안 수정 부탁드려요${ev.tags?.length ? ` — ${ev.tags.join(', ')}` : ''}${ev.msg ? `\n${ev.msg}` : ''}`;
     case 'advance': return { making: '제작을 시작했어요', ready: '케이크가 준비됐어요! 픽업 시간에 맞춰 오세요', done: '픽업 완료 · 맛있게 드세요!' }[ev.to] || '';
-    case 'paid': return ev.paid ? '예약금 입금을 확인했어요. 고맙습니다!' : '입금 확인을 취소했어요';
+    case 'paid': return ev.by === 'c' ? `${ev.method || '간편결제'}로 ${p(ev.amount)} 결제했어요 (체험용 가상 결제)` : ev.paid ? '예약금 입금을 확인했어요. 고맙습니다!' : '입금 확인을 취소했어요';
     case 'cancel': return '주문을 취소했어요';
     case 'review': return `후기를 남겼어요 ${'★'.repeat(ev.stars || 5)}`;
     case 'msg': return ev.text || '';

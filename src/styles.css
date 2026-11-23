@@ -899,3 +899,113 @@ textarea.inp { resize: none; min-height: 76px; line-height: 1.45; }
 .th-o .btn.ok:active { background: #5E8A3A; }
 .gingham .btn.pri { background: var(--acc-bg2); }
 .gingham .btn.ghost, .gingham .btn.sec { background: #fff; border: 1px solid var(--line2); }
+/* ───────── 11/23 UI: 주문서 2단계 ───────── */
+.steptag { margin-right: 10px; height: 26px; padding: 0 10px; border-radius: 999px; background: var(--acc-bg); color: var(--acc-ink); font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; }
+.olead { margin: 2px 0 14px; font-size: 14.5px; color: var(--ink2); }
+.dgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 10px; }
+.dcard { text-align: left; display: flex; flex-direction: column; min-width: 0; }
+.dcard .im { position: relative; width: 100%; aspect-ratio: 1 / 1.05; border-radius: 16px; overflow: hidden; background: var(--cream); display: block; padding: 0; border: 2px solid transparent; }
+.dcard .im img, .dcard .im svg { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dcard .im.up { border: 1.5px dashed #d9cbc5; background: #fbf8f6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font-size: 14px; color: var(--ink2); }
+.dcard .im.up .pl { width: 42px; height: 42px; border-radius: 50%; background: #fff; box-shadow: var(--sh1); display: grid; place-items: center; color: var(--acc-ink); }
+.dcard.on .im { border-color: #E8889A; box-shadow: 0 0 0 3px var(--acc-bg); }
+.th-o .dcard.on .im { border-color: #8DB36A; }
+.dcard .ck { position: absolute; right: 8px; top: 8px; width: 26px; height: 26px; border-radius: 50%; background: #E07A8E; color: #fff; display: grid; place-items: center; }
+.dcard .dt { padding: 7px 2px 0; display: flex; flex-direction: column; gap: 1px; }
+.dcard .dt b { font-size: 14.5px; font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dcard .dt small { font-size: 12.5px; color: var(--mute); }
+.dcard .dtools { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+.dcard .dtools .chip { height: 28px; font-size: 12px; padding: 0 9px; }
+.picked { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 18px; background-color: var(--ghbase); background-image: linear-gradient(90deg, var(--gh) 50%, transparent 50%), linear-gradient(var(--gh) 50%, transparent 50%); background-size: 22px 22px; }
+.picked .pth { width: 58px; height: 58px; border-radius: 12px; overflow: hidden; background: #fff; flex: none; }
+.picked .pth img, .picked .pth svg { width: 100%; height: 100%; object-fit: cover; }
+.picked small { display: block; font-size: 11.5px; font-weight: 700; color: var(--acc-ink); }
+.picked b { display: block; font-size: 15.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.picked span { display: block; font-size: 12.5px; color: var(--mute); }
+.picked .btn { background: #fff; }
+.flbl { margin: 22px 0 8px; font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+.flbl.row { display: flex; align-items: center; }
+.cnt2 { font-size: 12.5px; color: var(--mute); font-weight: 500; }
+.cnt2.over { color: var(--warn); font-weight: 700; }
+.g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.opt2 { min-height: 48px; padding: 7px 4px; border-radius: 12px; background: #fff; border: 1px solid var(--line2); font-size: 14.5px; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.25; }
+.opt2 small { font-size: 11.5px; font-weight: 500; color: var(--mute); }
+.opt2.on { background: var(--acc-bg); border-color: #EFA9B6; color: var(--acc-ink); }
+.th-o .opt2.on { border-color: #B5CF97; }
+.opt2.on small { color: var(--acc-ink); }
+.dayrow { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.dayrow::-webkit-scrollbar { display: none; }
+.dchip { flex: none; min-width: 66px; padding: 7px 4px; border-radius: 12px; border: 1px solid var(--line2); background: #fff; display: flex; flex-direction: column; align-items: center; line-height: 1.25; position: relative; }
+.dchip small { font-size: 11.5px; color: var(--mute); }
+.dchip b { font-size: 15px; }
+.dchip em { font-style: normal; font-size: 10px; color: var(--faint); }
+.dchip:disabled { opacity: 0.45; }
+.dchip.on { background: var(--acc-bg); border-color: #EFA9B6; color: var(--acc-ink); }
+.dchip.on small { color: var(--acc-ink); }
+.morebtn { width: 100%; display: flex; align-items: center; gap: 8px; margin-top: 18px; padding: 12px 14px; border-radius: 14px; background: var(--bg2); text-align: left; font-size: 14px; }
+.ordbar .pp { font-size: 11.5px; }
+.ordbar .pp b { font-size: 19px; }
+.pickbadge { position: absolute; left: 4px; bottom: 4px; padding: 1px 6px; border-radius: 6px; background: rgba(255, 255, 255, 0.92); font-size: 10px; font-weight: 700; color: var(--ink2); }
+.ocard .th { position: relative; }
+
+/* 주문 완료 · 결제 완료 요약 카드 */
+.sumcard { background: #fff; border-radius: 18px; padding: 4px 16px; box-shadow: 0 2px 12px rgba(61, 42, 42, 0.07); }
+.sumcard .kv { padding: 11px 0; border-bottom: 1px solid var(--line); margin: 0; }
+.sumcard .kv:last-child { border-bottom: 0; }
+.sumcard .kv span { color: var(--mute); font-size: 13.5px; }
+.sumcard .kv b { font-size: 14px; }
+
+/* 결제 (체험용 가상 결제) */
+.paycard { margin-top: 12px; }
+.paynote { display: flex; gap: 10px; align-items: flex-start; padding: 14px; border-radius: 16px; background: var(--acc-bg); color: var(--acc-ink); font-size: 14px; line-height: 1.5; }
+.paynote .ck { width: 26px; height: 26px; border-radius: 50%; background: #fff; display: grid; place-items: center; flex: none; }
+.paybox { margin-top: 10px; background: #fff; border-radius: 16px; padding: 6px 14px; border: 1px solid var(--line); }
+.paybox .kv { padding: 9px 0; margin: 0; font-size: 14px; }
+.paybox .kv span:first-child { color: var(--ink2); }
+.paybox .kv.tot { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 12px; }
+.paybox .kv.tot b { font-size: 20px; }
+.payopt { text-align: left; padding: 12px; border-radius: 14px; background: #fff; border: 1.5px solid var(--line2); display: flex; flex-direction: column; gap: 1px; }
+.payopt small { font-size: 12.5px; color: var(--mute); font-weight: 600; }
+.payopt b { font-size: 17px; }
+.payopt span { font-size: 11.5px; color: var(--mute); }
+.payopt.row { flex-direction: row; align-items: center; gap: 8px; }
+.payopt.row b { font-size: 15px; }
+.payopt.on { border-color: #E8889A; background: #FFF8F9; }
+.payopt.on small { color: var(--acc-ink); }
+.pm { font-style: normal; width: 34px; height: 24px; border-radius: 7px; display: grid; place-items: center; font-size: 11px; font-weight: 800; flex: none; }
+.pm.kakao { background: #FEE500; color: #191919; }
+.pm.toss { background: #3182F6; color: #fff; }
+.paidov { position: absolute; inset: 0; z-index: 60; overflow-y: auto; padding: calc(36px + var(--st)) 18px calc(24px + var(--sb)); display: flex; flex-direction: column; animation: scrIn 0.25s ease both; }
+.paidov h2 { text-align: center; font-size: 20px; line-height: 1.45; margin: 6px 0 0; letter-spacing: -0.5px; }
+.paidart { position: relative; width: 170px; height: 150px; margin: 10px auto 0; }
+.paidart > div { position: absolute; left: 15px; right: 15px; bottom: 0; }
+.paidart .spark { position: absolute; left: 50%; top: 52%; font-size: 18px; color: #4A3B39; opacity: 0; animation: spark 1.6s ease-out infinite; }
+.paidart .spark.s1 { animation-delay: 0.25s; } .paidart .spark.s2 { animation-delay: 0.5s; } .paidart .spark.s3 { animation-delay: 0.75s; } .paidart .spark.s4 { animation-delay: 1s; } .paidart .spark.s5 { animation-delay: 1.25s; }
+.paidart .spark.s0 { --dx: -60px; --dy: -70px; } .paidart .spark.s1 { --dx: -25px; --dy: -88px; } .paidart .spark.s2 { --dx: 10px; --dy: -96px; } .paidart .spark.s3 { --dx: 42px; --dy: -84px; } .paidart .spark.s4 { --dx: 66px; --dy: -62px; } .paidart .spark.s5 { --dx: -46px; --dy: -40px; }
+@keyframes spark { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); } 25% { opacity: 1; } 100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.15) rotate(40deg); } }
+@media (prefers-reduced-motion: reduce) { .paidart .spark { animation: none; opacity: 1; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))); } }
+
+/* 사장님 주문 카드 · 오늘 픽업 줄 */
+.ocard.oc2 { display: block; padding: 14px; border-radius: 18px; }
+.oc2 .oc-top { display: flex; gap: 12px; align-items: center; }
+.oc2 .th.round { width: 54px; height: 54px; border-radius: 50%; }
+.oc2 .when { font-size: 12.5px; color: var(--mute); font-weight: 500; white-space: nowrap; }
+.oc2 .t2 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.acts2 { display: grid; grid-template-columns: 1fr 1.7fr; gap: 8px; margin-top: 12px; }
+.acts2 > :only-child { grid-column: 1 / -1; }
+.btn.ok2 { background: var(--acc-bg); color: var(--acc-ink); }
+.btn.ok2:active { background: var(--acc-bg2); }
+.pickrow { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 16px; background: #fff; border: 1px solid var(--line); margin-bottom: 8px; }
+.pickrow .tm { font-size: 16px; color: var(--rose2); width: 50px; flex: none; }
+.pickrow .t1 { font-weight: 700; font-size: 14.5px; }
+.pickrow .t2 { font-size: 13px; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.newreq .b { font-size: 16px; }
+
+/* 관심: 사진 아래 가게 이름 · 안내 상자 */
+.mi .mk { display: block; margin-top: 1px; padding: 0 2px; font-size: 12.5px; color: var(--mute); text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.feedinfo.note2 { margin: 0 16px 12px; padding: 10px 12px; border-radius: 12px; background: #FFF4EF; color: var(--ink2); }
+
+/* 가게 화면: 대표 디자인 슬라이드 */
+.hero .photos .slide { flex: none; width: 100%; height: 100%; position: relative; scroll-snap-align: start; }
+.hero .photos .slide .cake { bottom: 30px; }

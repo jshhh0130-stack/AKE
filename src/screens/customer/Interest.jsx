@@ -10,11 +10,11 @@ import Sketch from '../../components/Sketch.jsx';
 import { removePic, saveEdited } from '../../lib/imagegen.js';
 import { useApp, setState } from '../../lib/state.js';
 import { nav, back, queryOf, navAfterSheet } from '../../lib/router.js';
-import { getStores, rankStores } from '../../lib/stores.js';
+import { getStores, rankStores, distKm } from '../../lib/stores.js';
 import { loadImage, toDataURL, analyzeImage, loadDataURL } from '../../lib/image.js';
-import { shareText, ago } from '../../lib/util.js';
+import { shareText, ago, hash } from '../../lib/util.js';
 import { SHAPES, creamOf, optName, sizeOf, designOf } from '../../data/catalog.js';
-import { StoreCard } from './Home.jsx';
+import { StoreCard, usePlaces } from './Home.jsx';
 import G from '../../data/gallery.json';
 
 const BASE = import.meta.env.BASE_URL;
@@ -77,7 +77,7 @@ const useLike = () => {
   return [likes, toggle];
 };
 
-function Tile({ it, liked, onLike, sc }) {
+function Tile({ it, liked, onLike, sc, maker }) {
   return (
     <div className="mi" role="button" tabIndex={0} onClick={() => nav(`/c/cake/${it.id}`)}>
       <div className="im" style={{ aspectRatio: `${it.w} / ${it.h}`, background: it.c || 'var(--cream2)' }}>
@@ -87,8 +87,22 @@ function Tile({ it, liked, onLike, sc }) {
         <button className={`heart ${liked ? 'on' : ''}`} onClick={(e) => { e.stopPropagation(); onLike(); }} aria-label={liked ? '관심 빼기' : '관심 담기'}><Icon n="heart" /></button>
       </div>
       <div className="t">{it.t}</div>
+      {maker && <button className="mk" onClick={(e) => { e.stopPropagation(); nav(`/store/${maker.id}`); }}>{maker.name} ›</button>}
     </div>
   );
+}
+// 사진마다 '이런 케이크 만드는 가게' 한 곳: 같은 스타일을 만드는 가까운 가게 중에서 골고루
+function useMakers(st) {
+  return useMemo(() => {
+    const near = getStores(st).filter((s) => !s.hidden && s.lat != null).sort((a, b) => distKm(st.loc, a) - distKm(st.loc, b));
+    const out = {};
+    for (const it of GALLERY) {
+      const want = (it.st || []).filter((x) => x !== 'lettering');
+      const cand = near.filter((s) => (want.length ? want.some((w) => s.styles?.includes(w)) : s.styles?.includes('lettering'))).slice(0, 6);
+      if (cand.length) out[it.id] = cand[hash(it.id) % cand.length];
+    }
+    return out;
+  }, [st.loc.lat, st.loc.lng, st.shop, st.partners]); // eslint-disable-line react-hooks/exhaustive-deps
 }
 function WorkTile({ w }) {
   return (
@@ -128,6 +142,8 @@ function CakeFeed({ q0, cat0 = 'all' }) {
   const [photo, setPhoto] = useState(null); // { thumb, an }
   const [busy, setBusy] = useState(false);
   const qq = q.trim();
+  usePlaces(); // 카카오 가게 목록이 도착하면 가게 이름도 다시
+  const makers = useMakers(st);
   // 입점 가게 사장님이 올린 작품 사진 (진짜 사진)
   const works = useMemo(() => getStores(st).filter((s) => s.kind === 'partner').flatMap((s) => (s.portfolio || []).filter((p) => p.src).map((p, k) => ({ id: `${s.id}-${k}`, src: p.src, t: p.caption || `${s.name} 작품`, store: s }))), [st.shop, st.partners]);
   const list = useMemo(() => {
@@ -174,7 +190,7 @@ function CakeFeed({ q0, cat0 = 'all' }) {
         </div>
       )}
       {related.length > 0 && <div className="related">{related.map((t) => <button key={t} onClick={() => { setQ(t); setPhoto(null); }}><Icon n="search" />{t}</button>)}</div>}
-      <div className="feedinfo"><Icon n="info" />AI로 만든 예시 사진이에요. 실제 작품은 가게 페이지에서 확인해요.</div>
+      <div className="feedinfo note2"><Icon n="info" />AI로 만든 예시 사진이에요. 사진 아래 가게 이름을 누르면 이런 케이크를 만드는 가게로 가요.</div>
       {showWorks && (<>
         <div className="sec-t" style={{ margin: '4px 16px 10px' }}><h3 style={{ fontSize: 15 }}>입점 가게 작품</h3></div>
         <div className="masonry">{works.map((w) => <WorkTile key={w.id} w={w} />)}</div>
@@ -182,7 +198,7 @@ function CakeFeed({ q0, cat0 = 'all' }) {
       {list.length === 0 ? (
         <Empty icon={cat === 'liked' ? 'heart' : 'search'}>{cat === 'liked' ? <>아직 저장한 케이크가 없어요.<br />마음에 드는 사진의 하트를 눌러 보세요.</> : <>‘{qq}’와 비슷한 사진이 없어요.<br />다른 말로 찾아보세요.</>}</Empty>
       ) : (
-        <div className="masonry">{list.map(({ it, sc }) => <Tile key={it.id} it={it} liked={likes.includes(it.id)} onLike={() => toggleLike(it.id)} sc={photo ? Math.round(45 + 55 * sc / max) : null} />)}</div>
+        <div className="masonry">{list.map(({ it, sc }) => <Tile key={it.id} it={it} liked={likes.includes(it.id)} onLike={() => toggleLike(it.id)} sc={photo ? Math.round(45 + 55 * sc / max) : null} maker={makers[it.id]} />)}</div>
       )}
       <div className="sec-t" style={{ margin: '12px 16px 10px' }}><h3 style={{ fontSize: 15 }}>더 많은 사진 보기</h3></div>
       <div className="outlinks">

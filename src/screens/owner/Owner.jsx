@@ -10,6 +10,7 @@ import { orderView } from '../../lib/ordertext.js';
 import { won, range, fmtDate, relDay, ymd, today, addDays, parseYmd, DOW, ago, maskName, man, pad } from '../../lib/util.js';
 import { SIZES, DESIGNS, sizeOf, designOf } from '../../data/catalog.js';
 import { readiness } from './Editors.jsx';
+import OrderThumb from '../../components/OrderThumb.jsx';
 
 const amount = (o) => o.finalPrice ?? o.est?.lo ?? 0;
 // 시간대별 인사말 (11/23 UI): 아침 05~11시 · 낮 11~17시 · 저녁·밤 17~05시. 한 시간 동안은 같은 말을 보여 준다.
@@ -39,23 +40,36 @@ export function OCard({ o, quick = true }) {
   const un = unreadOf(o, 'o');
   const last = [...(o.ev || [])].reverse().find((e) => e.t !== 'img' && e.by !== 'o');
   return (
-    <div className="ocard" role="button" onClick={() => nav(`/o/order/${o.id}`)}>
-      <div className="th"><CakeView o={orderView(o)} /></div>
-      <div className="grow">
-        <div className="t1"><span className="grow">{maskName(o.customer?.name)} · {sizeOf(o.o.size).name}{o.sample && <span className="tag mute" style={{ marginLeft: 4 }}>예시</span>}</span><StatusTag status={o.status} owner /></div>
-        <div className="t2">{relDay(o.o.date)} {fmtDate(o.o.date, true)} {o.o.time} · {designOf(o.o.design).name}</div>
-        <div className="t2">{o.o.noText ? '문구 없음' : `“${o.o.text}”`} · <b style={{ color: 'var(--ink)' }}>{o.finalPrice != null ? won(o.finalPrice) : range(o.est?.lo, o.est?.hi, true)}</b>{needDeposit && <> · <span className={`tag ${o.paid ? 'ok' : 'warn'}`}>{o.paid ? '입금 완료' : '입금 전'}</span></>}</div>
-        {un > 0 && last && <div className="lastmsg"><span className="un">{un}</span><span>{evText(last, o).split('\n')[0]}</span></div>}
-        {quick && o.status === 'requested' && (
-          <div className="acts" onClick={(e) => e.stopPropagation()}>
-            <button className="btn xs ok" onClick={() => { act(o.id, 'o', 'approve', { price: o.est.lo }); toast(`승인했어요 · ${won(o.est.lo)}`); }}>승인 {man(o.est.lo)}원</button>
-            <button className="btn xs line" onClick={() => nav(`/o/order/${o.id}`)}>수정 제안 · 대화</button>
-          </div>
-        )}
-        {quick && n && (
-          <div className="acts" onClick={(e) => e.stopPropagation()}><button className="btn xs dark" onClick={() => { act(o.id, 'o', 'advance', { to: n }); toast(`${NEXT_LABEL[o.status]} 처리했어요`); }}>{NEXT_LABEL[o.status]} →</button></div>
-        )}
+    <div className="ocard oc2" role="button" onClick={() => nav(`/o/order/${o.id}`)}>
+      <div className="oc-top">
+        <div className="th round"><OrderThumb order={o} /></div>
+        <div className="grow" style={{ minWidth: 0 }}>
+          <div className="t1"><span className="grow">{maskName(o.customer?.name)}{o.sample && <span className="tag mute" style={{ marginLeft: 4 }}>예시</span>}</span>{o.status === 'requested' ? <small className="when">{fmtDate(o.o.date, true)} {o.o.time}</small> : <StatusTag status={o.status} owner />}</div>
+          <div className="t2">{sizeOf(o.o.size).name} · {o.o.noText ? '문구 없음' : `“${o.o.text}”`}</div>
+          <div className="t2">{o.status === 'requested' ? (o.o.pickName || designOf(o.o.design).name) : `${relDay(o.o.date)} ${o.o.time}`} · <b style={{ color: 'var(--ink)' }}>{o.finalPrice != null ? won(o.finalPrice) : range(o.est?.lo, o.est?.hi, true)}</b>{needDeposit && <> · <span className={`tag ${o.paid ? 'ok' : 'warn'}`}>{o.paid ? '입금 완료' : '입금 전'}</span></>}</div>
+          {un > 0 && last && <div className="lastmsg"><span className="un">{un}</span><span>{evText(last, o).split('\n')[0]}</span></div>}
+        </div>
       </div>
+      {quick && o.status === 'requested' && (
+        <div className="acts2" onClick={(e) => e.stopPropagation()}>
+          <button className="btn sm ghost" onClick={() => { if (confirm('이 주문을 거절할까요?')) { act(o.id, 'o', 'decline'); toast('주문을 거절했어요'); } }}>거절</button>
+          <button className="btn sm ok2" onClick={() => { act(o.id, 'o', 'approve', { price: o.est.lo }); toast(`수락했어요 · ${won(o.est.lo)} 확정`); }}>수락 · {man(o.est.lo)}</button>
+        </div>
+      )}
+      {quick && n && (
+        <div className="acts2" onClick={(e) => e.stopPropagation()}><button className="btn sm ok2" onClick={() => { act(o.id, 'o', 'advance', { to: n }); toast(`${NEXT_LABEL[o.status]} 처리했어요`); }}>{NEXT_LABEL[o.status]} →</button></div>
+      )}
+    </div>
+  );
+}
+// 오늘 픽업 한 줄: [시간] 이름 · 크기 / “문구” [다음 단계]
+function PickRow({ o }) {
+  const n = nextStatus(o.status);
+  return (
+    <div className="pickrow" role="button" onClick={() => nav(`/o/order/${o.id}`)}>
+      <b className="tm">{o.o.time}</b>
+      <div className="grow" style={{ minWidth: 0 }}><div className="t1">{maskName(o.customer?.name)} · {sizeOf(o.o.size).name}</div><div className="t2">{o.o.noText ? '문구 없음' : `“${o.o.text}”`}</div></div>
+      {n ? <button className="btn xs ok2" onClick={(e) => { e.stopPropagation(); act(o.id, 'o', 'advance', { to: n }); toast(`${NEXT_LABEL[o.status]} 처리했어요`); }}>{NEXT_LABEL[o.status]}</button> : <StatusTag status={o.status} owner />}
     </div>
   );
 }
@@ -93,7 +107,7 @@ export function OwnerHome() {
           {reqs.length === 0 ? <div className="card pad small muted">새로 온 요청이 없어요.</div> : reqs.map((o) => <OCard key={o.id} o={o} />)}
           {talk.length > 0 && (<><div className="sec-t"><h3>② 새 소식 (자동 확정 · 손님 메시지)</h3></div>{talk.map((o) => <OCard key={o.id} o={o} quick={false} />)}</>)}
           <div className="sec-t"><h3>{talk.length ? '③' : '②'} 오늘 픽업 · {fmtDate(t)}</h3></div>
-          {todays.length === 0 ? <div className="card pad small muted">오늘 픽업 예정이 없어요.</div> : todays.map((o) => <OCard key={o.id} o={o} />)}
+          {todays.length === 0 ? <div className="card pad small muted">오늘 픽업 예정이 없어요.</div> : todays.map((o) => <PickRow key={o.id} o={o} />)}
           {week.length > 0 && (<>
             <div className="sec-t"><h3>이번 주 일정</h3></div>
             <div className="card" style={{ padding: '0 14px' }}>{week.slice(0, 8).map((o) => (

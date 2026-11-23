@@ -15,6 +15,7 @@ import { usePlaces } from './Home.jsx';
 import { enrich } from '../../lib/gplaces.js';
 import { refreshPartner } from '../../lib/live.js';
 import { kakaoKeyOf, kakaoLinks } from '../../lib/kakao.js';
+import { storeDesigns, manwon } from '../../lib/designs.js';
 
 // 카카오맵 정보 카드: 카카오에 등록된 정보를 그대로(분류·주소·전화), 사진·후기는 카카오맵 화면으로 바로 이어 준다
 function KakaoCard({ s }) {
@@ -114,7 +115,9 @@ export default function StoreDetail({ params }) {
   const links = mapLinks(s);
   const reviews = st.orders.filter((o) => o.storeId === s.id && o.review);
   const realPhotos = [...(s.g?.photos || []).map((p) => ({ src: p.src, by: p.by, g: true })), ...(s.portfolio || []).filter((p) => p.src).map((p) => ({ src: p.src, cap: p.caption }))];
-  const gallery = s.portfolio?.length ? s.portfolio : Array.from({ length: 5 }, (_, k) => ({ id: 'g' + k, design: storeLook(s, k), caption: '스타일 예시', gen: true }));
+  // 대표 디자인 (주문서 1단계와 같은 목록) · 위쪽 큰 사진은 가게 사진들을, 없으면 대표 디자인들을 옆으로 넘겨 본다
+  const gallery = storeDesigns(s).map((g) => ({ ...g, caption: g.name }));
+  const slides = realPhotos.length ? realPhotos : gallery.filter((g) => g.design).map((g) => ({ design: g.design, cap: g.name }));
   const rows = SIZES.map((z) => ({ z, e: estimate(s, { size: z.id, design: 'simple', shape: 'round', cream: 'white', flavor: 'vanilla', text: '축하해' }) }))
     .filter(({ z }) => !s.menu || s.menu.sizes?.[z.id] != null);
   const hp = rows.find((r) => r.z.id === 'h1') || rows[0];
@@ -130,12 +133,13 @@ export default function StoreDetail({ params }) {
     <div className="screen">
       <div className="scroll">
         <div className="hero" style={realPhotos.length ? undefined : heroBg(s)}>
-          {realPhotos.length ? (<>
+          {slides.length ? (<>
             <div className="photos" onScroll={(e) => setPi(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}>
-              {realPhotos.map((p, i) => <img key={i} src={p.src} alt="" referrerPolicy="no-referrer" onClick={() => p.g && setGPhoto(p)} />)}
+              {slides.map((p, i) => (p.src ? <img key={i} src={p.src} alt="" referrerPolicy="no-referrer" onClick={() => p.g && setGPhoto(p)} />
+                : <div key={i} className="slide"><div className="cake"><CakeView o={p.design} bg={false} fancy /></div></div>))}
             </div>
-            <span className="cnt">{pi + 1} / {realPhotos.length}</span>
-            {realPhotos[pi]?.g && <span className="hcap">사진: 구글 지도</span>}
+            {slides.length > 1 && <span className="cnt">{Math.min(pi, slides.length - 1) + 1} / {slides.length}</span>}
+            {slides[pi]?.g ? <span className="hcap">사진: 구글 지도</span> : !realPhotos.length && <span className="hcap">스타일 예시 그림</span>}
           </>) : (<>
             <div className="cake"><CakeView o={hero} bg={false} fancy /></div>
             <span className="hcap">스타일 예시 그림</span>
@@ -179,15 +183,12 @@ export default function StoreDetail({ params }) {
         <div className="pad" style={{ paddingTop: 4 }}>
           <div className="sec-t"><h3>이런 케이크를 만들어요</h3><span className="more">{gallery[0]?.gen ? '스타일 예시 그림' : '대표 디자인'}</span></div>
           <div className="gal big">
-            {gallery.map((g, i) => {
-              const pr = g.design ? estimate(s, { flavor: 'vanilla', text: 'a', size: 'h1', ...g.design }) : null;
-              return (
-                <button key={g.id} className="gi" onClick={() => setGalIdx(i)}>
-                  <div className="im">{g.src ? <img src={g.src} alt={g.caption} /> : <CakeView o={g.design} />}</div>
-                  <div className="gt"><b>{g.caption}</b>{pr && <small>{(Math.round(pr.lo / 1000) / 10).toString()}만원~</small>}</div>
-                </button>
-              );
-            })}
+            {gallery.map((g, i) => (
+              <button key={g.id} className="gi" onClick={() => setGalIdx(i)}>
+                <div className="im">{g.src ? <img src={g.src} alt={g.caption} /> : <CakeView o={g.design} />}</div>
+                <div className="gt"><b>{g.caption}</b><small>{manwon(g.price)}~</small></div>
+              </button>
+            ))}
           </div>
           {!s.portfolio?.some((p) => p.src) && !s.g?.photos?.length && (
             <div className="card cream pad row" style={{ marginTop: 12 }}>
@@ -284,7 +285,7 @@ export default function StoreDetail({ params }) {
               <div className="b">{gallery[galIdx].caption}</div>
               <div className="btns" style={{ marginTop: 12 }}>
                 <button className="btn line" onClick={() => setGalIdx(null)}>닫기</button>
-                {gallery[galIdx].design && <button className="btn pri" style={{ flex: 2 }} onClick={() => { const dsg = gallery[galIdx].design; setGalIdx(null); nav(`/order/${s.id}?from=${encodeURIComponent(JSON.stringify(dsg))}`); }}>이 디자인으로 주문</button>}
+                <button className="btn pri" style={{ flex: 2 }} onClick={() => { const id = gallery[galIdx].id; setGalIdx(null); nav(`/order/${s.id}?pick=${encodeURIComponent(id)}`); }}>이 디자인으로 주문</button>
               </div>
             </div>
           </div>
