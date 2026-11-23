@@ -14,7 +14,6 @@ const SP_STARS = [
 ];
 const easeInBack = (t) => { const c1 = 1.70158, c3 = c1 + 1; return c3 * t * t * t - c1 * t * t; };
 const yank = (T, start) => { if (T <= start) return 0; if (T >= start + 0.55) return 600; return 600 * easeInBack((T - start) / 0.55); };
-const LOADING = '로딩중입니다...'.split('');
 
 export function Splash({ out, onSkip }) {
   const [T, setT] = useState(0);
@@ -35,9 +34,6 @@ export function Splash({ out, onSkip }) {
           <text x="195" y="660" fill="#6b5d54" letterSpacing="2">iAKE</text>
           <text x="195" y="660" filter="url(#sp-wob)" fill="none" stroke="#4a3d36" strokeWidth="2.6" strokeLinejoin="round" letterSpacing="2">iAKE</text>
         </g>
-        <text x="195" y="818" textAnchor="middle" fill="#6b5d54" style={{ fontFamily: 'Gaegu, sans-serif', fontWeight: 700, fontSize: 20 }}>
-          {LOADING.map((c, i) => <tspan key={i} dy={3.2 * (Math.sin(T * 6 - i * 0.7) - (i ? Math.sin(T * 6 - (i - 1) * 0.7) : 0))}>{c}</tspan>)}
-        </text>
         <g filter="url(#sp-wob)" stroke="#3a2f2a" strokeWidth="1.4" strokeLinejoin="round">
           {SP_STARS.map((s, k) => <g key={k} transform={`translate(${s.x} ${s.y}) rotate(${s.r}) scale(${s.s})`}><use href="#sp-star" fill={s.c} /></g>)}
         </g>

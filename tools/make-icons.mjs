@@ -74,7 +74,6 @@ await page.setViewport({ width: 1200, height: 630, deviceScaleFactor: 1 });
 await page.setContent(`<html><head><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"></head>
 <body style="margin:0;width:1200px;height:630px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:34px;background:${CREAM};font-family:'Pretendard Variable',sans-serif;color:#3D2A2A">
   <img src="${logoData}" style="width:620px">
-  <div style="font-size:38px;font-weight:700;letter-spacing:-0.5px">C는 비워 뒀어요. 당신이 채우는 순간, CAKE가 됩니다.</div>
   <div style="font-size:24px;color:#84726F">사진으로 찾고, 가격 먼저 보고, 사장님과 바로 대화하는 커스텀 케이크 앱</div>
 </body></html>`, { waitUntil: 'networkidle0' });
 await page.screenshot({ path: 'public/og.png' });

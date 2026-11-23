@@ -117,7 +117,7 @@ export default function App() {
     <div className="desk">
       <aside className="desk-info">
         <Logo h={64} />
-        <p className="sub">당신이 채우는 순간, CAKE가 됩니다.<br /><span style={{ fontSize: 15 }}>손님과 사장님이 한 앱에서 찾기부터 주문까지 끝내요.</span></p>
+        <p className="sub">손님과 사장님이 한 앱에서 찾기부터 주문까지 끝내요.</p>
         <div className="qr">
           <QR text={appUrl} size={112} />
           <div className="small"><b>핸드폰으로 열어 보세요</b><br /><span className="muted">카메라로 QR을 찍으면 앱이 열려요. 홈 화면에 추가하면 앱처럼 설치돼요.</span></div>
