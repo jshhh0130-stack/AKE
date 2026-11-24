@@ -9,7 +9,8 @@ import { Header, PhotoPick, Portal, CakeView, Empty, toast } from '../../compone
 import Sketch from '../../components/Sketch.jsx';
 import { useApp, setState } from '../../lib/state.js';
 import { nav } from '../../lib/router.js';
-import { makeCakeImage, saveEdited } from '../../lib/imagegen.js';
+import { makeCakeImage, saveEdited, MAKE_DEFAULT } from '../../lib/imagegen.js';
+import { SHAPES, SIZES, CREAMS, TEXT_COLORS, TOPPINGS, creamOf, sizeOf, optName, textColorOf } from '../../data/catalog.js';
 import { loadImage, toDataURL } from '../../lib/image.js';
 import { getStores, rankStores } from '../../lib/stores.js';
 import { MAKE_CATS, makeCatOf } from '../../data/makeCats.js';
@@ -18,6 +19,8 @@ import { StoreCard, usePlaces } from './Home.jsx';
 const BASE = import.meta.env.BASE_URL;
 const cardImg = (c) => (c.img ? `${BASE}gallery/s/${c.img}.webp` : c.ex ? `${BASE}examples/${c.ex}.jpeg` : null);
 const TEXT_MAX = 28, REQ_MAX = 100;
+const FONT_OPTS = [['jua', '동글동글 귀엽게'], ['pen', '손글씨'], ['gaegu', '삐뚤빼뚤'], ['gowun', '단정하게']];
+const LAYOUTS = [['below', '그림 아래'], ['center', '가운데 크게'], ['arc', '테두리 따라 둥글게']];
 
 function CatImg({ c }) {
   const [bad, setBad] = useState(false);
@@ -60,6 +63,9 @@ export function MakeForm({ params }) {
   const [text, setText] = useState('');
   const [req, setReq] = useState('');
   const [busy, setBusy] = useState('');
+  const [op, setOp] = useState(() => ({ ...MAKE_DEFAULT, textColor: params.cat === 'letter' ? 'berry' : 'choco', layout: params.cat === 'letter' ? 'center' : 'below' }));
+  const setO = (p) => setOp((x) => ({ ...x, ...p }));
+  const togTop = (id) => setOp((x) => ({ ...x, toppings: x.toppings.includes(id) ? x.toppings.filter((y) => y !== id) : [...x.toppings, id] }));
   if (!cat) return <div className="screen"><Header title="AI로 케이크 만들기" fallback="/c/make" /><Empty icon="search">카테고리를 찾을 수 없어요.</Empty></div>;
   const hasKey = !!st.settings?.geminiKey;
   const missing = cat.photo === 'need' && !img ? '이미지를 먼저 올려 주세요' : cat.textNeed && !text.trim() ? '레터링 문구를 적어 주세요' : '';
@@ -68,8 +74,8 @@ export function MakeForm({ params }) {
     if (missing) { toast(missing); return; }
     setBusy('준비하는 중…');
     try {
-      const r = await makeCakeImage({ cat, image: img, text, request: req, onStatus: setBusy });
-      setState({ aiDraft: { id: r.pic.id, cat: cat.id, src: r.pic.src, text: text.trim(), request: req.trim(), engine: r.engine, at: Date.now() } });
+      const r = await makeCakeImage({ cat, image: img, text, request: req, opts: op, onStatus: setBusy });
+      setState({ aiDraft: { id: r.pic.id, cat: cat.id, src: r.pic.src, text: text.trim(), request: req.trim(), opts: op, engine: r.engine, at: Date.now() } });
       nav('/c/make/result');
     } catch (e) { toast(e.message || '이미지를 만들지 못했어요', 4500); }
     setBusy('');
@@ -95,10 +101,42 @@ export function MakeForm({ params }) {
         <div className="mk-lbl row"><span className="grow">레터링 문구{!cat.textNeed && <span> (선택)</span>}</span><small>{text.length}/{TEXT_MAX}</small></div>
         <input className="inp mk-inp" value={text} maxLength={TEXT_MAX} onChange={(e) => setText(e.target.value)} placeholder={cat.textPh} />
 
+        {text.trim() && (
+          <div className="mk-opts">
+            <div className="mk-olbl">글씨 색</div>
+            <div className="mk-sw">{TEXT_COLORS.map((c) => <button key={c.id} className={op.textColor === c.id ? 'on' : ''} onClick={() => setO({ textColor: c.id })}><i style={{ background: c.hex }} />{c.name}</button>)}</div>
+            <div className="mk-olbl">글씨 느낌</div>
+            <div className="mk-chips">{FONT_OPTS.map(([id, nm]) => <button key={id} className={op.font === id ? 'on' : ''} onClick={() => setO({ font: id })}>{nm}</button>)}</div>
+            <div className="mk-olbl">글씨 자리</div>
+            <div className="mk-chips">{LAYOUTS.filter(([id]) => cat.id !== 'letter' || id !== 'below').map(([id, nm]) => <button key={id} className={op.layout === id ? 'on' : ''} onClick={() => setO({ layout: id })}>{nm}</button>)}</div>
+          </div>
+        )}
+
+        <div className="mk-lbl">꾸미기 옵션 <span>(고른 대로 그려요)</span></div>
+        <div className="mk-opts">
+          {cat.id !== 'shape' && cat.id !== 'remake' && (<>
+            <div className="mk-olbl">모양 · 크기</div>
+            <div className="mk-chips">{SHAPES.map((s) => <button key={s.id} className={op.shape === s.id ? 'on' : ''} onClick={() => setO({ shape: s.id })}>{s.name}</button>)}<span className="sep" />{SIZES.map((z) => <button key={z.id} className={op.size === z.id ? 'on' : ''} onClick={() => setO({ size: z.id })}>{z.name}</button>)}</div>
+          </>)}
+          {cat.id !== 'remake' && (<>
+            <div className="mk-olbl">크림 색</div>
+            <div className="mk-sw">{CREAMS.map((c) => <button key={c.id} className={op.cream === c.id ? 'on' : ''} onClick={() => setO({ cream: c.id })}><i style={{ background: c.hex }} />{c.name}</button>)}</div>
+          </>)}
+          <div className="mk-olbl">장식 <span>(여러 개 가능)</span></div>
+          <div className="mk-chips">{TOPPINGS.map((t) => <button key={t.id} className={op.toppings.includes(t.id) ? 'on' : ''} onClick={() => togTop(t.id)}>{t.name}</button>)}<button className={op.candle ? 'on' : ''} onClick={() => setO({ candle: !op.candle })}>파티 초</button></div>
+        </div>
+
         <div className="mk-lbl row"><span className="grow">추가 요청 사항 <span>(선택)</span></span><small>{req.length}/{REQ_MAX}</small></div>
         <textarea className="inp mk-inp" rows={3} value={req} maxLength={REQ_MAX} onChange={(e) => setReq(e.target.value)} placeholder={cat.reqPh} />
 
-        <div className="mk-engine">{hasKey ? <><b>구글 나노바나나</b>로 한 장 만들어요 · 1장 약 50~90원</> : <><b>무료 AI</b>로 만들어요 · 마이 › 지도·AI 연결에서 구글 제미나이 키를 넣으면 더 정확해요 (한글 문구는 키가 있을 때만 그려요)</>}</div>
+        {hasKey ? (<>
+          <div className="mk-lbl">만들기 품질</div>
+          <div className="mk-qual">
+            <button className={op.quality === 'pro' ? 'on' : ''} onClick={() => setO({ quality: 'pro' })}><b>글씨 정확하게</b><small>나노바나나 Pro · 1장 약 180원</small></button>
+            <button className={op.quality === 'std' ? 'on' : ''} onClick={() => setO({ quality: 'std' })}><b>기본</b><small>나노바나나 2 · 1장 약 90원</small></button>
+          </div>
+          <div className="xs muted" style={{ marginTop: 6 }}>한글 레터링은 ‘글씨 정확하게’가 훨씬 잘 써요.</div>
+        </>) : <div className="mk-engine"><b>무료 AI</b>로 만들어요 · 무료 AI는 한글 글씨를 못 써서 글씨 없이 만들어요. 마이 › 지도·AI 연결에서 구글 제미나이 키를 넣으면 레터링까지 그려요.</div>}
         <div className="xs muted" style={{ marginTop: 6 }}>올린 사진은 이미지를 만들 때만 쓰고 따로 저장하지 않아요.</div>
       </div>
       <div className="stickybar mk-bar">
@@ -127,7 +165,9 @@ export function MakeResult() {
         <div className="mk-result"><img src={d.src} alt="만든 케이크" /><span className="ai">AI 예시</span>{d.edited && <span className="ed">그림판으로 꾸밈</span>}</div>
         <div className="mk-sum">
           <div><span>종류</span><b>{cat?.name || '케이크'}</b></div>
-          {d.text && <div><span>레터링</span><b>“{d.text}”</b></div>}
+          {d.opts && <div><span>케이크</span><b>{optName(SHAPES, d.opts.shape)} · {sizeOf(d.opts.size).name} · {creamOf(d.opts.cream).name} 크림</b></div>}
+          {d.text && <div><span>레터링</span><b>“{d.text}”{d.opts ? ` · ${textColorOf(d.opts.textColor).name}` : ''}</b></div>}
+          {d.opts && (d.opts.toppings?.length > 0 || d.opts.candle) && <div><span>장식</span><b>{[...d.opts.toppings.map((t) => optName(TOPPINGS, t)), d.opts.candle && '파티 초'].filter(Boolean).join(', ')}</b></div>}
           {d.request && <div><span>요청</span><b>{d.request}</b></div>}
         </div>
         <button className="linkbtn" style={{ display: 'flex', margin: '10px auto 0' }} onClick={() => nav(`/c/make/${d.cat}`, { replace: true })}><Icon n="refresh" size="sm" />다시 만들기</button>

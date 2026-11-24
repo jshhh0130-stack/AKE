@@ -1591,3 +1591,24 @@ textarea.mk-inp { min-height: 96px; resize: none; }
 .mbar .bell { color: #2B2321; }
 .mbar .bell .ico { width: 22px; height: 22px; }
 .mbar .bell .badge { position: absolute; top: 6px; right: 6px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #E5404F; color: #fff; font-size: 10.5px; font-weight: 800; display: grid; place-items: center; border: 2px solid #fff; }
+
+/* AI 만들기: 꾸미기 옵션 */
+.mk-opts { padding: 4px 14px 12px; border-radius: 16px; background: #fff; border: 1px solid #F0EBE6; margin-top: 8px; }
+.mk-olbl { margin: 12px 0 7px; font-size: 12.5px; font-weight: 800; color: #5E5450; }
+.mk-olbl span { font-weight: 500; color: #A0958F; }
+.mk-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.mk-chips button { padding: 7px 12px; border-radius: 999px; background: #fff; box-shadow: inset 0 0 0 1.5px #E8E1DA; font-size: 13px; font-weight: 700; color: #2B2321; }
+.mk-chips button.on { background: #FCECEE; color: #B03444; box-shadow: inset 0 0 0 1.5px #EFB9C2; }
+.mk-chips .sep { width: 1px; height: 20px; background: #E8E1DA; margin: 0 4px; }
+.mk-sw { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 2px 2px 4px; }
+.mk-sw::-webkit-scrollbar { display: none; }
+.mk-sw button { flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; color: #6F6560; width: 48px; }
+.mk-sw i { width: 30px; height: 30px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1); }
+.mk-sw button.on { color: #B03444; font-weight: 800; }
+.mk-sw button.on i { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #E98DA0; }
+.mk-qual { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mk-qual button { text-align: left; padding: 12px 14px; border-radius: 16px; background: #fff; border: 1.5px solid #F0EBE6; }
+.mk-qual button b { display: block; font-size: 14.5px; font-weight: 800; }
+.mk-qual button small { display: block; font-size: 11.5px; color: #8A7F7A; margin-top: 3px; }
+.mk-qual button.on { border-color: #E98DA0; background: #FFF8F9; }
+.mk-qual button.on b { color: #B03444; }

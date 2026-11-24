@@ -11,7 +11,7 @@ const CREAM_EN = { white: 'white', pink: 'baby pink', peach: 'peach', butter: 'p
 const SHAPE_EN = { round: 'round', heart: 'heart-shaped', square: 'square' };
 const DESIGN_EN = { simple: 'simple piped shell border', vintage: 'vintage lambeth piped frills and garlands', heartdots: 'small piped hearts on the sides', flower: 'piped buttercream flowers', drip: 'glossy chocolate drip', character: 'a cute simple drawing hand-piped in buttercream on top', photo: 'an edible printed photo on top' };
 const TOP_EN = { cherry: 'red cherries', strawberry: 'fresh strawberries', sprinkle: 'colorful sprinkles', pearl: 'small sugar pearls', ribbon: 'satin ribbon bows', freshflower: 'edible fresh flowers', macaron: 'macarons' };
-const KO_EN = [[/핑크|분홍/, 'pink'], [/하늘|스카이|파랑|블루/, 'sky blue'], [/민트|초록/, 'mint green'], [/노랑|노란|버터/, 'butter yellow'], [/보라|라벤더/, 'lavender'], [/흰|하얀|화이트/, 'white'], [/초코|브라운|갈색/, 'chocolate'], [/빨강|빨간|레드/, 'red'], [/체리/, 'cherries'], [/딸기/, 'strawberries'], [/하트/, 'hearts'], [/리본/, 'ribbon bows'], [/장미/, 'roses'], [/꽃|플라워/, 'flowers'], [/진주|펄/, 'sugar pearls'], [/스프링클/, 'sprinkles'], [/별/, 'stars'], [/구름/, 'clouds'], [/곰/, 'teddy bear'], [/강아지/, 'puppy'], [/고양이/, 'cat'], [/토끼/, 'bunny'], [/빈티지|프릴/, 'vintage frills'], [/미니|작은/, 'small mini size'], [/2단/, 'two tiers'], [/초|캔들/, 'birthday candles'], [/마카롱/, 'macarons'], [/사각|네모/, 'square shape'], [/동그란|원형/, 'round shape'], [/금|골드/, 'gold accents'], [/은|실버/, 'silver accents']];
+const KO_EN = [[/핑크|분홍/, 'pink'], [/하늘|스카이|파랑|블루/, 'sky blue'], [/민트|초록/, 'mint green'], [/노랑|노란|버터/, 'butter yellow'], [/보라|라벤더/, 'lavender'], [/흰|하얀|화이트|크림색|아이보리/, 'white ivory'], [/초코|브라운|갈색/, 'chocolate'], [/빨강|빨간|레드/, 'red'], [/체리/, 'cherries'], [/딸기/, 'strawberries'], [/하트/, 'hearts'], [/리본/, 'ribbon bows'], [/장미/, 'roses'], [/꽃|플라워/, 'flowers'], [/진주|펄/, 'sugar pearls'], [/스프링클/, 'sprinkles'], [/별 ?모양|별 장식|별 토핑|스타/, 'stars'], [/구름/, 'clouds'], [/곰/, 'teddy bear'], [/강아지/, 'puppy'], [/고양이/, 'cat'], [/토끼/, 'bunny'], [/빈티지|프릴/, 'vintage frills'], [/미니|작은/, 'small mini size'], [/2단/, 'two tiers'], [/캔들|생일 ?초|파티 ?초|초 ?꽂/, 'birthday candles'], [/마카롱/, 'macarons'], [/사각|네모/, 'square shape'], [/동그란|원형/, 'round shape'], [/금색|골드/, 'gold accents'], [/은색|실버/, 'silver accents']];
 export function extraEn(t) {
   if (!t) return '';
   const w = [...new Set(KO_EN.filter(([re]) => re.test(t)).map(([, en]) => en))];
@@ -58,10 +58,10 @@ async function urlToDataURL(url, max = 720) {
 const rnd = () => Math.floor(Math.random() * 1e9);
 
 // ── ① 구글 제미나이 (사진 고치기를 아주 잘해요 · 유료 키) ──
-function findImage(o) { // 응답 어디에 있든 base64 사진 찾기 (보낸 사진이 되돌아오는 칸은 건너뜀)
+function findImage(o) { // 응답 어디에 있든 base64 사진 찾기 (보낸 사진이 되돌아오는 칸 · Pro의 '생각 중 초안' 사진은 건너뛰고 마지막 완성본)
   let out = null;
   const walk = (x, k) => {
-    if (out || !x || typeof x !== 'object' || k === 'input' || k === 'contents') return;
+    if (!x || typeof x !== 'object' || k === 'input' || k === 'contents' || x.thought === true) return;
     const mt = x.mime_type || x.mimeType;
     if (typeof x.data === 'string' && x.data.length > 800 && (!mt || /^image\//.test(mt))) { out = `data:${mt || 'image/png'};base64,${x.data}`; return; }
     for (const [kk, v] of Object.entries(x)) walk(v, kk);
@@ -70,10 +70,21 @@ function findImage(o) { // 응답 어디에 있든 base64 사진 찾기 (보낸 
   return out;
 }
 const gErr = (j, status) => { const m = j?.error?.message || ''; if (status === 400 && /API key/i.test(m)) return '제미나이 키가 맞지 않아요'; if (status === 403) return '제미나이 키 권한(결제·API 사용 설정)을 확인해 주세요'; if (status === 429) return '제미나이 사용량이 다 됐어요'; return m ? `제미나이: ${m.slice(0, 80)}` : '제미나이가 사진을 만들지 못했어요'; };
-async function gemini(key, text, image, aspect = '4:5') {
+// models 를 주면(글씨가 중요한 'AI로 케이크 만들기') 그 모델들만 순서대로 — 글씨를 잘 쓰는 Pro·나노바나나 2
+async function gemini(key, text, image, aspect = '4:5', models = null) {
   const mime = image ? image.slice(5, image.indexOf(';')) : null;
   const b64 = image ? image.split(',')[1] : null;
   let last = '';
+  if (models) {
+    for (const model of models) {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, { method: 'POST', headers: { 'x-goog-api-key': key, 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text }, ...(image ? [{ inline_data: { mime_type: mime, data: b64 } }] : [])] }], generationConfig: { responseModalities: ['TEXT', 'IMAGE'], imageConfig: { aspectRatio: aspect } } }) });
+      const j = await r.json().catch(() => ({}));
+      const img = findImage(j); if (img) return img;
+      last = gErr(j, r.status);
+      if ([401, 403, 429].includes(r.status) || (r.status === 400 && /API key/i.test(j?.error?.message || ''))) break;
+    }
+    throw new Error(last || '제미나이가 사진을 만들지 못했어요');
+  }
   // 새 방식 (Interactions API, 2026)
   try {
     const r = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', { method: 'POST', headers: { 'x-goog-api-key': key, 'Content-Type': 'application/json', 'Api-Revision': '2026-05-20' }, body: JSON.stringify({ model: 'gemini-nano-banana-2.1', input: [{ type: 'text', text }, ...(image ? [{ type: 'image', mime_type: mime, data: b64 }] : [])], response_format: { type: 'image', mime_type: 'image/jpeg', aspect_ratio: aspect } }) });
@@ -226,42 +237,98 @@ export async function makeRealistic({ mode = 'real', image = null, opts = {}, ex
   return { job, engine: 'horde', note: notes[notes.length - 1] };
 }
 
-// ── AI로 케이크 만들기 (카테고리 10개 · 케이크잇처럼 '사진 + 문구 + 요청' → 바로 한 장) ──
-// 제미나이 키가 있으면 나노바나나(정사각형 1장, 약 45~90원), 없으면 무료 FLUX. 대기열(10~20분)은 이 흐름에선 안 씀.
-// 프롬프트는 영어로 섹션을 나눠 아주 구체적으로 (실제로 잘 나온 '강아지 케이크' 사진의 느낌: 카페 테이블·리넨·창가 빛·45° 위에서)
-const MK_HEAD = 'Photorealistic close-up product photograph of a real handmade Korean custom "lettering cake" (레터링 케이크) from a small boutique bakery in Seoul, shot on a full-frame camera with an 85mm lens.';
-const MK_SCENE = 'SCENE: the cake sits on a cream-colored handmade ceramic plate placed on a softly wrinkled beige linen napkin, on a warm oak table in a cozy Korean dessert café; soft natural window daylight from the left, gentle realistic shadows, softly blurred dried-flower vase and window in the background (shallow depth of field).';
-const MK_CAMERA = 'CAMERA: 45-degree high angle looking down at the cake so the entire top design and the lettering are fully visible and undistorted; the cake is centered and fills about 70% of the square frame.';
-const MK_STYLE = 'STYLE: true-to-life food photography, real whipped-buttercream texture with subtle handmade imperfections, natural true colors, sharp focus on the cake top.';
-const MK_AVOID = 'AVOID: no people, no hands, no utensils, no candles unless requested, no extra cakes, no packaging or boxes, no logos or watermarks, no extra, garbled or misspelled text, no English text unless requested, no cartoon/3D-render/illustration look for the cake itself, no plastic or CGI look.';
-const MK_TAIL = `${MK_SCENE} ${MK_CAMERA} ${MK_STYLE} ${MK_AVOID}`;
-// 한글 문구: 글자를 하나씩 풀어서 알려 주면 철자가 더 정확해진다
-const spellOut = (t) => [...t].map((c) => (c === ' ' ? '(space)' : c)).join(' ');
-export function cakePrompt(cat, { text = '', request = '', hasImage = false } = {}) {
-  const t = text.trim(), rq = request.trim();
-  const cake = cat.cake ?? 'CAKE: a 15cm (6-inch) round two-layer cake about 9cm tall, covered in perfectly smooth soft-ivory whipped buttercream with a matte finish and a clean sharp top edge, with a neat border of small piped buttercream pearls around the top edge and the base.';
-  const main = `TOP DESIGN: ${hasImage ? cat.en : cat.enNoImg || cat.en}${hasImage && cat.id !== 'photo' && cat.id !== 'remake' ? ' Use the attached image only as the reference for the design — the result must be a brand-new photograph of a real cake; do not paste or overlay the original image.' : ''}`;
-  const letter = t
-    ? `LETTERING: the Korean text "${t}" — exactly these Hangul characters in this order: ${spellOut(t)} — ${cat.id === 'letter'
-      ? 'is the main design: piped large in neat, cute rounded handwriting in glossy buttercream (deep pink unless the request says another color), centered on the top in one or two balanced lines'
-      : 'is hand-piped in thin glossy dark-chocolate buttercream in cute rounded handwriting, on one line centered below the main design'}; every character complete, correctly spelled and clearly legible. Do not add any other text.`
-    : 'LETTERING: none — no text or letters anywhere on the cake.';
-  const req = rq ? `CUSTOMER REQUEST (written in Korean — apply it exactly; it overrides the defaults above, e.g. cream color, size, decorations): "${rq}"` : '';
-  const deco = 'DECORATION: at most 2 tiny accents (for example two small pastel sprinkles or tiny piped hearts), never overlapping the main design or the lettering.';
-  return [MK_HEAD, cake, main, letter, req, deco, MK_TAIL].filter(Boolean).join('\n');
+// ── AI로 케이크 만들기 (카테고리 10개 · 케이크잇처럼 '사진 + 문구 + 요청 + 꾸미기 옵션' → 바로 한 장) ──
+// 글씨가 제일 중요해서: ① 프롬프트 맨 앞에 레터링 ② 글자를 한 자씩 풀어 쓰고 줄도 나눠 줌 ③ 마지막에 한 번 더 확인
+// ④ 글씨를 잘 쓰는 모델(나노바나나 Pro → 나노바나나 2)로 부른다. 키가 없으면 무료 FLUX(글씨는 못 씀).
+export const MAKE_DEFAULT = { shape: 'round', size: 'h1', cream: 'white', textColor: 'choco', font: 'jua', layout: 'below', toppings: [], candle: false, quality: 'pro' };
+const SIZE_EN = { mini: 'small 12cm (4.5-inch) mini cake about 8cm tall', h1: '15cm (6-inch) cake about 9cm tall', h2: '18cm (7-inch) cake about 10cm tall', h3: '21cm (8-inch) cake about 11cm tall' };
+const SHAPE_EN2 = { round: 'round', heart: 'heart-shaped', square: 'square' };
+const CREAM_EN2 = { white: 'soft ivory white', pink: 'pastel baby pink', peach: 'pastel peach', butter: 'pastel butter yellow', mint: 'pastel mint green', sky: 'pastel sky blue', lavender: 'pastel lavender', cocoa: 'light cocoa brown', hotpink: 'vivid hot pink', navy: 'deep navy blue' };
+const INK_EN = { berry: 'deep raspberry pink', choco: 'dark chocolate brown', navy: 'navy blue', black: 'black', white: 'pure white', gold: 'metallic gold' };
+const FONT_EN = { jua: 'cute, chubby, rounded bold handwriting (Korean 동글동글 귀여운 손글씨)', pen: 'thin, casual hand-written pen-style letters', gaegu: 'playful, slightly wobbly hand-drawn letters', gowun: 'neat, clean and simple evenly spaced letters', melody: 'cute bouncy handwriting with soft curves' };
+const LAYOUT_EN = {
+  below: 'centered on the lower part of the top, below the main design (one or two lines)',
+  center: 'large in the very center of the top as the main focal point (one or two balanced lines)',
+  arc: 'curving in an arc along the inner edge of the top, following the round border, like popular Korean lettering cakes',
+};
+const TOP_EN2 = {
+  cherry: 'three glossy red cherries with stems placed on one side of the top edge',
+  strawberry: 'a few fresh halved strawberries arranged on one side of the top',
+  sprinkle: 'a light scatter of tiny colorful sprinkles near the top edge (not on the lettering)',
+  pearl: 'small edible white sugar pearls dotted around the border',
+  ribbon: 'a satin ribbon bow attached to the side of the cake',
+  freshflower: 'a small cluster of real edible fresh flowers on one side of the top',
+  macaron: 'two pastel macarons standing on the top edge',
+};
+// 한글 문구를 한 줄(짧으면) 또는 두 줄(9자 넘으면 가운데에서 가까운 빈칸)로
+// 받는 사람 이름이 보통 앞에 와서 첫 줄이 너무 길지 않게: 첫 줄 ≤ 둘째 줄+2 인 빈칸 중 가운데에 가까운 곳
+// 예) "콩이야 / 생일 축하해", "엄마 아빠 / 사랑해요"
+function splitLines(t) {
+  if (t.length <= 9 || !t.includes(' ')) return [t];
+  const mid = t.length / 2;
+  let best = -1;
+  [...t].forEach((c, i) => { if (c === ' ' && i <= t.length - i - 1 + 2 && (best < 0 || Math.abs(i - mid) < Math.abs(best - mid))) best = i; });
+  if (best < 0) best = t.indexOf(' ');
+  return [t.slice(0, best), t.slice(best + 1)];
 }
-export async function makeCakeImage({ cat, image = null, text = '', request = '', onStatus }) {
+const spellOut = (s) => [...s].map((c) => (c === ' ' ? '(space)' : c)).join(' ');
+const MK_SCENE = 'the cake sits on a cream-colored handmade ceramic plate on a softly wrinkled beige linen napkin, on a warm oak table in a cozy Korean dessert café; soft natural window daylight from the left with gentle realistic shadows; softly blurred background (shallow depth of field).';
+const MK_CAMERA = '45-degree high angle looking down at the cake so the whole top — the design and every letter — is fully visible and not distorted; the cake is centered and fills about 70% of the square frame; sharp focus on the cake top.';
+const MK_STYLE = 'photorealistic true-to-life food photography taken with a full-frame camera and 85mm lens; real whipped-buttercream texture with subtle handmade imperfections; natural true colors.';
+const MK_AVOID = 'no people, no hands, no utensils, no extra cakes, no boxes or packaging, no logos or watermarks, no extra or garbled text, no English text unless it is in the lettering, no cartoon / 3D-render / illustration look for the cake itself, no plastic or CGI look.';
+
+export function cakePrompt(cat, { text = '', request = '', hasImage = false, opts = {} } = {}) {
+  const o = { ...MAKE_DEFAULT, ...opts };
+  const t = text.trim(), rq = request.trim();
+  const lines = t ? splitLines(t) : [];
+  const out = [];
+  out.push(`Create ONE photorealistic photograph of a real handmade Korean custom cake${t ? ' with Korean lettering piped on top' : ''}.`);
+  // 1) 레터링 (가장 중요)
+  if (t) {
+    out.push([
+      `1) LETTERING — MOST IMPORTANT, it MUST appear on the cake: write the Korean text "${t}" on the top of the cake, hand-piped in glossy ${INK_EN[o.textColor] || INK_EN.choco} buttercream.`,
+      `   - Exact Hangul characters in this order: ${spellOut(t)}${lines.length > 1 ? ` — written on 2 lines: line 1 "${lines[0]}", line 2 "${lines[1]}"` : ' — written on 1 line'}.`,
+      `   - Letter style: ${FONT_EN[o.font] || FONT_EN.jua}; thick, even piped lines so every letter is easy to read in the photo.`,
+      `   - Placement: ${cat.id === 'letter' && o.layout === 'below' ? LAYOUT_EN.center : LAYOUT_EN[o.layout] || LAYOUT_EN.below}; leave enough empty smooth cream around the letters.`,
+      '   - Every character must be complete, correctly spelled, in the right order and clearly legible. Do not translate, shorten or change the text, and do not add any other words.',
+    ].join('\n'));
+  } else out.push('1) LETTERING: none — there is no text or letters anywhere on the cake.');
+  // 2) 케이크 몸통
+  const cake = cat.cake === '' ? 'the same shape and size as the cake in the attached photo' : `a ${SHAPE_EN2[o.shape] || 'round'} ${SIZE_EN[o.size] || SIZE_EN.h1}, two layers, covered in perfectly smooth ${CREAM_EN2[o.cream] || CREAM_EN2.white} whipped buttercream with a matte finish and a clean sharp top edge, with a neat border of small piped buttercream pearls in the same cream color around the top edge and the base`;
+  const sculpt = `a sculpted specially-shaped cake (the shape comes from the top design below) about 9cm tall, covered in perfectly smooth ${CREAM_EN2[o.cream] || CREAM_EN2.white} whipped buttercream with a matte finish and a neat border of small piped buttercream pearls around the edges`;
+  out.push(`2) CAKE: ${cat.id === 'shape' ? sculpt : cake}.`);
+  // 3) 윗면 디자인 (카테고리)
+  const main = hasImage ? cat.en : cat.enNoImg || cat.en;
+  out.push(`3) TOP DESIGN: ${main}${hasImage && !['photo', 'remake'].includes(cat.id) ? ' Use the attached image only as the reference for this design — the result must be a brand-new photograph of a real cake; do not paste or overlay the original image.' : ''}${t ? ' Keep the design clear of the lettering area so the text stays fully readable.' : ''}`);
+  // 4) 장식 (고른 것만)
+  const deco = [...(o.toppings || []).map((x) => TOP_EN2[x]).filter(Boolean), o.candle && 'two thin pastel birthday candles standing at the back of the top (unlit)'].filter(Boolean);
+  out.push(deco.length
+    ? `4) DECORATIONS — include exactly these and nothing else: ${deco.join('; ')}. Decorations never cover the lettering or the main design.`
+    : '4) DECORATIONS: no extra toppings — only the piped pearl border (at most two tiny piped dots or hearts as accents, away from the lettering).');
+  // 5) 손님 요청
+  if (rq) out.push(`5) CUSTOMER REQUEST (written in Korean — follow it exactly; if it conflicts with anything above, the request wins, except it must never remove the lettering): "${rq}"${extraEn(rq) ? ` (hints: ${extraEn(rq).replace(/^, with /, '')})` : ''}`);
+  // 6) 사진
+  out.push(`6) PHOTO: ${MK_SCENE} ${MK_CAMERA} ${MK_STYLE}`);
+  out.push(`7) AVOID: ${MK_AVOID}`);
+  if (t) out.push(`FINAL CHECK before finishing: the Korean text "${t}" is clearly written on the cake top exactly as given. An image without this text, or with wrong or missing characters, is incorrect.`);
+  return out.join('\n');
+}
+export async function makeCakeImage({ cat, image = null, text = '', request = '', opts = {}, onStatus }) {
   const { geminiKey, hfToken } = getState().settings || {};
+  const o = { ...MAKE_DEFAULT, ...opts };
   const input = image ? await fitImage(image, { max: 1024, q: 0.9 }) : null;
-  const meta = { mode: 'make', cat: cat.id, opts: { design: cat.design || 'simple', styles: cat.styles || [] } };
+  const meta = { mode: 'make', cat: cat.id, opts: { design: cat.design || 'simple', styles: cat.styles || [], shape: o.shape, size: o.size, cream: o.cream, toppings: o.toppings } };
   if (geminiKey) {
-    onStatus?.('나노바나나가 케이크를 그리는 중… (10~30초)');
-    const src = await fitImage(await gemini(geminiKey, cakePrompt(cat, { text, request, hasImage: !!input }), input, '1:1'), { max: 720 });
+    const pro = o.quality === 'pro';
+    onStatus?.(pro ? '나노바나나 Pro가 글씨까지 그리는 중… (20~40초)' : '나노바나나가 케이크를 그리는 중… (10~30초)');
+    const models = pro ? ['gemini-3-pro-image', 'gemini-3.1-flash-image'] : ['gemini-3.1-flash-image', 'gemini-3-pro-image'];
+    const src = await fitImage(await gemini(geminiKey, cakePrompt(cat, { text, request, hasImage: !!input, opts: o }), input, '1:1', models), { max: 900 });
     return { pic: savePic({ id: 'my-' + uid(), src, at: Date.now(), ...meta, engine: 'gemini' }), engine: 'gemini' };
   }
-  // 무료 FLUX: 한글 문구·한국어 요청은 못 알아들어서 요청 속 낱말만 영어로 바꿔 넣는다 (문구는 주문서·그림판에서)
+  // 무료 FLUX: 한글은 못 써서 글씨 없이, 고른 옵션은 영어로 넣는다 (문구는 주문서·그림판에서)
   onStatus?.('무료 AI(FLUX)에 연결하는 중…');
-  const prompt = `Photorealistic photo of a handmade Korean custom cake on a cream ceramic plate, beige linen napkin, oak café table, soft window light, 45 degree angle. ${input ? cat.en : cat.enNoImg || cat.en}${extraEn(request)}. Smooth ivory buttercream, small piped pearl border, real buttercream texture, no text, no letters, no people, no hands, sharp focus.`;
+  const deco = (o.toppings || []).map((x) => TOP_EN2[x]).filter(Boolean).join(', ');
+  const prompt = `Photorealistic photo of a handmade Korean custom ${SHAPE_EN2[o.shape] || 'round'} cake with smooth ${CREAM_EN2[o.cream] || 'ivory'} buttercream and a small piped pearl border, on a cream ceramic plate, beige linen napkin, oak café table, soft window light, 45 degree angle. ${input ? cat.en : cat.enNoImg || cat.en}${deco ? ` Decorations: ${deco}.` : ''}${extraEn(request)}. Real buttercream texture, no text, no letters, no people, no hands, sharp focus.`;
   try {
     const url = input
       ? await hfRun(HF.kontext, [{ url: input, meta: { _type: 'gradio.FileData' } }, prompt, rnd(), false, 2.5, 24], hfToken, (s) => onStatus?.(s.msg))
