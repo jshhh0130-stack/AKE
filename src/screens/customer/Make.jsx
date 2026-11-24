@@ -68,7 +68,7 @@ export function MakeForm({ params }) {
   const togTop = (id) => setOp((x) => ({ ...x, toppings: x.toppings.includes(id) ? x.toppings.filter((y) => y !== id) : [...x.toppings, id] }));
   if (!cat) return <div className="screen"><Header title="AI로 케이크 만들기" fallback="/c/make" /><Empty icon="search">카테고리를 찾을 수 없어요.</Empty></div>;
   const hasKey = !!st.settings?.geminiKey;
-  const missing = cat.photo === 'need' && !img ? '이미지를 먼저 올려 주세요' : cat.textNeed && !text.trim() ? '레터링 문구를 적어 주세요' : '';
+  const missing = !hasKey ? '구글 제미나이 키를 연결해 주세요' : cat.photo === 'need' && !img ? '이미지를 먼저 올려 주세요' : cat.textNeed && !text.trim() ? '레터링 문구를 적어 주세요' : '';
   const onPick = async (f) => { try { const el = await loadImage(f); setImg(toDataURL(el, 1024, 0.9)); } catch (e) { toast(e.message || '사진을 읽지 못했어요'); } };
   const make = async () => {
     if (missing) { toast(missing); return; }
@@ -136,7 +136,12 @@ export function MakeForm({ params }) {
             <button className={op.quality === 'std' ? 'on' : ''} onClick={() => setO({ quality: 'std' })}><b>기본</b><small>나노바나나 2 · 1장 약 90원</small></button>
           </div>
           <div className="xs muted" style={{ marginTop: 6 }}>한글 레터링은 ‘글씨 정확하게’가 훨씬 잘 써요.</div>
-        </>) : <div className="mk-engine"><b>무료 AI</b>로 만들어요 · 무료 AI는 한글 글씨를 못 써서 글씨 없이 만들어요. 마이 › 지도·AI 연결에서 구글 제미나이 키를 넣으면 레터링까지 그려요.</div>}
+        </>) : (
+          <div className="mk-engine">
+            <b>구글 제미나이 키를 먼저 연결해 주세요</b><br />이 기기에 키가 아직 없어요. 마이 › 지도·AI 연결 › AI 실사 사진에 키를 넣으면 바로 만들 수 있어요.
+            <button className="btn sm sec" style={{ marginTop: 10, width: '100%' }} onClick={() => nav('/settings')}>키 연결하러 가기</button>
+          </div>
+        )}
         <div className="xs muted" style={{ marginTop: 6 }}>올린 사진은 이미지를 만들 때만 쓰고 따로 저장하지 않아요.</div>
       </div>
       <div className="stickybar mk-bar">

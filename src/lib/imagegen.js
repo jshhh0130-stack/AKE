@@ -239,7 +239,7 @@ export async function makeRealistic({ mode = 'real', image = null, opts = {}, ex
 
 // ── AI로 케이크 만들기 (카테고리 10개 · 케이크잇처럼 '사진 + 문구 + 요청 + 꾸미기 옵션' → 바로 한 장) ──
 // 글씨가 제일 중요해서: ① 프롬프트 맨 앞에 레터링 ② 글자를 한 자씩 풀어 쓰고 줄도 나눠 줌 ③ 마지막에 한 번 더 확인
-// ④ 글씨를 잘 쓰는 모델(나노바나나 Pro → 나노바나나 2)로 부른다. 키가 없으면 무료 FLUX(글씨는 못 씀).
+// ④ 글씨를 잘 쓰는 모델(나노바나나 Pro → 나노바나나 2)로 부른다. 구글 제미나이 키로만 만든다.
 export const MAKE_DEFAULT = { shape: 'round', size: 'h1', cream: 'white', textColor: 'choco', font: 'jua', layout: 'below', toppings: [], candle: false, quality: 'pro' };
 const SIZE_EN = { mini: 'small 12cm (4.5-inch) mini cake about 8cm tall', h1: '15cm (6-inch) cake about 9cm tall', h2: '18cm (7-inch) cake about 10cm tall', h3: '21cm (8-inch) cake about 11cm tall' };
 const SHAPE_EN2 = { round: 'round', heart: 'heart-shaped', square: 'square' };
@@ -314,33 +314,18 @@ export function cakePrompt(cat, { text = '', request = '', hasImage = false, opt
   return out.join('\n');
 }
 export async function makeCakeImage({ cat, image = null, text = '', request = '', opts = {}, onStatus }) {
-  const { geminiKey, hfToken } = getState().settings || {};
+  // AI로 케이크 만들기는 구글 제미나이(나노바나나)로만 만든다 — 키가 없으면 만들지 않고 연결하라고 알려 준다
+  const { geminiKey } = getState().settings || {};
+  if (!geminiKey) throw new Error('구글 제미나이 키를 먼저 연결해 주세요 (마이 › 지도·AI 연결)');
   const o = { ...MAKE_DEFAULT, ...opts };
   const input = image ? await fitImage(image, { max: 1024, q: 0.9 }) : null;
   const meta = { mode: 'make', cat: cat.id, opts: { design: cat.design || 'simple', styles: cat.styles || [], shape: o.shape, size: o.size, cream: o.cream, toppings: o.toppings } };
-  if (geminiKey) {
-    const pro = o.quality === 'pro';
-    onStatus?.(pro ? '나노바나나 Pro가 글씨까지 그리는 중… (20~40초)' : '나노바나나가 케이크를 그리는 중… (10~30초)');
-    const models = pro ? ['gemini-3-pro-image', 'gemini-3.1-flash-image'] : ['gemini-3.1-flash-image', 'gemini-3-pro-image'];
-    const src = await fitImage(await gemini(geminiKey, cakePrompt(cat, { text, request, hasImage: !!input, opts: o }), input, '1:1', models), { max: 900 });
-    return { pic: savePic({ id: 'my-' + uid(), src, at: Date.now(), ...meta, engine: 'gemini' }), engine: 'gemini' };
-  }
-  // 무료 FLUX: 한글은 못 써서 글씨 없이, 고른 옵션은 영어로 넣는다 (문구는 주문서·그림판에서)
-  onStatus?.('무료 AI(FLUX)에 연결하는 중…');
-  const deco = (o.toppings || []).map((x) => TOP_EN2[x]).filter(Boolean).join(', ');
-  const prompt = `Photorealistic photo of a handmade Korean custom ${SHAPE_EN2[o.shape] || 'round'} cake with smooth ${CREAM_EN2[o.cream] || 'ivory'} buttercream and a small piped pearl border, on a cream ceramic plate, beige linen napkin, oak café table, soft window light, 45 degree angle. ${input ? cat.en : cat.enNoImg || cat.en}${deco ? ` Decorations: ${deco}.` : ''}${extraEn(request)}. Real buttercream texture, no text, no letters, no people, no hands, sharp focus.`;
-  try {
-    const url = input
-      ? await hfRun(HF.kontext, [{ url: input, meta: { _type: 'gradio.FileData' } }, prompt, rnd(), false, 2.5, 24], hfToken, (s) => onStatus?.(s.msg))
-      : await hfRun(HF.schnell, [prompt, rnd(), false, 768, 768, 4], hfToken, (s) => onStatus?.(s.msg));
-    onStatus?.('사진을 받아 오는 중…');
-    const src = await urlToDataURL(url);
-    return { pic: savePic({ id: 'my-' + uid(), src, at: Date.now(), ...meta, engine: 'flux' }), engine: 'flux' };
-  } catch (e) {
-    throw new Error(e.quota ? '오늘 무료 AI 사용량이 다 됐어요. 마이 › 지도·AI 연결에서 구글 제미나이 키를 넣으면 바로 만들어요' : `${e.message} · 마이 › 지도·AI 연결에서 구글 제미나이 키를 넣으면 더 빠르고 정확해요`);
-  }
+  const pro = o.quality === 'pro';
+  onStatus?.(pro ? '나노바나나 Pro가 글씨까지 그리는 중… (20~40초)' : '나노바나나가 케이크를 그리는 중… (10~30초)');
+  const models = pro ? ['gemini-3-pro-image', 'gemini-3.1-flash-image'] : ['gemini-3.1-flash-image', 'gemini-3-pro-image'];
+  const src = await fitImage(await gemini(geminiKey, cakePrompt(cat, { text, request, hasImage: !!input, opts: o }), input, '1:1', models), { max: 900 });
+  return { pic: savePic({ id: 'my-' + uid(), src, at: Date.now(), ...meta, engine: 'gemini' }), engine: 'gemini' };
 }
-
 // 지금 쓸 수 있는 엔진 설명
 export function engineInfo(settings = getState().settings || {}) {
   if (settings.geminiKey) return { name: '구글 제미나이', sub: '키 연결됨 · 가장 정확해요' };
