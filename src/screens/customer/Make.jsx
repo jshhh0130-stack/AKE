@@ -9,7 +9,7 @@ import { Header, PhotoPick, Portal, CakeView, Empty, toast } from '../../compone
 import Sketch from '../../components/Sketch.jsx';
 import { useApp, setState } from '../../lib/state.js';
 import { nav } from '../../lib/router.js';
-import { makeCakeImage, saveEdited, MAKE_DEFAULT } from '../../lib/imagegen.js';
+import { makeCakeImage, saveEdited, MAKE_DEFAULT, LAYOUTS, OCCASIONS } from '../../lib/imagegen.js';
 import { SHAPES, SIZES, CREAMS, TEXT_COLORS, TOPPINGS, creamOf, sizeOf, optName, textColorOf } from '../../data/catalog.js';
 import { loadImage, toDataURL } from '../../lib/image.js';
 import { getStores, rankStores } from '../../lib/stores.js';
@@ -20,7 +20,6 @@ const BASE = import.meta.env.BASE_URL;
 const cardImg = (c) => (c.img ? `${BASE}gallery/s/${c.img}.webp` : c.ex ? `${BASE}examples/${c.ex}.jpeg` : null);
 const TEXT_MAX = 28, REQ_MAX = 100;
 const FONT_OPTS = [['jua', '동글동글 귀엽게'], ['pen', '손글씨'], ['gaegu', '삐뚤빼뚤'], ['gowun', '단정하게']];
-const LAYOUTS = [['below', '그림 아래'], ['center', '가운데 크게'], ['arc', '테두리 따라 둥글게']];
 
 function CatImg({ c }) {
   const [bad, setBad] = useState(false);
@@ -114,6 +113,10 @@ export function MakeForm({ params }) {
 
         <div className="mk-lbl">꾸미기 옵션 <span>(고른 대로 그려요)</span></div>
         <div className="mk-opts">
+          <div className="mk-olbl">어떤 날이에요?</div>
+          <div className="mk-chips">{OCCASIONS.map(([id, nm]) => <button key={id || 'none'} className={op.occasion === id ? 'on' : ''} onClick={() => setO({ occasion: id })}>{nm}</button>)}</div>
+          <div className="mk-olbl">사진 느낌</div>
+          <div className="mk-chips"><button className={op.photo === 'top' ? 'on' : ''} onClick={() => setO({ photo: 'top' })}>위에서 찍은 도안 사진</button><button className={op.photo === 'cafe' ? 'on' : ''} onClick={() => setO({ photo: 'cafe' })}>카페 테이블 · 비스듬히</button></div>
           {cat.id !== 'shape' && cat.id !== 'remake' && (<>
             <div className="mk-olbl">모양 · 크기</div>
             <div className="mk-chips">{SHAPES.map((s) => <button key={s.id} className={op.shape === s.id ? 'on' : ''} onClick={() => setO({ shape: s.id })}>{s.name}</button>)}<span className="sep" />{SIZES.map((z) => <button key={z.id} className={op.size === z.id ? 'on' : ''} onClick={() => setO({ size: z.id })}>{z.name}</button>)}</div>
