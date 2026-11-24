@@ -35,10 +35,6 @@ export function Splash({ out, onSkip }) {
           <text x="195" y="660" fill="#6b5d54" letterSpacing="2">iAKE</text>
           <text x="195" y="660" filter="url(#sp-wob)" fill="none" stroke="#4a3d36" strokeWidth="2.6" strokeLinejoin="round" letterSpacing="2">iAKE</text>
         </g>
-        {/* 아래 '로딩중입니다...' — 글자마다 차례로 위아래로 출렁 */}
-        <text x="195" y="818" textAnchor="middle" fill="#6b5d54" style={{ fontFamily: 'Gaegu, sans-serif', fontWeight: 700, fontSize: 20 }}>
-          {LOADING.map((c, i) => <tspan key={i} dy={3.2 * (Math.sin(T * 6 - i * 0.7) - (i ? Math.sin(T * 6 - (i - 1) * 0.7) : 0))}>{c}</tspan>)}
-        </text>
         <g filter="url(#sp-wob)" stroke="#3a2f2a" strokeWidth="1.4" strokeLinejoin="round">
           {SP_STARS.map((s, k) => <g key={k} transform={`translate(${s.x} ${s.y}) rotate(${s.r}) scale(${s.s})`}><use href="#sp-star" fill={s.c} /></g>)}
         </g>
@@ -48,6 +44,8 @@ export function Splash({ out, onSkip }) {
           </g></g>
         ))}
       </svg>
+      {/* '로딩중입니다...' — 그림이 화면 비율 때문에 잘려도 항상 보이게 그림 밖(화면 맨 아래)에 · 글자마다 차례로 위아래로 출렁 */}
+      <div className="sp-loading">{LOADING.map((c, i) => <span key={i} style={{ transform: `translateY(${(-4 * Math.sin(T * 6 - i * 0.7)).toFixed(2)}px)` }}>{c}</span>)}</div>
     </div>
   );
 }

@@ -61,11 +61,17 @@ export default function Coach({ steps, onDone, strict = false }) {
     return () => { clearTimeout(t); clearTimeout(again); window.removeEventListener('resize', onR); };
   }, [i]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (tipRef.current) setTipH(tipRef.current.offsetHeight); });
+  // step.auto(ms): 칸을 찾은 뒤 그 시간이 지나면 저절로 다음으로 (한 단계 안에서 화면이 슥 넘어가는 느낌)
+  useEffect(() => { const a = steps[i]?.auto; if (!a || !box) return undefined; const t = setTimeout(() => setI((x) => (x === i ? x + 1 : x)), a); return () => clearTimeout(t); }, [i, !!box]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const last = i >= steps.length - 1;
   const next = () => (last ? onDone?.() : setI(i + 1));
   const s = steps[i];
   if (!s) return null;
+  // step.n: 화면에 보이는 단계 번호 (여러 화면이 한 단계를 나눠 쓸 때) — 없으면 순서대로
+  const num = (k) => steps[k]?.n ?? k + 1;
+  const total = num(steps.length - 1);
+  const prevStart = () => { let g = i; while (g > 0 && num(g - 1) === num(i)) g--; let k = g - 1; while (k > 0 && num(k - 1) === num(k)) k--; return Math.max(0, k); }; // '이전'은 앞 단계의 첫 화면으로
   const W = size.w, H = size.h;
   // 흐린 막 + 네모 구멍 (구멍 모서리는 둥글게)
   let clip;
@@ -84,14 +90,14 @@ export default function Coach({ steps, onDone, strict = false }) {
       {box && <div className="ring" style={{ left: box.x, top: box.y, width: box.w, height: box.h, borderRadius: box.r }} />}
       <div className="tip" ref={tipRef} style={{ top: tipTop }}>
         {box && <span className="arrow" style={{ left: arrowX, [below ? 'top' : 'bottom']: -6 }} />}
-        <div className="stp"><span>{i + 1} / {steps.length}</span><span className="dots">{steps.map((_, k) => <i key={k} className={k === i ? 'on' : ''} />)}</span></div>
+        <div className="stp"><span>{num(i)} / {total}</span><span className="dots">{Array.from({ length: total }, (_, k) => <i key={k} className={k + 1 === num(i) ? 'on' : ''} />)}</span></div>
         <h4>{s.title}</h4>
         <p>{s.body}</p>
         <div className="acts">
           <button className="skip" onClick={() => onDone?.()}>건너뛰기</button>
           <div className="row" style={{ gap: 4 }}>
-            {i > 0 && <button className="back" onClick={() => setI(i - 1)}>이전</button>}
-            <button className="next" onClick={next}>{last ? '시작하기' : '다음'}</button>
+            {i > 0 && <button className="back" onClick={() => setI(prevStart())}>이전</button>}
+            <button className="next" onClick={next}>{last ? (s.doneLabel || '시작하기') : '다음'}</button>
           </div>
         </div>
       </div>
