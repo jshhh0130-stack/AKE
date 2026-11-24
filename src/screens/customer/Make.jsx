@@ -17,7 +17,7 @@ import { MAKE_CATS, makeCatOf } from '../../data/makeCats.js';
 import { StoreCard, usePlaces } from './Home.jsx';
 
 const BASE = import.meta.env.BASE_URL;
-const cardImg = (c) => (c.img ? `${BASE}gallery/s/${c.img}.webp` : c.ex ? `${BASE}examples/${c.ex}.jpeg` : null);
+const cardImg = (c) => (c.src ? `${BASE}${c.src}` : c.img ? `${BASE}gallery/s/${c.img}.webp` : c.ex ? `${BASE}examples/${c.ex}.jpeg` : null);
 const TEXT_MAX = 28, REQ_MAX = 100;
 const FONT_OPTS = [['jua', '동글동글 귀엽게'], ['pen', '손글씨'], ['gaegu', '삐뚤빼뚤'], ['gowun', '단정하게']];
 

@@ -3,10 +3,10 @@
 // en: 사진이 있을 때 TOP DESIGN 영어 문장(아주 구체적으로) · enNoImg: 사진 없이 만들 때
 // cake: 케이크 몸통 설명 (없으면 15cm 원형 2단 · 아이보리 버터크림 · 진주 테두리가 기본)
 // styles: 만든 케이크로 가게를 찾을 때 쓰는 가게 스타일 · design: 주문서에 넘길 디자인
-// img: 카드 예시 (관심 탭과 같은 AI 예시 사진 · public/gallery/s) · ex: 예시 사진(public/examples)
+// src: 카드 예시 — 우리 앱(나노바나나 Pro)으로 실제 뽑은 사진(public/make-examples) · img: 관심 탭 AI 예시 사진(public/gallery/s) · ex: 예시 사진(public/examples)
 export const MAKE_CATS = [
   {
-    id: 'letter', name: '문구', sub: '레터링 케이크로 마음 표현하기', badge: '레터링 문구', photo: 'none', img: 'ko-pink-heart-love',
+    id: 'letter', name: '문구', sub: '레터링 케이크로 마음 표현하기', badge: '레터링 문구', photo: 'none', img: 'ko-pink-heart-love', src: 'make-examples/letter.jpg',
     textPh: '예: 생일 축하해, 사랑해', textNeed: true, reqPh: '예: 핑크 크림, 하트 테두리, 글씨는 진한 빨강',
     en: 'a minimal Korean lettering cake — the top is smooth and clean and the lettering itself is the main design, framed by a delicate vintage piped buttercream border, with only a few tiny piped hearts or dots as accents.',
     styles: ['lettering'], design: 'simple',
@@ -30,7 +30,7 @@ export const MAKE_CATS = [
     styles: ['character'], design: 'character',
   },
   {
-    id: 'character', name: '캐릭터 느낌', sub: '좋아하는 캐릭터 느낌의 오리지널 그림', badge: '이미지 1장 (선택)', photo: 'opt', img: 'c-bear-sky',
+    id: 'character', name: '캐릭터 느낌', sub: '좋아하는 캐릭터 느낌의 오리지널 그림', badge: '이미지 1장 (선택)', photo: 'opt', img: 'c-bear-sky', src: 'make-examples/character.jpg',
     photoHint: '좋아하는 캐릭터 사진을 올리면 비슷한 느낌으로 그려요. 똑같이 베끼지는 않아요.', textPh: '예: 신조 사사게요', reqPh: '예: 동그란 하얀 강아지, 큰 눈',
     en: 'an ORIGINAL cute character inspired by the mood, colors and silhouette of the attached image (not an exact copy of any copyrighted or brand character), hand-piped in buttercream with thick dark outlines and flat colors, centered on the upper two-thirds of the top.',
     enNoImg: 'an original cute round character described in the customer request (not a copy of any copyrighted or brand character), hand-piped in buttercream with thick dark outlines and flat pastel colors, centered on the upper two-thirds of the top.',
@@ -49,7 +49,7 @@ export const MAKE_CATS = [
     styles: ['photo'], design: 'photo',
   },
   {
-    id: 'flower', name: '꽃 케이크', sub: '버터크림·앙금 꽃으로 꾸미기', badge: '사진 선택', photo: 'opt', img: 'f-rose-crescent',
+    id: 'flower', name: '꽃 케이크', sub: '버터크림·앙금 꽃으로 꾸미기', badge: '사진 선택', photo: 'opt', img: 'f-rose-crescent', src: 'make-examples/flower.jpg',
     photoHint: '원하는 꽃 사진이 있으면 올려 주세요.', textPh: '예: 감사합니다', reqPh: '예: 분홍 장미와 데이지, 한쪽에 초승달 모양',
     en: 'lush buttercream flowers matching the flower types and colors in the attached photo, piped with realistic layered petals and sage-green leaves, arranged in a crescent along one side of the top while the rest stays smooth.',
     enNoImg: 'lush buttercream flowers — roses, small peonies and tiny daisies in soft pastel pink, peach and ivory with sage-green leaves — piped with realistic layered petals and arranged in a crescent along one side of the top while the rest stays smooth.',
