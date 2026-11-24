@@ -18,7 +18,7 @@ import { StoreCard, usePlaces } from './Home.jsx';
 
 const BASE = import.meta.env.BASE_URL;
 const cardImg = (c) => (c.src ? `${BASE}${c.src}` : c.img ? `${BASE}gallery/s/${c.img}.webp` : c.ex ? `${BASE}examples/${c.ex}.jpeg` : null);
-const TEXT_MAX = 28, REQ_MAX = 100;
+const TEXT_MAX = 28, REQ_MAX = 100, PLATE_MAX = 24;
 const FONT_OPTS = [['jua', '동글동글 귀엽게'], ['pen', '손글씨'], ['gaegu', '삐뚤빼뚤'], ['gowun', '단정하게']];
 
 function CatImg({ c }) {
@@ -111,6 +111,22 @@ export function MakeForm({ params }) {
           </div>
         )}
 
+        {/* 판 문구: 케이크 아래 흰 판에 쓰는 글씨 (예: 우리 예진공주의 축생일 from. 친구들) */}
+        <div className="mk-lbl row"><span className="grow">판 문구 <span>(선택 · 케이크 아래 판에 써요)</span></span><small>{op.plateText.length}/{PLATE_MAX}</small></div>
+        <input className="inp mk-inp" value={op.plateText} maxLength={PLATE_MAX} onChange={(e) => setO({ plateText: e.target.value })} placeholder="예: 우리 예진공주의 생일 from. 친구들" />
+        {op.plateText.trim() && (
+          <div className="mk-opts">
+            <div className="mk-olbl">판 문구 자리</div>
+            <div className="mk-chips">
+              <button className={op.plateLayout === 'arc' ? 'on' : ''} onClick={() => setO({ plateLayout: 'arc' })}>케이크 따라 둥글게</button>
+              <button className={op.plateLayout === 'line' ? 'on' : ''} onClick={() => setO({ plateLayout: 'line' })}>판 아래 한 줄</button>
+              <span className="sep" />
+              <button className={op.plateHearts ? 'on' : ''} onClick={() => setO({ plateHearts: !op.plateHearts })}>양 끝 하트 ♥</button>
+            </div>
+            <div className="mk-hint" style={{ marginTop: 8 }}>판 문구는 주문서에 ‘판 문구’로 들어가요 (보통 +1,000원).</div>
+          </div>
+        )}
+
         <div className="mk-lbl">꾸미기 옵션 <span>(고른 대로 그려요)</span></div>
         <div className="mk-opts">
           <div className="mk-olbl">어떤 날이에요?</div>
@@ -175,7 +191,8 @@ export function MakeResult() {
           <div><span>종류</span><b>{cat?.name || '케이크'}</b></div>
           {d.opts && <div><span>케이크</span><b>{optName(SHAPES, d.opts.shape)} · {sizeOf(d.opts.size).name} · {creamOf(d.opts.cream).name} 크림</b></div>}
           {d.text && <div><span>레터링</span><b>“{d.text}”{d.opts ? ` · ${textColorOf(d.opts.textColor).name}` : ''}</b></div>}
-          {d.opts && (d.opts.toppings?.length > 0 || d.opts.candle) && <div><span>장식</span><b>{[...d.opts.toppings.map((t) => optName(TOPPINGS, t)), d.opts.candle && '파티 초'].filter(Boolean).join(', ')}</b></div>}
+          {d.opts?.plateText?.trim() && <div><span>판 문구</span><b>“{d.opts.plateText.trim()}”</b></div>}
+          {d.opts && (d.opts.toppings?.length > 0 || d.opts.candle) &&<div><span>장식</span><b>{[...d.opts.toppings.map((t) => optName(TOPPINGS, t)), d.opts.candle && '파티 초'].filter(Boolean).join(', ')}</b></div>}
           {d.request && <div><span>요청</span><b>{d.request}</b></div>}
         </div>
         <button className="linkbtn" style={{ display: 'flex', margin: '10px auto 0' }} onClick={() => nav(`/c/make/${d.cat}`, { replace: true })}><Icon n="refresh" size="sm" />다시 만들기</button>

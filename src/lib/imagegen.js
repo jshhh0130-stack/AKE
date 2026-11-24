@@ -245,7 +245,7 @@ export async function makeRealistic({ mode = 'real', image = null, opts = {}, ex
 // ── AI로 케이크 만들기 (카테고리 10개 · 케이크잇처럼 '사진 + 문구 + 요청 + 꾸미기 옵션' → 한 번에 한 장) ──
 // 글씨까지 들어간 사진을 한 번에 만든다 (구글 제미나이 키로만 · 글씨를 제일 잘 쓰는 나노바나나 Pro 먼저).
 // 글씨를 놓치지 않게: 첫 문장에 글귀를 넣고, 글귀를 '케이크 디자인의 일부'로 설명하고, 짧고 분명하게, 마지막에 한 번 더.
-export const MAKE_DEFAULT = { shape: 'round', size: 'h1', cream: 'white', textColor: 'choco', font: 'jua', layout: 'below', toppings: [], candle: false, quality: 'pro', photo: 'top', occasion: '' };
+export const MAKE_DEFAULT = { shape: 'round', size: 'h1', cream: 'white', textColor: 'choco', font: 'jua', layout: 'below', toppings: [], candle: false, quality: 'pro', photo: 'top', occasion: '', plateText: '', plateLayout: 'arc', plateHearts: true };
 export const LAYOUTS = [['below', '그림 아래'], ['above', '그림 위'], ['bubble', '말풍선 안'], ['arcbottom', '아래 테두리 따라'], ['arc', '테두리 따라 둥글게'], ['center', '가운데 크게']];
 // 어떤 날이에요? (케이크잇 도안 분류처럼) — 날에 맞는 작은 장식을 더한다
 export const OCCASIONS = [['', '그냥'], ['birthday', '생일'], ['couple', '커플·기념일'], ['thanks', '감사·스승의날'], ['parents', '어버이날'], ['congrats', '축하·합격'], ['xmas', '크리스마스']];
@@ -304,8 +304,10 @@ export function cakePrompt(cat, { text = '', request = '', hasImage = false, opt
   const lines = t && !['arc', 'arcbottom'].includes(layout) ? splitLines(t) : t ? [t] : []; // 테두리 따라 쓰는 글씨는 한 줄
   const out = [];
   // 첫 문장: 글귀가 들어간 레터링 케이크 사진
+  const pt0 = (o.plateText || '').trim();
   out.push(t
-    ? `A photorealistic photo of a Korean custom lettering cake (레터링 케이크) with the Korean words "${t}" hand-piped on top in ${ink} buttercream.`
+    ? `A photorealistic photo of a Korean custom lettering cake (레터링 케이크) with the Korean words "${t}" hand-piped on top in ${ink} buttercream${pt0 ? `, and the words "${pt0}" piped on the white cake board under it` : ''}.`
+    : pt0 ? `A photorealistic photo of a Korean custom cake on a white square cake board, with the Korean words "${pt0}" hand-piped on the board (no writing on the cake top).`
     : 'A photorealistic photo of a Korean custom cake from a small boutique bakery, with no writing on it.');
   // 같이 보낸 사진들의 역할
   if (refCount) {
@@ -327,11 +329,16 @@ export function cakePrompt(cat, { text = '', request = '', hasImage = false, opt
   const deco = [...(o.toppings || []).map((x) => TOP_EN2[x]).filter(Boolean), o.candle && 'two thin pastel birthday candles at the back of the top (unlit)'].filter(Boolean);
   if (OCC_EN[o.occasion]) out.push(`Occasion: ${OCC_EN[o.occasion]}.`);
   out.push(deco.length ? `Decorations (only these): ${deco.join('; ')} — kept away from the lettering and the drawing.` : 'No other toppings.');
+  // 판 문구: 케이크 아래 흰 사각 판에 짜는 작은 글씨 (예: "우리 예진공주의 축생일 from. 친구들")
+  const pt = (o.plateText || '').trim();
+  if (pt) {
+    out.push(`Cake board writing (판 문구): the cake sits on a plain white square cake board with a wide empty margin, and on the BOARD itself (not on the cake) the Korean words "${pt}" are hand-piped in thin glossy ${ink} buttercream in small cute handwriting — ${o.plateLayout === 'line' ? 'in one straight line on the board below the cake' : 'curving along the board around the bottom of the round cake, following its shape'}${o.plateHearts !== false ? ', with a tiny piped red heart at each end' : ''}. The Hangul characters on the board are exactly: ${spellOut(pt)}.`);
+  }
   // 손님 요청
   if (rq) out.push(`Customer request (Korean, follow it): "${rq}"${extraEn(rq) ? ` (${extraEn(rq).replace(/^, with /, '')})` : ''}.`);
-  // 사진
-  out.push(`${PHOTO_EN[o.photo] || PHOTO_EN.top} No people, no hands, no utensils, no packaging, no watermark or logo, no cartoon or 3D-render look.`);
-  if (t) out.push(`Important: the Korean text "${t}" must appear on the cake, spelled exactly, every character clear. Do not add any other words.`);
+  // 사진 (판 문구가 있으면 판이 보이게 항상 흰 사각 판 위에서)
+  out.push(`${pt ? PHOTO_EN.top : PHOTO_EN[o.photo] || PHOTO_EN.top} No people, no hands, no utensils, no packaging, no watermark or logo, no cartoon or 3D-render look.`);
+  if (t || pt) out.push(`Important: ${[t && `the Korean text "${t}" must appear on the cake`, pt && `the Korean text "${pt}" must appear on the cake board`].filter(Boolean).join(', and ')} — spelled exactly, every character clear. Do not add any other words.`);
   return out.join('\n');
 }
 

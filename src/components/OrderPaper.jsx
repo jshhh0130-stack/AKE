@@ -15,6 +15,7 @@ export default function OrderPaper({ order, compact = false }) {
     ['레터링', x.noText ? '문구 없음' : `“${x.text}”`],
     !compact && !x.noText && ['글씨', `${fontOf(x.font).name}체 · ${textColorOf(x.textColor).name}`],
     !compact && deco.length > 0 && ['장식·추가', deco.join(', ')],
+    x.plateText && ['판 문구', `“${x.plateText}”`],
     ['픽업', `${mdDate(x.date)} ${x.time}`],
     x.request && ['요청사항', x.request],
     x.allergy && ['알레르기', x.allergy],

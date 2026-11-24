@@ -52,7 +52,7 @@ function initialOrder(store, from, photo, ai) {
     Object.assign(o, { refPhoto: ai.src, text: ai.text || '', request: ai.request || '', design: makeCatOf(ai.cat)?.design || 'simple', pickName: 'AI로 만든 케이크', _ai: true });
     // AI 만들 때 고른 옵션(모양·크기·크림·글씨·장식)도 주문서에 그대로 → 예상 금액에도 반영
     const ao = ai.opts;
-    if (ao) Object.assign(o, { shape: ao.shape || o.shape, size: sizes.includes(ao.size) ? ao.size : o.size, cream: ao.cream || o.cream, textColor: ao.textColor || o.textColor, font: ['jua', 'pen', 'gaegu', 'gowun'].includes(ao.font) ? ao.font : o.font, toppings: ao.toppings || [], extras: ao.candle ? ['candle'] : [] });
+    if (ao) Object.assign(o, { shape: ao.shape || o.shape, size: sizes.includes(ao.size) ? ao.size : o.size, cream: ao.cream || o.cream, textColor: ao.textColor || o.textColor, font: ['jua', 'pen', 'gaegu', 'gowun'].includes(ao.font) ? ao.font : o.font, toppings: ao.toppings || [], extras: [ao.candle && 'candle', ao.plateText?.trim() && 'plate'].filter(Boolean), plateText: (ao.plateText || '').trim() });
   } else if (from) Object.assign(o, from, { date: null, time: null, pickName: from.pickName || `지난 주문 · ${designOf(from.design).name}` });
   else if (photo && Date.now() - (photo.at || 0) < 6 * 3600e3) {
     Object.assign(o, { design: photo.design || o.design, shape: photo.shape || o.shape, cream: photo.cream || o.cream, refPhoto: photo.thumb || null }, photoToOptions(photo.ai));
