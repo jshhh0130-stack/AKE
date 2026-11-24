@@ -17,6 +17,7 @@ import { photoToOptions, aiAnalyzePhoto } from '../../lib/ai.js';
 import { loadImage, toDataURL, analyzeImage } from '../../lib/image.js';
 import { cakeSVG } from '../../lib/cake.js';
 import { storeDesigns, designLabel } from '../../lib/designs.js';
+import { makeCatOf } from '../../data/makeCats.js';
 import { won, today, addDays, ymd, DOW, textLen } from '../../lib/util.js';
 import { SIZES, FLAVORS, RICE_FLAVORS, CREAMS, CREAM_ADD, TEXT_COLORS, FONTS, TOPPINGS, EXTRAS, QUICK_TEXTS, SIZE_MULT, sizeOf, optName, designOf, textColorOf } from '../../data/catalog.js';
 
@@ -39,7 +40,7 @@ function addOf(store, kind, id, base, size) {
 }
 const plus = (a, b) => (b === 0 ? '' : a === b ? ` +${a % 1000 ? (a / 1000).toFixed(1) : a / 1000}천` : ` +${Math.round(a / 1000)}~${Math.round(b / 1000)}천`);
 
-function initialOrder(store, from, photo) {
+function initialOrder(store, from, photo, ai) {
   const sizes = store.menu ? SIZES.filter((z) => store.menu.sizes?.[z.id] != null).map((z) => z.id) : SIZES.map((z) => z.id);
   const rice = store.styles?.includes('rice') && !store.styles?.includes('lettering');
   const o = {
@@ -47,7 +48,9 @@ function initialOrder(store, from, photo) {
     text: '', noText: false, font: 'jua', textColor: 'berry', toppings: [], extras: [], date: null, time: null,
     request: '', allergy: '', refPhoto: null, plateText: '', variant: 0, pickId: null, pickName: null,
   };
-  if (from) Object.assign(o, from, { date: null, time: null, pickName: from.pickName || `지난 주문 · ${designOf(from.design).name}` });
+  if (ai) { // AI로 만든 케이크: 그 이미지가 주문서 가운데에 · 문구·요청도 그대로
+    Object.assign(o, { refPhoto: ai.src, text: ai.text || '', request: ai.request || '', design: makeCatOf(ai.cat)?.design || 'simple', pickName: 'AI로 만든 케이크', _ai: true });
+  } else if (from) Object.assign(o, from, { date: null, time: null, pickName: from.pickName || `지난 주문 · ${designOf(from.design).name}` });
   else if (photo && Date.now() - (photo.at || 0) < 6 * 3600e3) {
     Object.assign(o, { design: photo.design || o.design, shape: photo.shape || o.shape, cream: photo.cream || o.cream, refPhoto: photo.thumb || null }, photoToOptions(photo.ai));
     o._fromPhoto = true;
@@ -67,14 +70,16 @@ export default function OrderForm({ params, path }) {
   const from = useMemo(() => { try { return q.get('from') ? JSON.parse(q.get('from')) : null; } catch { return null; } }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const pickQ = q.get('pick');
   const photoQ = st.find?.photo ? { ...st.find.photo, at: st.find.at } : null;
+  const aiQ = q.get('ai') && st.aiDraft ? st.aiDraft : null;
   const designs = useMemo(() => storeDesigns(store), [store]);
   const [o, setO] = useState(() => {
     if (!store) return null;
-    const base = initialOrder(store, from, photoQ);
+    const base = initialOrder(store, from, photoQ, aiQ);
     const d = pickQ && storeDesigns(store).find((x) => x.id === pickQ);
     return d ? applyPick(base, d) : base;
   });
-  const [step, setStep] = useState(() => (from || (pickQ && o?.pickId) ? 2 : 1));
+  // 처음에 사진을 넣고(사진으로 찾기 · AI로 만들기) 이 가게에 왔으면 디자인 고르기는 건너뛰고 바로 2단계
+  const [step, setStep] = useState(() => (from || o?._ai || o?._fromPhoto || (pickQ && o?.pickId) ? 2 : 1));
   const [more, setMore] = useState(false);
   const [studio, setStudio] = useState(null); // AI 실사 창 { inputs }
   const [sketchSrc, setSketchSrc] = useState(null); // 그림판 바탕
@@ -85,7 +90,7 @@ export default function OrderForm({ params, path }) {
   const [to, setTo] = useState('');
   const [gmsg, setGmsg] = useState('');
   const scroller = useRef(null);
-  useEffect(() => { if (o?._fromPhoto) toast('내 사진을 첨부했어요. 이 사진으로 주문하거나 가게 디자인을 골라 주세요'); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (o?._fromPhoto) toast('찾을 때 넣은 사진을 주문서에 넣었어요. 가게 디자인으로 바꾸려면 ‘바꾸기’를 눌러 주세요', 3500); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { scroller.current?.scrollTo({ top: 0 }); }, [step]);
   const est = useMemo(() => (store && o ? estimate(store, o) : null), [store, o]);
   if (!store || !o) return <div className="screen"><Header title="주문서" fallback="/c" /><Empty icon="search">가게를 찾을 수 없어요.</Empty></div>;
@@ -151,14 +156,14 @@ export default function OrderForm({ params, path }) {
   const goNeed = () => document.getElementById(need[0][2])?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   const send = () => {
     setState({ me: { name: name.trim(), phone: phone.trim() } });
-    const { _fromPhoto, ...oo } = o; // eslint-disable-line no-unused-vars
+    const { _fromPhoto, _ai, ...oo } = o; // eslint-disable-line no-unused-vars
     const order = createOrder(store, oo, { name: name.trim(), phone: phone.trim() }, gift ? { to: to.trim(), msg: gmsg.trim(), from: name.trim() } : null);
     nav(`/done/${order.id}`, { replace: true });
   };
 
   return (
     <div className="screen ordf">
-      <Header title={`${store.name} 주문서`} fallback={`/store/${store.id}`} onBack={step === 2 ? () => setStep(1) : undefined} right={<span className="steptag">{step}/2</span>} />
+      <Header title={`${store.name} 주문서`} fallback={`/store/${store.id}`} onBack={step === 2 && !o._ai ? () => setStep(1) : undefined} right={<span className="steptag">{step}/2</span>} />
       {step === 1 ? (
         <div className="scroll pad" ref={scroller} style={{ paddingBottom: 110 }}>
           <h2 className="otitle">어떤 케이크로 할까요?</h2>
@@ -194,6 +199,9 @@ export default function OrderForm({ params, path }) {
         </div>
       ) : (
         <div className="scroll pad" ref={scroller} style={{ paddingBottom: 110 }}>
+          {o._ai ? (
+            <div className="aihero"><img src={o.refPhoto} alt="AI로 만든 케이크" /><small>AI로 만든 케이크 · 이 이미지가 사장님께 함께 가요</small></div>
+          ) : (
           <div className="picked">
             <div className="pth">{pickSrc ? <img src={pickSrc} alt="" /> : <CakeView o={view} />}</div>
             <div className="grow" style={{ minWidth: 0 }}>
@@ -203,6 +211,7 @@ export default function OrderForm({ params, path }) {
             </div>
             <button className="btn xs line" onClick={() => setStep(1)}>바꾸기</button>
           </div>
+          )}
 
           <div className="flbl">사이즈</div>
           <div className="g4">
@@ -233,7 +242,7 @@ export default function OrderForm({ params, path }) {
 
           <div className="flbl" id="f-req">요청사항 <span className="xs muted" style={{ fontWeight: 500 }}>(선택)</span></div>
           <textarea className="inp" maxLength={200} value={o.request} onChange={(e) => set({ request: e.target.value })} placeholder="예) 글씨는 조금 크게, 하트는 왼쪽 위에 작게" />
-          {(form.refPhoto !== false || designOf(o.design).needPhoto) && (
+          {!o._ai && (form.refPhoto !== false || designOf(o.design).needPhoto) && (
             <div className="row" style={{ marginTop: 8 }}>
               {o.refPhoto && <img src={o.refPhoto} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover' }} />}
               <PhotoPick onPick={async (f) => { try { const el = await loadImage(f); set({ refPhoto: toDataURL(el, 480, 0.82, true) }); } catch { toast('사진을 읽지 못했어요'); } }} className="btn line sm"><Icon n="image" size="sm" />{o.refPhoto ? '사진 바꾸기' : designOf(o.design).needPhoto ? '인쇄할 사진 첨부 (필수)' : '참고 사진 첨부'}</PhotoPick>

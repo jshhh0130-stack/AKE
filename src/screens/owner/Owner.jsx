@@ -12,6 +12,7 @@ import { won, range, fmtDate, mdDate, relDay, ymd, today, addDays, parseYmd, DOW
 import { SIZES, DESIGNS, sizeOf, designOf } from '../../data/catalog.js';
 import { readiness } from './Editors.jsx';
 import OrderThumb from '../../components/OrderThumb.jsx';
+import OrderPaper from '../../components/OrderPaper.jsx';
 
 const amount = (o) => o.finalPrice ?? o.est?.lo ?? 0;
 // 시간대별 인사말 (11/23 UI): 아침 05~11시 · 낮 11~17시 · 저녁·밤 17~05시. 한 시간 동안은 같은 말을 보여 준다.
@@ -90,6 +91,20 @@ export function OCard({ o, quick = true, list = false }) {
       )}
     </div>
   );
+}// 사장님 첫 화면 새 요청: 손님이 보낸 주문서를 종이 한 장처럼 (케이크 사진 포함) · 누르면 대화방에서 채팅
+function ReqSheet({ o }) {
+  const decline = () => { if (confirm('이 주문을 거절할까요?')) { act(o.id, 'o', 'decline'); toast('주문을 거절했어요'); } };
+  const approve = () => { act(o.id, 'o', 'approve', { price: o.est.lo }); toast(`주문을 받았어요 · 손님에게 '주문되었습니다'를 보냈어요`); nav(`/o/order/${o.id}`); };
+  return (
+    <div className="reqsheet" role="button" onClick={() => nav(`/o/order/${o.id}`)}>
+      <OrderPaper order={o} compact />
+      <div className="acts3" onClick={(e) => e.stopPropagation()}>
+        <button className="btn sm ghost" onClick={decline}>거절</button>
+        <button className="btn sm line" onClick={() => nav(`/o/order/${o.id}`)}><Icon n="chat" size="sm" />채팅</button>
+        <button className="btn sm ok2" onClick={approve}>주문 받기 · {man(o.est.lo)}</button>
+      </div>
+    </div>
+  );
 }// 오늘 픽업 한 줄: [시간] 이름 · 크기 / “문구” [다음 단계]
 function PickRow({ o }) {
   const n = nextStatus(o.status);
@@ -133,7 +148,7 @@ export function OwnerHome() {
         <div className="pad">
           {samples && <div className="note row" style={{ marginBottom: 12 }}><span className="grow">예시 주문이 들어 있어요. 실제로 쓰기 전에 지워 주세요.</span><button className="btn xs line" onClick={() => { removeSampleOrders(); toast('예시 주문을 지웠어요'); }}>예시 지우기</button></div>}
           <div className="sec-t"><h3><i className="num">1</i>확인이 필요한 주문</h3><button className="more" onClick={() => nav('/o/orders', { replace: true })}>전체 ›</button></div>
-          {reqs.length === 0 ? <div className="card pad small muted">새로 온 요청이 없어요.</div> : reqs.map((o) => <OCard key={o.id} o={o} />)}
+          {reqs.length === 0 ? <div className="card pad small muted">새로 온 요청이 없어요.</div> : reqs.map((o) => <ReqSheet key={o.id} o={o} />)}
           {talk.length > 0 && (<><div className="sec-t"><h3><i className="num">2</i>새 소식 (자동 확정 · 손님 메시지)</h3></div>{talk.map((o) => <OCard key={o.id} o={o} quick={false} />)}</>)}
           <div className="sec-t"><h3><i className="num">{talk.length ? 3 : 2}</i>오늘 픽업 · {fmtDate(t)}</h3></div>
           {todays.length === 0 ? <div className="card pad small muted">오늘 픽업 예정이 없어요.</div> : todays.map((o) => <PickRow key={o.id} o={o} />)}

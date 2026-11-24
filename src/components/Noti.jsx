@@ -1,7 +1,7 @@
 // 알림 종 + 알림함 + 알림 설정
 import { useState } from 'react';
 import Icon from './Icon.jsx';
-import { Sheet, Toggle, toast } from './ui.jsx';
+import { Sheet, Toggle, toast, Portal } from './ui.jsx';
 import { useApp, setState } from '../lib/state.js';
 import { unreadNotis, readAll, askPermission } from '../lib/notify.js';
 import { navAfterSheet } from '../lib/router.js';
@@ -20,11 +20,12 @@ export function NotiBell({ role, dark = false }) {
         <Icon n="bell" />
         {n > 0 && <span className="badge">{n > 9 ? '9+' : n}</span>}
       </button>
-      <Sheet open={open} onClose={() => { setOpen(false); readAll(role); }} title="알림">
+      {/* 지도 위(검색줄 안)에서 열어도 지도 뒤로 숨지 않게 화면 맨 위에 띄운다 */}
+      <Portal><Sheet open={open} onClose={() => { setOpen(false); readAll(role); }} title="알림">
         {list.length === 0 && <div className="empty"><div className="big"><Icon n="bell" /></div>아직 알림이 없어요.<br />주문 소식과 메시지가 오면 여기에 모여요.</div>}
         {list.map((x) => (
-          <button key={x.id} className="list-row" onClick={() => { setOpen(false); readAll(role); if (x.link) navAfterSheet(x.link, {}); }}>
-            <span className="setrow" style={{ all: 'unset', position: 'relative' }}><Icon n={KIND_ICON[x.kind] || 'bell'} />{!x.read && <i style={{ position: 'absolute', right: -3, top: -3, width: 8, height: 8, borderRadius: 4, background: 'var(--p500)' }} />}</span>
+          <button key={x.id} className={`list-row notirow ${x.read ? '' : 'unread'}`} onClick={() => { setOpen(false); readAll(role); if (x.link) navAfterSheet(x.link, {}); }}>
+            <span className="nic"><Icon n={KIND_ICON[x.kind] || 'bell'} />{!x.read && <i />}</span>
             <div className="grow"><div className="t small" style={{ fontWeight: x.read ? 600 : 800 }}>{x.title}</div><div className="s">{x.body}</div></div>
             <span className="xs muted">{ago(x.at)}</span>
           </button>
@@ -32,7 +33,7 @@ export function NotiBell({ role, dark = false }) {
         {list.length > 0 && <button className="btn ghost block sm" style={{ marginTop: 10 }} onClick={() => setState((s) => ({ ...s, notis: (s.notis || []).filter((y) => y.role !== role) }))}>알림 모두 지우기</button>}
         <div className="hr" />
         <NotiSettings role={role} />
-      </Sheet>
+      </Sheet></Portal>
     </>
   );
 }

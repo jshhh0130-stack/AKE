@@ -58,7 +58,7 @@ export function evText(ev, o) {
   switch (ev.t) {
     case 'request': return o?.gift ? `${o.gift.to}님께 보내는 선물 주문서를 보냈어요` : '주문 요청서를 보냈어요';
     case 'auto': return `사장님이 정해 둔 규칙 안이라 바로 확정됐어요 · ${p(ev.price)}`;
-    case 'approve': return ev.msg || `주문을 확정했어요 · 최종 ${p(ev.price)}`;
+    case 'approve': return ev.msg || `주문되었습니다 · 최종 ${p(ev.price)}`;
     case 'change': return `${ev.msg || '이렇게 바꾸면 가능해요.'}${ev.price != null ? ` (제안 금액 ${p(ev.price)})` : ''}`;
     case 'decline': return ev.msg || '죄송해요, 이번 주문은 어려워요.';
     case 'accept': return '수정 제안을 수락했어요. 이대로 확정해 주세요!';
@@ -77,7 +77,7 @@ export function evText(ev, o) {
 }
 export const isSystemish = (ev) => ['auto', 'advance', 'paid', 'request', 'cancel', 'review', 'accept', 'proofok'].includes(ev.t);
 const NOTI = { // 이벤트 → [알림 종류, 제목]
-  request: ['status', '새 주문 요청'], auto: ['status', '주문 자동 확정'], approve: ['status', '주문이 확정됐어요'], change: ['status', '사장님 수정 제안'], decline: ['status', '주문이 어렵대요'],
+  request: ['status', '새 주문 요청'], auto: ['status', '주문 자동 확정'], approve: ['status', '주문되었습니다'], change: ['status', '사장님 수정 제안'], decline: ['status', '주문이 어렵대요'],
   accept: ['status', '손님이 제안을 수락했어요'], revise: ['status', '손님이 주문 수정을 요청했어요'], proof: ['proof', '시안이 도착했어요'], proofok: ['proof', '손님이 시안을 승인했어요'], prooffix: ['proof', '손님이 시안 수정을 요청했어요'],
   advance: ['status', '주문 진행 소식'], paid: ['status', '입금 확인'], cancel: ['status', '손님이 주문을 취소했어요'], review: ['status', '새 후기'], msg: ['chat', '새 메시지'], img: ['chat', '사진이 도착했어요'],
 };

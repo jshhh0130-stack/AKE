@@ -1451,3 +1451,143 @@ textarea.inp { resize: none; min-height: 76px; line-height: 1.45; }
 .hdr.big .more { font-size: 13px; font-weight: 700; color: #8A7F7A; }
 .th-o .cal + .sec-t h3, .th-o .row > b.grow.center { font-weight: 800; }
 .paybox .kv { border-bottom: 0; }
+
+/* ── AI로 원하는 케이크 만들기 (케이크잇처럼 · 고객 핑크) ── */
+.mk .scroll { background: #FAF8F5; }
+.mk-eyebrow { font-size: 12.5px; font-weight: 700; color: #B03444; margin-top: 4px; }
+.mk-title { margin: 4px 0 0; font-size: 24px; font-weight: 800; letter-spacing: -0.04em; line-height: 1.3; }
+.mk-lead { margin: 6px 0 18px; font-size: 14.5px; color: #8A7F7A; font-weight: 500; }
+.mk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mk-card { display: flex; flex-direction: column; align-items: flex-start; text-align: left; padding: 10px 10px 14px; border-radius: 20px; background: #fff; border: 1px solid #F0EBE6; box-shadow: 0 2px 10px rgba(120, 80, 70, 0.05); }
+.mk-card .im { width: 100%; aspect-ratio: 1; border-radius: 14px; overflow: hidden; background: #F6F1EB; margin-bottom: 10px; }
+.mk-card .im img, .mk-card .im svg { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mk-card small { font-size: 11.5px; font-weight: 700; color: #B03444; padding: 0 2px; }
+.mk-card b { font-size: 17px; font-weight: 800; letter-spacing: -0.03em; margin-top: 2px; padding: 0 2px; }
+.mk-card span { font-size: 12.5px; color: #8A7F7A; font-weight: 500; line-height: 1.45; margin-top: 3px; padding: 0 2px; word-break: keep-all; }
+.mk-card em { font-style: normal; font-size: 13px; font-weight: 800; margin-top: 10px; padding: 0 2px; }
+.mk-lbl { margin: 22px 0 8px; font-size: 14px; font-weight: 800; color: #5E5450; }
+.mk-lbl span { font-weight: 500; color: #A0958F; }
+.mk-lbl small { font-size: 12px; color: #A0958F; font-weight: 600; }
+.mk-up { width: 100%; min-height: 190px; border-radius: 18px; border: 1.5px dashed #D8D0C9; background: #F1EEE9; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; }
+.mk-up .ic { width: 46px; height: 46px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06); margin-bottom: 6px; }
+.mk-up b { font-size: 16px; font-weight: 800; }
+.mk-up small { font-size: 12.5px; color: #8A7F7A; }
+.mk-up.has { position: relative; padding: 0; overflow: hidden; border-style: solid; border-color: #F0EBE6; background: #fff; }
+.mk-up.has img { width: 100%; max-height: 300px; object-fit: contain; display: block; }
+.mk-upbtns { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 6px; }
+.mk-upbtns .btn { background: rgba(255, 255, 255, 0.95); }
+.mk-hint { margin-top: 8px; font-size: 12.5px; color: #8A7F7A; font-weight: 500; }
+.mk-inp { background: #fff; border: 1.5px solid #E8E1DA; border-radius: 16px; }
+textarea.mk-inp { min-height: 96px; resize: none; }
+.mk-engine { margin-top: 18px; padding: 12px 14px; border-radius: 14px; background: #FCECEE; color: #5E3A40; font-size: 12.5px; line-height: 1.55; font-weight: 500; }
+.mk-engine b { color: #B03444; }
+.mk-bar { align-items: center; gap: 12px; }
+.mk-bar .btn { height: 52px; padding: 0 22px; border-radius: 16px; }
+.mk-miss { font-size: 13px; color: #8A7F7A; font-weight: 600; }
+.mk-busy { position: absolute; inset: 0; z-index: 70; background: rgba(253, 249, 248, 0.94); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; padding: 30px; }
+.mk-busy b { font-size: 17px; font-weight: 800; }
+.mk-busy small { font-size: 13px; color: #8A7F7A; }
+.mk-result { position: relative; margin: 16px auto 0; width: 100%; max-width: 360px; aspect-ratio: 1; border-radius: 24px; overflow: hidden; background: #F6F1EB; box-shadow: 0 8px 24px rgba(120, 80, 70, 0.12); }
+.mk-result img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mk-result .ai, .mk-result .ed { position: absolute; left: 10px; top: 10px; padding: 3px 8px; border-radius: 8px; background: rgba(255, 255, 255, 0.92); font-size: 11.5px; font-weight: 800; color: #6F6560; }
+.mk-result .ed { left: auto; right: 10px; color: #B03444; }
+.mk-sum { margin-top: 16px; padding: 4px 16px; border-radius: 18px; background: #fff; border: 1px solid #F0EBE6; }
+.mk-sum > div { display: flex; justify-content: space-between; gap: 14px; padding: 11px 0; border-top: 1px solid #F3EFEA; font-size: 14px; }
+.mk-sum > div:first-child { border-top: 0; }
+.mk-sum span { color: #8A7F7A; font-weight: 500; flex: none; }
+.mk-sum b { text-align: right; font-weight: 700; word-break: keep-all; }
+.mk-actions { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 16px calc(14px + var(--sb)); background: #fff; border-top: 1px solid #F0EBE6; border-radius: 22px 22px 0 0; box-shadow: 0 -6px 20px rgba(60, 40, 30, 0.06); display: flex; flex-direction: column; gap: 8px; z-index: 10; }
+.mk-actions .btn { height: 52px; border-radius: 16px; }
+.mk-actions .btn.line { border: 0; background: transparent; color: #5E5450; height: 40px; font-size: 14.5px; }
+.mk-shophead { display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: 18px; background: #fff; border: 1px solid #F6E3E6; }
+.mk-shophead img { width: 72px; height: 72px; border-radius: 14px; object-fit: cover; flex: none; }
+.mk-shophead b { display: block; font-size: 15px; font-weight: 800; }
+.mk-shophead small { display: block; font-size: 12px; color: #8A7F7A; margin-top: 3px; line-height: 1.45; }
+.mk-sec { display: flex; align-items: baseline; justify-content: space-between; margin: 22px 2px 4px; }
+.mk-sec b { font-size: 17px; font-weight: 800; }
+.mk-sec span { font-size: 12.5px; color: #8A7F7A; font-weight: 600; }
+.mk .scard { background: transparent; }
+
+/* AI 찾기 시트: AI로 원하는 케이크 이미지 만들기 */
+.aimake { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 10px; padding: 14px; border-radius: 16px; background: #FCECEE; text-align: left; color: #5E3A40; }
+.aimake .ic { width: 40px; height: 40px; border-radius: 12px; background: #fff; color: #B03444; display: grid; place-items: center; flex: none; }
+.aimake b { display: block; font-size: 15px; font-weight: 800; color: #B03444; }
+.aimake small { display: block; font-size: 12px; margin-top: 2px; line-height: 1.4; }
+
+/* 가게 화면: 만든 케이크를 들고 왔을 때 */
+.aibar { flex: none; display: flex; align-items: center; gap: 10px; padding: 8px 16px; background: #FCECEE; }
+.aibar img { width: 40px; height: 40px; border-radius: 10px; object-fit: cover; }
+.aibar b { display: block; font-size: 13.5px; color: #B03444; }
+.aibar small { display: block; font-size: 11.5px; color: #5E3A40; }
+
+/* 주문서: AI로 만든 케이크를 가운데에 크게 */
+.aihero { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.aihero img { width: 100%; max-width: 300px; aspect-ratio: 1; object-fit: cover; border-radius: 22px; box-shadow: 0 0 0 6px #fff, 0 10px 26px rgba(180, 90, 110, 0.16); margin-top: 6px; }
+.aihero small { font-size: 12.5px; color: #B03444; font-weight: 700; margin-top: 6px; }
+
+/* 종이 주문서 (사장님 첫 화면 · 대화방 첫 단계) */
+.paper { position: relative; background: #FFFEFB; border-radius: 6px; padding: 16px 16px 18px; box-shadow: 0 1px 0 #EDE6DC, 0 8px 22px rgba(90, 70, 50, 0.1); border: 1px solid #EFE8DD; }
+.paper::after { content: ''; position: absolute; left: 0; right: 0; bottom: -7px; height: 8px; background: radial-gradient(circle at 6px 0, #FFFEFB 5px, transparent 5.5px) 0 0 / 12px 8px repeat-x; }
+.pp-head { display: flex; align-items: center; padding-bottom: 10px; border-bottom: 2px solid #2B2321; }
+.pp-t { font-size: 18px; font-weight: 800; letter-spacing: 0.3em; }
+.pp-head small { font-size: 11.5px; color: #8A7F7A; font-weight: 600; }
+.pp-who { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-top: 10px; }
+.pp-who b { font-size: 16px; font-weight: 800; }
+.pp-who small { font-size: 11px; color: #A0958F; font-family: ui-monospace, monospace; }
+.pp-img { position: relative; margin: 10px auto 4px; width: 100%; max-width: 260px; aspect-ratio: 1; border-radius: 14px; overflow: hidden; background: #F6F1EB; }
+.pp-img img, .pp-img svg { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pp-img .ai { position: absolute; left: 8px; top: 8px; padding: 2px 7px; border-radius: 7px; background: rgba(255, 255, 255, 0.92); font-size: 11px; font-weight: 800; color: #B03444; }
+.pp-rows { margin-top: 8px; }
+.pp-row { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px dashed #E3DBD0; font-size: 14px; }
+.pp-row span { width: 72px; flex: none; color: #8A7F7A; font-weight: 600; }
+.pp-row b { flex: 1; font-weight: 700; word-break: keep-all; }
+.pp-sum { display: flex; justify-content: space-between; align-items: baseline; padding-top: 12px; }
+.pp-sum span { font-size: 14px; font-weight: 800; }
+.pp-sum b { font-size: 18px; font-weight: 800; color: #4E6A2E; }
+.paper.compact .pp-img { max-width: 200px; }
+.paper.compact .pp-row { padding: 6px 0; font-size: 13.5px; }
+.reqsheet { margin-bottom: 18px; cursor: pointer; }
+.acts3 { display: grid; grid-template-columns: 1fr 1fr 1.8fr; gap: 6px; margin-top: 14px; }
+.acts3 .btn { min-height: 42px; border-radius: 12px; font-size: 13.5px; }
+.acts3 .btn.ghost { background: #F5F2EE; color: #2B2321; border: 0; }
+.room .paper { margin-bottom: 14px; }
+
+/* 지도 핀: 모든 가게 같은 핑크 · 입점 가게는 케이크 도장 */
+.pin2.v2 .pb, .th-c .pin2.v2 .pb, .pin2.v2.pub .pb, .pin2.v2.dimmed .pb { position: relative; background: #FCECEE; color: #B03444; box-shadow: 0 0 0 1.5px #F2B9C0, 0 3px 10px rgba(40, 30, 30, 0.16); }
+.pin2.v2 .pb i, .th-c .pin2.v2 .pb i, .pin2.v2.pub .pb i, .pin2.v2.dimmed .pb i, .th-c .pin2.v2.pub .pb i, .th-c .pin2.v2.dimmed .pb i { background: #E98DA0; box-shadow: inset 0 0 0 3px #fff; }
+.pin2.v2 .tip, .th-c .pin2.v2 .tip { background: #FCECEE; box-shadow: 1.5px 1.5px 0 0 #F2B9C0; }
+.pin2.v2.dimmed { opacity: 1; }
+.pin2.v2.sel .pb, .th-c .pin2.v2.sel .pb { background: #E98DA0; color: #fff; box-shadow: 0 0 0 2px #fff, 0 4px 12px rgba(176, 52, 68, 0.3); }
+.pin2.v2.sel .pb i, .th-c .pin2.v2.sel .pb i { background: #fff; box-shadow: none; }
+.pin2.v2.sel .tip, .th-c .pin2.v2.sel .tip { background: #E98DA0; box-shadow: none; }
+.pin2.v2 .stamp { position: absolute; left: -15px; top: -15px; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: #fff; color: #C83A4C; border: 2px solid #C83A4C; box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 3.5px #C83A4C, 0 2px 6px rgba(176, 52, 68, 0.3); transform: rotate(-14deg); z-index: 2; }
+.pin2.v2 .stamp svg { width: 15px; height: 15px; }
+.pin2.v2.app { z-index: 3; }
+.mapbox.far .pin2.v2 .stamp { left: -11px; top: -11px; width: 22px; height: 22px; }
+.mapbox.far .pin2.v2 .stamp svg { width: 12px; height: 12px; }
+.legendrow .lstamp { width: 18px; height: 18px; border-radius: 50%; display: inline-grid; place-items: center; color: #C83A4C; border: 1.5px solid #C83A4C; background: #fff; transform: rotate(-14deg); }
+.legendrow .lstamp svg { width: 11px; height: 11px; }
+.scard .th .stamp { position: absolute; left: 5px; top: 5px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: #fff; color: #C83A4C; border: 2px solid #C83A4C; box-shadow: inset 0 0 0 1.5px #fff, inset 0 0 0 3px #C83A4C; transform: rotate(-14deg); }
+.scard .th .stamp svg { width: 13px; height: 13px; }
+
+/* 사장님 단계 눌러 보기 */
+.steps.pickable .st { cursor: pointer; background: none; border: 0; padding: 4px 0; border-radius: 10px; font: inherit; }
+.steps.pickable .st.sel { background: #EFF3E6; }
+.steps.pickable .st.sel span { text-decoration: underline; text-underline-offset: 3px; }
+.stepdetail { margin-top: 10px; border-radius: 18px; border: 1.5px solid #CFE0BC; }
+.stepevs { margin-top: 8px; }
+.sev { display: flex; gap: 10px; justify-content: space-between; padding: 8px 0; border-top: 1px dashed #E3DBD0; font-size: 13.5px; }
+.sev:first-child { border-top: 0; }
+.sev small { color: #A0958F; flex: none; font-size: 11.5px; }
+
+/* 알림함: 읽기 쉽게 */
+.notirow { gap: 12px; align-items: center; }
+.notirow .nic { position: relative; width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; flex: none; background: #F5F2EE; color: #6F6560; }
+.notirow .nic .ico { width: 19px; height: 19px; }
+.notirow .nic i { position: absolute; right: -2px; top: -2px; width: 9px; height: 9px; border-radius: 50%; background: #E5404F; border: 2px solid #fff; }
+.notirow.unread .nic { background: var(--acc-bg); color: var(--acc-ink); }
+.notirow .t { font-size: 14.5px; color: #2B2321; }
+.notirow .s { font-size: 12.5px; color: #8A7F7A; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mbar .bell { color: #2B2321; }
+.mbar .bell .ico { width: 22px; height: 22px; }
+.mbar .bell .badge { position: absolute; top: 6px; right: 6px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #E5404F; color: #fff; font-size: 10.5px; font-weight: 800; display: grid; place-items: center; border: 2px solid #fff; }

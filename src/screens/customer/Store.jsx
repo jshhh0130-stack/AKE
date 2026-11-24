@@ -4,7 +4,7 @@ import MapView from '../../components/MapView.jsx';
 import { LocShareSheet } from '../../components/Share.jsx';
 import { CakeView, Header, Stars, toast, Empty } from '../../components/ui.jsx';
 import { useApp, setState } from '../../lib/state.js';
-import { nav, back } from '../../lib/router.js';
+import { nav, back, queryOf } from '../../lib/router.js';
 import { getStores, distKm, fmtKm, kindLabel, canOrderInApp, closedDaysOf, nextOpenDay, mapLinks, strengths, SEED_UPDATED } from '../../lib/stores.js';
 import { estimate, basisText } from '../../lib/price.js';
 import { storeLook } from '../../lib/cake.js';
@@ -94,8 +94,9 @@ export function heroBg(s) {
   return { background: shade(c, 0.8) };
 }
 
-export default function StoreDetail({ params }) {
+export default function StoreDetail({ params, path }) {
   const st = useApp();
+  const ai = queryOf(path).get('ai') && st.aiDraft ? st.aiDraft : null; // AI로 만든 케이크를 들고 온 경우
   usePlaces();
   const stores = getStores(st);
   const s = stores.find((x) => x.id === params.id);
@@ -266,10 +267,11 @@ export default function StoreDetail({ params }) {
           <div style={{ height: 16 }} />
         </div>
       </div>
+      {ai && <div className="aibar"><img src={ai.src} alt="" /><span className="grow"><b>만든 케이크로 주문해요</b><small>주문서 쓰기를 누르면 이 이미지가 주문서에 들어가요</small></span></div>}
       <div className="stickybar">
         <button className={`favbtn ${fav ? 'on' : ''}`} onClick={toggleFav} aria-label="찜"><Icon n="heart" />찜</button>
         <button className="btn line" style={{ flex: 1 }} onClick={() => askRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>물어보기</button>
-        <button className="btn pri" style={{ flex: 1.6 }} onClick={() => nav(`/order/${s.id}`)}>주문서 쓰기</button>
+        <button className="btn pri" style={{ flex: 1.6 }} onClick={() => nav(`/order/${s.id}${ai ? '?ai=1' : ''}`)}>주문서 쓰기</button>
       </div>
       <LocShareSheet open={shareOpen} onClose={() => setShareOpen(false)} store={s} />
       {gPhoto && (

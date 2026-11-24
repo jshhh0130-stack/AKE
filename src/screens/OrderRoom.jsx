@@ -17,21 +17,43 @@ import { won, range, fmtDate, relDay, ago, maskName, maskPhone, shareText, copyT
 import { SHAPES, CREAMS, TEXT_COLORS, FONTS, sizeOf, designOf, creamOf, fontOf, textColorOf, optName } from '../data/catalog.js';
 import OrderThumb from '../components/OrderThumb.jsx';
 import { PaidCake } from '../components/HandDrawn.jsx';
+import OrderPaper from '../components/OrderPaper.jsx';
 
 const STEPS = ['요청', '확인', '확정', '제작', '픽업'];
-function Steps({ status }) {
+// onPick 이 있으면 단계를 눌러 그 단계에서 있었던 일을 다시 볼 수 있다 (사장님)
+function Steps({ status, onPick, sel }) {
   const step = STATUS[status]?.step ?? 0;
   const dead = ['declined', 'canceled'].includes(status);
   return (
-    <div className="steps">
-      {STEPS.map((s, i) => <div key={s} className={`st ${dead ? '' : status === 'done' || i < step ? 'done' : i === step ? 'now' : ''}`}><i>{status === 'done' || i < step ? <Icon n="check" /> : i + 1}</i><span>{s}</span></div>)}
+    <div className={`steps ${onPick ? 'pickable' : ''}`}>
+      {STEPS.map((s, i) => {
+        const cls = `st ${dead ? '' : status === 'done' || i < step ? 'done' : i === step ? 'now' : ''} ${sel === i ? 'sel' : ''}`;
+        const inner = <><i>{status === 'done' || i < step ? <Icon n="check" /> : i + 1}</i><span>{s}</span></>;
+        return onPick ? <button key={s} className={cls} onClick={(e) => { e.stopPropagation(); onPick(sel === i ? null : i); }}>{inner}</button> : <div key={s} className={cls}>{inner}</div>;
+      })}
+    </div>
+  );
+}
+// 단계별로 있었던 일 (사장님이 단계를 누르면)
+const STEP_OF = (ev) => (['request', 'revise'].includes(ev.t) ? 0 : ['approve', 'auto', 'change', 'decline', 'accept', 'cancel'].includes(ev.t) ? 1 : ['paid', 'proof', 'proofok', 'prooffix'].includes(ev.t) ? 2 : ev.t === 'advance' ? (ev.to === 'making' ? 3 : 4) : ev.t === 'review' ? 4 : -1);
+function StepDetail({ order, i, onClose }) {
+  const evs = (order.ev || []).filter((e) => STEP_OF(e) === i);
+  const proofImgs = i === 2 || i === 3 ? (order.ev || []).filter((e) => e.t === 'proof' && e.img && order.imgs?.[e.img]).map((e) => order.imgs[e.img]) : [];
+  return (
+    <div className="card pad stepdetail fadeup">
+      <div className="row"><b className="grow">{i + 1}단계 · {STEPS[i]}</b><button className="btn xs ghost" onClick={onClose}>닫기</button></div>
+      {i === 0 && <div style={{ marginTop: 10 }}><OrderPaper order={order} compact /></div>}
+      {proofImgs.length > 0 && <div className="row" style={{ marginTop: 10, gap: 6 }}>{proofImgs.map((src, k) => <img key={k} src={src} alt="시안" style={{ width: 84, height: 84, borderRadius: 12, objectFit: 'cover' }} />)}</div>}
+      {evs.length ? (
+        <div className="stepevs">{evs.map((e) => <div key={e.id} className="sev"><span>{evText(e, order).split('\n')[0]}</span><small>{new Date(e.at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</small></div>)}</div>
+      ) : <div className="small muted" style={{ marginTop: 8 }}>{i === 2 && order.finalPrice != null ? `확정 금액 ${won(order.finalPrice)} · ${order.paid ? '입금 완료' : '입금 전'}` : '아직 이 단계 기록이 없어요.'}</div>}
     </div>
   );
 }
 
 function useLive() { const [v, set] = useState(liveStatus()); useEffect(() => onLiveStatus(() => set(liveStatus())), []); return v; }
 
-function Summary({ order, role, open, setOpen }) {
+function Summary({ order, role, open, setOpen, stepSel, onStep }) {
   const x = order.o;
   const deco = decoList(x);
   const [tab, setTab] = useState('pv');
@@ -47,7 +69,7 @@ function Summary({ order, role, open, setOpen }) {
         </div>
         <Icon n={open ? 'down' : 'right'} size="sm" />
       </button>
-      <Steps status={order.status} />
+      <Steps status={order.status} onPick={onStep} sel={stepSel} />
       {open && (
         <div className="rs-body fadeup">
           {ref && <div style={{ marginBottom: 8 }}><Seg value={tab} onChange={setTab} items={[['pv', '앱 시안'], ['ref', role === 'o' ? '손님 참고 사진' : '내 참고 사진']]} /></div>}
@@ -357,16 +379,19 @@ export function CustomerOrder({ params }) {
 
 // ───────── 사장님 화면 ─────────
 const TEMPLATES = ['주문 잘 받았어요! 미리보기 그대로 만들어 드릴게요 :)', '문구 위치는 가운데로 해 드릴게요.', '캐릭터는 저작권 때문에 비슷한 느낌으로 그려 드려요.', '그날은 주문이 많아 다른 시간은 어떠세요?', '요청하신 장식 때문에 금액이 조금 추가돼요.'];
+// 새 요청일 때 빠른 답장 (수정은 버튼 대신 채팅으로)
+const REQ_QUICK = ['주문서 확인했어요! 곧 확정해 드릴게요', '문구 위치는 가운데로 해 드릴게요', '그날은 어려워서 다른 시간은 어떠세요?'];
 export function OwnerOrderDetail({ params }) {
   const st = useApp();
   const o = st.orders.find((x) => x.id === params.id);
   const [open, setOpen] = useState(false);
   const [price, setPrice] = useState(null);
   const [msg, setMsg] = useState('');
-  const [adjust, setAdjust] = useState(false);
+  const [stepSel, setStepSel] = useState(null); // 눌러서 다시 보는 단계 (0~4)
   const sc = useRef(null);
   const n = o?.ev?.length || 0;
-  useEffect(() => { if (o) { markSeen(o.id, 'o'); readLink('o', `/o/order/${o.id}`); } sc.current?.scrollTo({ top: 1e6, behavior: 'smooth' }); }, [n]); // eslint-disable-line react-hooks/exhaustive-deps
+  // 새 요청이면 종이 주문서가 먼저 보이게 맨 위, 그 뒤로는 대화 맨 아래로
+  useEffect(() => { if (o) { markSeen(o.id, 'o'); readLink('o', `/o/order/${o.id}`); } sc.current?.scrollTo({ top: o?.status === 'requested' && n <= 2 ? 0 : 1e6, behavior: 'smooth' }); }, [n]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (o) setPrice(o.finalPrice ?? o.proposedPrice ?? o.est?.lo ?? 0); }, [o?.status, o?.est?.lo]); // eslint-disable-line react-hooks/exhaustive-deps
   const store = useMemo(() => (st.shop ? shopToStore(st.shop, 'partner') : null), [st.shop]);
   if (!o) return <div className="screen"><Header title="주문" fallback="/o/orders" /><Empty>주문을 찾을 수 없어요.</Empty></div>;
@@ -390,29 +415,23 @@ export function OwnerOrderDetail({ params }) {
     <div className="screen">
       <Header title={`${maskName(o.customer?.name)}님 주문`} fallback="/o/orders" right={<span style={{ marginRight: 10 }}><StatusTag status={s} owner /></span>} />
       <div className="scroll pad room" ref={sc}>
-        <Summary order={o} role="o" open={open} setOpen={setOpen} />
-        {s === 'requested' && (
+        {s === 'requested' ? (<>
+          {/* 첫 단계: 손님 주문서를 종이 한 장처럼 · 고칠 게 있으면 아래 채팅으로 바로 */}
+          <OrderPaper order={o} />
           <div className="card pad todo newreq">
-            <div className="b">{lastRevise ? '손님이 주문을 고쳤어요 — 다시 확인해 주세요' : '새 주문 요청이에요'}</div>
-            <div className="small muted" style={{ marginTop: 2 }}>손님이 보낸 요청서예요. 수락하면 금액이 확정되고 손님에게 결제 안내가 가요.</div>
-            {lastRevise?.summary && <div className="note pink" style={{ marginTop: 6 }}>바뀐 점: <b>{lastRevise.summary}</b></div>}
-            {!v.ok && <ul className="rules" style={{ marginTop: 8 }}>{checks.filter((c) => !c.ok).map((c, i) => <li key={i} className="w"><i>!</i><span>{c.t}</span></li>)}</ul>}
-            <div className="btns" style={{ marginTop: 12 }}>
-              <button className="btn ghost" onClick={() => { if (confirm('이 주문을 거절할까요?')) { act(o.id, 'o', 'decline', { msg: msg.trim() || undefined }); toast('주문을 거절했어요'); } }}>거절</button>
-              <button className="btn ok" style={{ flex: 2.2 }} onClick={() => { act(o.id, 'o', 'approve', { price, msg: msg.trim() || undefined }); setMsg(''); toast(`수락했어요 · ${won(price)} 확정`); }}>수락하고 {won(price)} 확정</button>
+            {lastRevise?.summary && <div className="note pink" style={{ marginBottom: 8 }}>손님이 주문을 고쳤어요 · <b>{lastRevise.summary}</b></div>}
+            {!v.ok && <ul className="rules" style={{ marginBottom: 8 }}>{checks.filter((c) => !c.ok).map((c, i) => <li key={i} className="w"><i>!</i><span>{c.t}</span></li>)}</ul>}
+            <div className="row"><span className="grow b">받을 금액</span><div className="pricerow" style={{ border: 0, padding: 0 }}><PriceInput value={price} onChange={(vv) => setPrice(vv ?? 0)} /></div></div>
+            <div className="btns" style={{ marginTop: 10 }}>
+              <button className="btn ghost" onClick={() => { if (confirm('이 주문을 거절할까요?')) { act(o.id, 'o', 'decline'); toast('주문을 거절했어요'); } }}>거절</button>
+              <button className="btn ok" style={{ flex: 2.2 }} onClick={() => { act(o.id, 'o', 'approve', { price }); toast(`주문을 받았어요 · 손님에게 '주문되었습니다'를 보냈어요`); }}>주문 받기 · {won(price)}</button>
             </div>
-            <button className="morebtn" style={{ marginTop: 10 }} onClick={() => setAdjust(!adjust)}><span className="grow"><b>금액 바꾸기 · 수정 제안</b> <span className="xs muted">손님이 본 예상 {range(o.est?.lo, o.est?.hi, true)}</span></span><Icon n={adjust ? 'down' : 'right'} size="sm" /></button>
-            {adjust && (
-              <div className="fadeup">
-                <div className="row" style={{ marginTop: 8 }}><span className="grow b">최종 금액</span><div className="pricerow" style={{ border: 0, padding: 0 }}><PriceInput value={price} onChange={(vv) => setPrice(vv ?? 0)} /></div></div>
-                <div className="chips" style={{ marginTop: 6 }}>{[-1000, 1000, 3000, 5000].map((d) => <button key={d} className="chip sm" onClick={() => setPrice((p) => Math.max(0, (p || 0) + d))}>{d > 0 ? '+' : ''}{d.toLocaleString()}</button>)}</div>
-                <input className="inp" style={{ marginTop: 8 }} value={msg} onChange={(e) => setMsg(e.target.value)} placeholder="손님에게 한마디 (선택)" maxLength={200} />
-                <div className="chips" style={{ marginTop: 6 }}>{TEMPLATES.map((t) => <button key={t} className="chip sm" onClick={() => setMsg(t)}>{t.slice(0, 13)}…</button>)}</div>
-                <button className="btn line block sm" style={{ marginTop: 10 }} onClick={() => { act(o.id, 'o', 'change', { price, msg: msg.trim() || '이렇게 바꾸면 가능해요. 확인 부탁드려요!' }); setMsg(''); toast('수정 제안을 보냈어요'); }}>이 금액으로 수정 제안 보내기</button>
-              </div>
-            )}
+            <div className="xs muted" style={{ marginTop: 8 }}>고칠 게 있으면 아래 채팅으로 손님께 바로 말해 주세요. 예) “문구는 가운데로 할게요”</div>
           </div>
-        )}
+        </>) : (<>
+          <Summary order={o} role="o" open={open} setOpen={setOpen} stepSel={stepSel} onStep={setStepSel} />
+          {stepSel != null && <StepDetail order={o} i={stepSel} onClose={() => setStepSel(null)} />}
+        </>)}
         {s === 'change' && <div className="note warn" style={{ marginTop: 10 }}>손님에게 수정 제안({won(o.proposedPrice)})을 보냈어요. 손님이 수락하면 확정돼요.</div>}
         {s === 'confirmed' && (
           <div className="card pad todo">
@@ -444,7 +463,7 @@ export function OwnerOrderDetail({ params }) {
         {o.customer?.phone && !o.sample && <div className="row" style={{ marginTop: 12 }}><a className="btn xs line" href={`tel:${o.customer.phone}`}><Icon n="phone" size="sm" />전화</a><a className="btn xs line" href={`sms:${o.customer.phone}`}><Icon n="chat" size="sm" />문자</a></div>}
         <div style={{ height: 12 }} />
       </div>
-      {!['declined', 'canceled'].includes(s) && <Composer order={o} role="o" quick={s === 'requested' ? [] : TEMPLATES.slice(0, 3)} />}
+      {!['declined', 'canceled'].includes(s) && <Composer order={o} role="o" quick={s === 'requested' ? REQ_QUICK : TEMPLATES.slice(0, 3)} />}
     </div>
   );
 }

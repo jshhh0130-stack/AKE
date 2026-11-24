@@ -70,13 +70,13 @@ function findImage(o) { // 응답 어디에 있든 base64 사진 찾기 (보낸 
   return out;
 }
 const gErr = (j, status) => { const m = j?.error?.message || ''; if (status === 400 && /API key/i.test(m)) return '제미나이 키가 맞지 않아요'; if (status === 403) return '제미나이 키 권한(결제·API 사용 설정)을 확인해 주세요'; if (status === 429) return '제미나이 사용량이 다 됐어요'; return m ? `제미나이: ${m.slice(0, 80)}` : '제미나이가 사진을 만들지 못했어요'; };
-async function gemini(key, text, image) {
+async function gemini(key, text, image, aspect = '4:5') {
   const mime = image ? image.slice(5, image.indexOf(';')) : null;
   const b64 = image ? image.split(',')[1] : null;
   let last = '';
   // 새 방식 (Interactions API, 2026)
   try {
-    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', { method: 'POST', headers: { 'x-goog-api-key': key, 'Content-Type': 'application/json', 'Api-Revision': '2026-05-20' }, body: JSON.stringify({ model: 'gemini-nano-banana-2.1', input: [{ type: 'text', text }, ...(image ? [{ type: 'image', mime_type: mime, data: b64 }] : [])], response_format: { type: 'image', mime_type: 'image/jpeg', aspect_ratio: '4:5' } }) });
+    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', { method: 'POST', headers: { 'x-goog-api-key': key, 'Content-Type': 'application/json', 'Api-Revision': '2026-05-20' }, body: JSON.stringify({ model: 'gemini-nano-banana-2.1', input: [{ type: 'text', text }, ...(image ? [{ type: 'image', mime_type: mime, data: b64 }] : [])], response_format: { type: 'image', mime_type: 'image/jpeg', aspect_ratio: aspect } }) });
     const j = await r.json().catch(() => ({}));
     const img = findImage(j); if (img) return img;
     last = gErr(j, r.status);
@@ -84,7 +84,7 @@ async function gemini(key, text, image) {
   } catch (e) { if (/키|권한|사용량/.test(e.message)) throw e; }
   // 예전 방식 (generateContent)
   for (const model of ['gemini-3.1-flash-image', 'gemini-2.5-flash-image']) {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, { method: 'POST', headers: { 'x-goog-api-key': key, 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text }, ...(image ? [{ inline_data: { mime_type: mime, data: b64 } }] : [])] }], generationConfig: { responseModalities: ['IMAGE', 'TEXT'] } }) });
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, { method: 'POST', headers: { 'x-goog-api-key': key, 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text }, ...(image ? [{ inline_data: { mime_type: mime, data: b64 } }] : [])] }], generationConfig: { responseModalities: ['IMAGE', 'TEXT'], imageConfig: { aspectRatio: aspect } } }) });
     const j = await r.json().catch(() => ({}));
     const img = findImage(j); if (img) return img;
     last = gErr(j, r.status);
@@ -224,6 +224,54 @@ export async function makeRealistic({ mode = 'real', image = null, opts = {}, ex
   setState((s) => ({ ...s, aiJobs: [...(s.aiJobs || []), job] }));
   resumeAIJobs();
   return { job, engine: 'horde', note: notes[notes.length - 1] };
+}
+
+// ── AI로 케이크 만들기 (카테고리 10개 · 케이크잇처럼 '사진 + 문구 + 요청' → 바로 한 장) ──
+// 제미나이 키가 있으면 나노바나나(정사각형 1장, 약 45~90원), 없으면 무료 FLUX. 대기열(10~20분)은 이 흐름에선 안 씀.
+// 프롬프트는 영어로 섹션을 나눠 아주 구체적으로 (실제로 잘 나온 '강아지 케이크' 사진의 느낌: 카페 테이블·리넨·창가 빛·45° 위에서)
+const MK_HEAD = 'Photorealistic close-up product photograph of a real handmade Korean custom "lettering cake" (레터링 케이크) from a small boutique bakery in Seoul, shot on a full-frame camera with an 85mm lens.';
+const MK_SCENE = 'SCENE: the cake sits on a cream-colored handmade ceramic plate placed on a softly wrinkled beige linen napkin, on a warm oak table in a cozy Korean dessert café; soft natural window daylight from the left, gentle realistic shadows, softly blurred dried-flower vase and window in the background (shallow depth of field).';
+const MK_CAMERA = 'CAMERA: 45-degree high angle looking down at the cake so the entire top design and the lettering are fully visible and undistorted; the cake is centered and fills about 70% of the square frame.';
+const MK_STYLE = 'STYLE: true-to-life food photography, real whipped-buttercream texture with subtle handmade imperfections, natural true colors, sharp focus on the cake top.';
+const MK_AVOID = 'AVOID: no people, no hands, no utensils, no candles unless requested, no extra cakes, no packaging or boxes, no logos or watermarks, no extra, garbled or misspelled text, no English text unless requested, no cartoon/3D-render/illustration look for the cake itself, no plastic or CGI look.';
+const MK_TAIL = `${MK_SCENE} ${MK_CAMERA} ${MK_STYLE} ${MK_AVOID}`;
+// 한글 문구: 글자를 하나씩 풀어서 알려 주면 철자가 더 정확해진다
+const spellOut = (t) => [...t].map((c) => (c === ' ' ? '(space)' : c)).join(' ');
+export function cakePrompt(cat, { text = '', request = '', hasImage = false } = {}) {
+  const t = text.trim(), rq = request.trim();
+  const cake = cat.cake ?? 'CAKE: a 15cm (6-inch) round two-layer cake about 9cm tall, covered in perfectly smooth soft-ivory whipped buttercream with a matte finish and a clean sharp top edge, with a neat border of small piped buttercream pearls around the top edge and the base.';
+  const main = `TOP DESIGN: ${hasImage ? cat.en : cat.enNoImg || cat.en}${hasImage && cat.id !== 'photo' && cat.id !== 'remake' ? ' Use the attached image only as the reference for the design — the result must be a brand-new photograph of a real cake; do not paste or overlay the original image.' : ''}`;
+  const letter = t
+    ? `LETTERING: the Korean text "${t}" — exactly these Hangul characters in this order: ${spellOut(t)} — ${cat.id === 'letter'
+      ? 'is the main design: piped large in neat, cute rounded handwriting in glossy buttercream (deep pink unless the request says another color), centered on the top in one or two balanced lines'
+      : 'is hand-piped in thin glossy dark-chocolate buttercream in cute rounded handwriting, on one line centered below the main design'}; every character complete, correctly spelled and clearly legible. Do not add any other text.`
+    : 'LETTERING: none — no text or letters anywhere on the cake.';
+  const req = rq ? `CUSTOMER REQUEST (written in Korean — apply it exactly; it overrides the defaults above, e.g. cream color, size, decorations): "${rq}"` : '';
+  const deco = 'DECORATION: at most 2 tiny accents (for example two small pastel sprinkles or tiny piped hearts), never overlapping the main design or the lettering.';
+  return [MK_HEAD, cake, main, letter, req, deco, MK_TAIL].filter(Boolean).join('\n');
+}
+export async function makeCakeImage({ cat, image = null, text = '', request = '', onStatus }) {
+  const { geminiKey, hfToken } = getState().settings || {};
+  const input = image ? await fitImage(image, { max: 1024, q: 0.9 }) : null;
+  const meta = { mode: 'make', cat: cat.id, opts: { design: cat.design || 'simple', styles: cat.styles || [] } };
+  if (geminiKey) {
+    onStatus?.('나노바나나가 케이크를 그리는 중… (10~30초)');
+    const src = await fitImage(await gemini(geminiKey, cakePrompt(cat, { text, request, hasImage: !!input }), input, '1:1'), { max: 720 });
+    return { pic: savePic({ id: 'my-' + uid(), src, at: Date.now(), ...meta, engine: 'gemini' }), engine: 'gemini' };
+  }
+  // 무료 FLUX: 한글 문구·한국어 요청은 못 알아들어서 요청 속 낱말만 영어로 바꿔 넣는다 (문구는 주문서·그림판에서)
+  onStatus?.('무료 AI(FLUX)에 연결하는 중…');
+  const prompt = `Photorealistic photo of a handmade Korean custom cake on a cream ceramic plate, beige linen napkin, oak café table, soft window light, 45 degree angle. ${input ? cat.en : cat.enNoImg || cat.en}${extraEn(request)}. Smooth ivory buttercream, small piped pearl border, real buttercream texture, no text, no letters, no people, no hands, sharp focus.`;
+  try {
+    const url = input
+      ? await hfRun(HF.kontext, [{ url: input, meta: { _type: 'gradio.FileData' } }, prompt, rnd(), false, 2.5, 24], hfToken, (s) => onStatus?.(s.msg))
+      : await hfRun(HF.schnell, [prompt, rnd(), false, 768, 768, 4], hfToken, (s) => onStatus?.(s.msg));
+    onStatus?.('사진을 받아 오는 중…');
+    const src = await urlToDataURL(url);
+    return { pic: savePic({ id: 'my-' + uid(), src, at: Date.now(), ...meta, engine: 'flux' }), engine: 'flux' };
+  } catch (e) {
+    throw new Error(e.quota ? '오늘 무료 AI 사용량이 다 됐어요. 마이 › 지도·AI 연결에서 구글 제미나이 키를 넣으면 바로 만들어요' : `${e.message} · 마이 › 지도·AI 연결에서 구글 제미나이 키를 넣으면 더 빠르고 정확해요`);
+  }
 }
 
 // 지금 쓸 수 있는 엔진 설명

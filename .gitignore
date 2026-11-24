@@ -9,3 +9,7 @@ tools/shots/
 tools/gallery/raw/
 
 kakaomap_key.txt
+# 제미나이(나노바나나) 결제 연결 키 — 절대 올리지 않기
+gemini_key.txt
+*_key.txt
+*.key

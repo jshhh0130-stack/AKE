@@ -5,10 +5,7 @@ import { loadKakao, kakaoKeyOf, sweepSuwon, onKakao, kakaoStatus, kakaoFind } fr
 import Coach from '../../components/Coach.jsx';
 import { LocShareSheet, myLocation } from '../../components/Share.jsx';
 import { CustomerTabBar } from '../../components/TabBar.jsx';
-import { Sheet, CakeView, toast, PhotoPick, Loading, Toggle, useBackClose, Portal } from '../../components/ui.jsx';
-import AIStudio from '../../components/AIStudio.jsx';
-import Sketch from '../../components/Sketch.jsx';
-import { saveEdited } from '../../lib/imagegen.js';
+import { Sheet, CakeView, toast, PhotoPick, Loading, useBackClose } from '../../components/ui.jsx';
 import { NotiBell } from '../../components/Noti.jsx';
 import { useApp, setState, getState } from '../../lib/state.js';
 import { nav, navAfterSheet } from '../../lib/router.js';
@@ -55,7 +52,7 @@ export function StoreCard({ r, sel, onClick, fav, onFav, picked, className = '' 
   else if (s.kind !== 'public') chips.push(<span key="ext" className="tag mute">지도 검색</span>);
   return (
     <button className={`scard ${sel ? 'sel' : ''} ${className}`} onClick={onClick} id={className ? undefined : `card-${s.id}`}>
-      <div className="th"><StoreThumb s={s} /></div>
+      <div className="th"><StoreThumb s={s} />{inApp && <span className="stamp" title="에이크 입점 · 앱 주문"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h16M5.5 20v-6a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v6M5.5 15.6c1.4.9 2.8.9 4.2 0s2.8-.9 4.2 0 2.8.9 4.1 0M12 12V8.6" /><path d="M12 3.6c1 1.1 1 2.2 0 2.8-1-.6-1-1.7 0-2.8z" fill="currentColor" /></svg></span>}</div>
       <div className="grow">
         <div className="nm"><span>{s.name}</span>{match != null && <span className="match">{match}%</span>}</div>
         <div className="meta">
@@ -305,7 +302,7 @@ export default function CustomerHome() {
               </select>
               <button className={`btn xs ${cmpMode ? 'dark' : 'ghost'}`} onPointerDown={(e) => e.stopPropagation()} onClick={() => { setCmpMode(!cmpMode); setCmp([]); if (!cmpMode) toast('비교할 가게를 2~3곳 눌러 주세요'); }}>{cmpMode ? '비교 취소' : '비교'}</button>
             </div>
-            <div className="legendrow"><span><i className="l1" />앱 주문</span><span><i className="l2" />케이크 가게</span>{!gKey && !kKey && <a className="osm" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">지도 © OpenStreetMap</a>}</div>
+            <div className="legendrow"><span><i className="l1" />케이크 가게</span><span><i className="lstamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h16M5.5 20v-6a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v6M12 12V8.6" /></svg></i>에이크 입점 · 앱 주문</span>{!gKey && !kKey && <a className="osm" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">지도 © OpenStreetMap</a>}</div>
             <div className="bl">
               {ranked.length === 0 && (
                 <div className="empty">이 조건에 맞는 가게가 없어요.<br />조건을 줄이거나 범위를 넓혀 보세요.
@@ -507,16 +504,8 @@ function SearchView({ stores, onClose, openPhoto }) {
   );
 }
 
-const SAMPLES = [
-  { label: '하트 빈티지', o: { shape: 'heart', size: 'h1', design: 'vintage', cream: 'pink', text: '사랑해', font: 'pen', textColor: 'berry', toppings: ['pearl'] } },
-  { label: '곰돌이 그림', o: { shape: 'round', size: 'h1', design: 'character', cream: 'sky', text: '생일 축하해', font: 'gaegu', textColor: 'choco', toppings: ['sprinkle'] } },
-  { label: '라벤더 꽃', o: { shape: 'round', size: 'h2', design: 'flower', cream: 'lavender', text: '감사합니다', font: 'gowun', textColor: 'navy', toppings: ['freshflower'] } },
-];
-const EXAMPLES = ['영통 근처 4만원대 캐릭터 케이크', '인계동 당일 가능한 레터링', '5만원 이하 꽃 케이크', '팔달구 사진 케이크'];
-const designStyles = (d) => (d === 'character' ? ['character'] : d === 'flower' ? ['flower'] : d === 'photo' ? ['photo'] : ['lettering']);
-
-// AI로 케이크 가게 찾기: 말로 · 사진으로 · 조건으로 (예전 '찾기' 그대로)
-// 넣은 사진은 'AI 실사 사진'으로 만들거나 그림판으로 고친 뒤 그 사진으로 찾을 수 있어요.
+// AI로 케이크 가게 찾기 (깔끔하게): 말로 찾기 · 사진으로 찾기 · AI로 원하는 케이크 이미지 만들기
+// 열 때마다 아무것도 안 눌린 빈 상태에서 시작한다.
 const EMPTY_FIND = { text: '', styles: [], budget: null, gu: null, sameDay: false, appOnly: false, photo: null };
 export function FindSheet({ open, onClose, stores, focus }) {
   const st = useApp();
@@ -524,24 +513,20 @@ export function FindSheet({ open, onClose, stores, focus }) {
   const [place, setPlace] = useState(null);
   const [busy, setBusy] = useState('');
   const [aiNote, setAiNote] = useState('');
-  const [big, setBig] = useState(null); // 넣은 사진 원본(크게) — AI·그림판용, 저장하지 않음
-  const [studio, setStudio] = useState(false);
-  const [sketch, setSketch] = useState(false);
   const photoRef = useRef(null);
   useEffect(() => {
     if (!open) return;
-    setF({ ...EMPTY_FIND, ...(st.find && st.find.src !== 'search' ? st.find : {}) }); setPlace(null); setAiNote(''); setBig(null);
+    setF(EMPTY_FIND); setPlace(null); setAiNote('');
     if (focus === 'photo') setTimeout(() => photoRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 380);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
   const set = (p) => setF((x) => ({ ...x, ...p }));
-  const toggleStyle = (id) => set({ styles: f.styles.includes(id) ? f.styles.filter((x) => x !== id) : [...f.styles, id] });
   const loc = place || st.loc;
   const [count, near] = useMemo(() => { const r = rankStores(stores, { loc, radius: place ? 3 : st.radius, find: f }); return [r.filter((x) => !x.partial).length, r.length]; }, [stores.length, f, loc.lat, loc.lng, st.radius]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 글을 쓰면 바로 조건으로 바꿔 보여 준다
+  // 글을 쓰면 바로 조건으로 바꿔 둔다 (동네·종류·예산·당일)
   const onText = (text) => {
     const p = parseFindText(text);
-    set({ text, ...(p.styles.length ? { styles: p.styles } : {}), ...(p.budget ? { budget: p.budget } : {}), ...(p.gu ? { gu: p.gu } : {}), ...(p.sameDay ? { sameDay: true } : {}) });
+    set({ text, styles: p.styles, budget: p.budget || null, gu: p.gu || null, sameDay: !!p.sameDay });
     setPlace(p.place);
   };
   const askAI = async () => {
@@ -560,19 +545,18 @@ export function FindSheet({ open, onClose, stores, focus }) {
     } catch (e) { toast(e.message); }
     setBusy('');
   };
-  const runPhoto = async (el, smp) => {
+  const runPhoto = async (el) => {
     setBusy('photo');
     try {
       const thumb = toDataURL(el, 360, 0.8, true);
-      setBig(toDataURL(el, 1024, 0.9));
       const an = analyzeImage(el);
-      let photo = { thumb, design: smp?.o.design || an.design, shape: smp?.o.shape || 'round', cream: smp?.o.cream || an.cream, palette: an.palette };
-      let styles = smp ? designStyles(smp.o.design) : an.styles.filter((x) => x !== 'lettering').length ? an.styles.filter((x) => x !== 'lettering') : ['lettering'];
-      if (st.settings.claudeKey && !smp) {
+      let photo = { thumb, design: an.design, shape: 'round', cream: an.cream, palette: an.palette };
+      let styles = an.styles.filter((x) => x !== 'lettering').length ? an.styles.filter((x) => x !== 'lettering') : ['lettering'];
+      if (st.settings.claudeKey) {
         try {
           const r = await aiAnalyzePhoto(st.settings.claudeKey, toDataURL(el, 900, 0.85));
           if (r.is_cake) { photo = { ...photo, ai: r, design: r.design || photo.design, shape: r.shape !== 'unknown' ? r.shape : photo.shape, cream: r.cream_colors?.[0] || photo.cream }; if (r.styles?.length) styles = r.styles.filter((x) => STYLES.some((s) => s.id === x)); setAiNote(r.summary_ko || ''); }
-          else setAiNote('케이크 사진이 아닌 것 같아요. 색만 참고했어요. AI 실사 사진으로 케이크처럼 바꿔 볼 수 있어요.');
+          else setAiNote('케이크 사진이 아닌 것 같아요. 색만 참고했어요.');
         } catch (e) { toast(e.message); }
       }
       set({ photo, styles: styles.length ? styles : ['lettering'] });
@@ -580,30 +564,15 @@ export function FindSheet({ open, onClose, stores, focus }) {
     setBusy('');
   };
   const onPick = async (file) => { try { await runPhoto(await loadImage(file)); } catch (e) { toast(e.message || '사진을 읽지 못했어요'); setBusy(''); } };
-  const trySample = async (smp) => {
-    const svg = cakeSVG(smp.o, { uid: 'smp' }).replace('<svg ', '<svg width="600" height="500" ');
-    const el = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
-    await runPhoto(el, smp);
-  };
-  // AI 실사 · 그림판으로 바꾼 사진으로 찾기
-  const usePhoto = async (src) => {
-    try {
-      const el = await loadDataURL(src);
-      const an = analyzeImage(el);
-      setF((x) => ({ ...x, photo: { ...(x.photo || { shape: 'round' }), thumb: toDataURL(el, 360, 0.8, true), palette: an.palette, design: x.photo?.design || an.design, cream: x.photo?.cream || an.cream, made: true }, styles: x.styles?.length ? x.styles : ['lettering'] }));
-      setBig(toDataURL(el, 1024, 0.9));
-      toast('이 사진으로 찾을게요. 아래 버튼을 누르면 가게가 나와요');
-    } catch { toast('사진을 읽지 못했어요'); }
-  };
   const apply = () => {
     const next = { ...f, text: f.text.trim(), q: '', at: Date.now(), src: 'ai' };
     setState((s) => ({ ...s, find: findCount(next) || next.text ? next : null, ...(place ? { loc: { ...place, src: 'find' }, radius: Math.min(s.radius, 3) } : {}) }));
     onClose();
     toast(count ? `조건에 맞는 가게 ${count}곳을 찾았어요` : near ? `딱 맞는 곳은 없지만 비슷한 가게 ${near}곳을 보여 드려요` : '맞는 가게가 없어요. 조건을 줄여 보세요');
   };
-  const reset = () => { setF(EMPTY_FIND); setPlace(null); setAiNote(''); setBig(null); };
+  const reset = () => { setF(EMPTY_FIND); setPlace(null); setAiNote(''); };
   const ph = f.photo;
-  const studioOpts = { design: ph?.design || (f.styles.includes('character') ? 'character' : f.styles.includes('flower') ? 'flower' : 'simple'), shape: ph?.shape || 'round', cream: ph?.cream || 'white' };
+  const conds = [...f.styles.map((x) => STYLES.find((s) => s.id === x)?.name).filter(Boolean), f.budget && budgetName(f.budget), f.gu, f.sameDay && '당일'].filter(Boolean);
   return (
     <Sheet open={open} onClose={onClose} title="케이크 가게 찾기" height="92%"
       footer={<div className="btns"><button className="btn line" style={{ flex: 0.6 }} onClick={reset}>초기화</button><button className="btn pri" style={{ flex: 2 }} onClick={apply}>{count ? `가게 ${count}곳 보기` : near ? `비슷한 가게 ${near}곳 보기` : '맞는 가게가 없어요'}</button></div>}>
@@ -612,45 +581,26 @@ export function FindSheet({ open, onClose, stores, focus }) {
         <input className="inp grow" value={f.text} onChange={(e) => onText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (st.settings.claudeKey ? askAI() : apply())} placeholder="예) 영통 근처 4만원대 캐릭터 케이크" />
         {st.settings.claudeKey && <button className="btn dark sm" style={{ minHeight: 48 }} onClick={askAI} disabled={busy === 'ai'}>{busy === 'ai' ? '…' : 'AI 해석'}</button>}
       </div>
-      <div className="chips" style={{ marginTop: 8 }}>{EXAMPLES.map((e) => <button key={e} className="chip sm" onClick={() => onText(e)}>{e}</button>)}</div>
-      {(place || aiNote) && <div className="note pink" style={{ marginTop: 8 }}>{place && <><b>{place.label}</b> 근처 3km에서 찾을게요. </>}{aiNote}</div>}
+      {(conds.length > 0 || place || aiNote) && <div className="note pink" style={{ marginTop: 8 }}>{place && <><b>{place.label}</b> 근처 3km · </>}{conds.length > 0 && <>찾는 조건: <b>{conds.join(' · ')}</b> </>}{aiNote}</div>}
 
-      <div className="lbl" style={{ marginTop: 22 }} ref={photoRef}>사진으로 찾기 <span className="xs muted">AI 실사 사진 · 그림판</span></div>
-      {busy === 'photo' ? <Loading text={st.settings.claudeKey ? 'AI가 사진을 보고 있어요…' : '사진의 색과 스타일을 보는 중…'} /> : ph ? (<>
+      <div className="lbl" style={{ marginTop: 22 }} ref={photoRef}>사진으로 찾기</div>
+      {busy === 'photo' ? <Loading text={st.settings.claudeKey ? 'AI가 사진을 보고 있어요…' : '사진의 색과 스타일을 보는 중…'} /> : ph ? (
         <div className="photo-q">
           <img src={ph.thumb} alt="" />
           <div className="grow">
-            <div className="b small">{ph.made ? 'AI·그림판 사진으로 찾아요' : ph.ai ? 'AI가 사진을 분석했어요' : '사진을 분석했어요'} <span className="xs muted">아래 조건이 채워졌어요</span></div>
-            <div className="row" style={{ marginTop: 4, gap: 4 }}>{(ph.palette || []).slice(0, 4).map((p, i) => <i key={i} title={p.name} style={{ width: 18, height: 18, borderRadius: 6, background: p.hex, border: '1px solid #0001' }} />)}<span className="xs muted">{optName(DESIGNS, ph.design)} · {optName(SHAPES, ph.shape)}</span></div>
+            <div className="b small">{ph.ai ? 'AI가 사진을 분석했어요' : '사진을 분석했어요'}</div>
+            <div className="row" style={{ marginTop: 4, gap: 4 }}>{(ph.palette || []).slice(0, 4).map((p, i) => <i key={i} title={p.name} style={{ width: 18, height: 18, borderRadius: 6, background: p.hex, border: '1px solid #0001' }} />)}<span className="xs muted">{optName(DESIGNS, ph.design)}</span></div>
           </div>
-          <button className="btn xs ghost" onClick={() => { set({ photo: null }); setBig(null); }}>빼기</button>
+          <button className="btn xs ghost" onClick={() => set({ photo: null, styles: [] })}>빼기</button>
         </div>
-        <div className="ai-pick">
-          <button className="btn sec sm" onClick={() => setStudio(true)}><Icon n="sparkle" size="sm" />AI 실사 사진 만들기</button>
-          <button className="btn line sm" onClick={() => setSketch(true)}><Icon n="pen" size="sm" />그림판으로 고치기</button>
-        </div>
-      </>) : (
-        <>
-          <div className="btns"><PhotoPick onPick={onPick} className="btn sec"><Icon n="image" size="sm" /> 앨범에서 고르기</PhotoPick><PhotoPick onPick={onPick} capture className="btn line"><Icon n="camera" size="sm" /> 사진 찍기</PhotoPick></div>
-          <div className="xs muted" style={{ margin: '10px 0 6px' }}>사진이 없으면 예시로 해 보세요</div>
-          <div className="opts c3">{SAMPLES.map((s) => <button key={s.label} className="opt" onClick={() => trySample(s)}><div className="thumb"><CakeView o={s.o} /></div><small>{s.label}</small></button>)}</div>
-          <button className="btn ghost block sm" style={{ marginTop: 8 }} onClick={() => setStudio(true)}><Icon n="sparkle" size="sm" />사진 없이 AI 실사 사진 만들기</button>
-        </>
+      ) : (
+        <div className="btns"><PhotoPick onPick={onPick} className="btn sec"><Icon n="image" size="sm" /> 앨범에서 고르기</PhotoPick><PhotoPick onPick={onPick} capture className="btn line"><Icon n="camera" size="sm" /> 사진 찍기</PhotoPick></div>
       )}
-
-      <div className="lbl" style={{ marginTop: 22 }}>케이크 종류 <span className="xs muted">여러 개 가능</span></div>
-      <div className="chips wrap">{STYLES.filter((s) => s.id !== 'custom').map((s) => <button key={s.id} className={`chip ${f.styles.includes(s.id) ? 'on' : ''}`} onClick={() => toggleStyle(s.id)}>{s.name}</button>)}</div>
-      <div className="lbl" style={{ marginTop: 20 }}>예산 <span className="xs muted">1호(2~4인) 기준</span></div>
-      <div className="chips wrap">{BUDGETS.map((b) => { const on = f.budget && f.budget[0] === b.r[0] && f.budget[1] === b.r[1]; return <button key={b.id} className={`chip ${on ? 'on' : ''}`} onClick={() => set({ budget: on ? null : b.r })}>{b.name}</button>; })}
-        {f.budget && !BUDGETS.some((b) => b.r[0] === f.budget[0] && b.r[1] === f.budget[1]) && <button className="chip on" onClick={() => set({ budget: null })}>{budgetName(f.budget)} <Icon n="close" /></button>}</div>
-      <div className="lbl" style={{ marginTop: 20 }}>지역</div>
-      <div className="chips wrap"><button className={`chip ${!f.gu ? 'on' : ''}`} onClick={() => set({ gu: null })}>내 주변 ({(place || st.loc).label})</button>{GUS.map((g) => <button key={g} className={`chip ${f.gu === g ? 'on' : ''}`} onClick={() => { set({ gu: g }); setPlace(null); }}>{g}</button>)}</div>
-      <div className="card" style={{ padding: '0 14px', marginTop: 20 }}>
-        <div className="list-row"><div className="grow"><div className="t">당일 주문 되는 곳만</div></div><Toggle on={f.sameDay} onChange={(v) => set({ sameDay: v })} label="당일" /></div>
-        <div className="list-row"><div className="grow"><div className="t">앱으로 바로 주문되는 곳만</div><div className="s">에이크 입점 가게</div></div><Toggle on={f.appOnly} onChange={(v) => set({ appOnly: v })} label="앱 주문" /></div>
-      </div>
-      <AIStudio open={studio} onClose={() => setStudio(false)} input={big || ph?.thumb || null} opts={studioOpts} onUse={usePhoto} useLabel="이 사진으로 가게 찾기" />
-      {sketch && (big || ph?.thumb) && <Portal><Sketch src={big || ph.thumb} onClose={() => setSketch(false)} onSave={(out) => { saveEdited(out, { opts: studioOpts }); usePhoto(out); }} /></Portal>}
+      <button className="aimake" onClick={() => { onClose(); setTimeout(() => nav('/c/make'), 250); }}>
+        <span className="ic"><Icon n="sparkle" /></span>
+        <span className="grow"><b>AI로 원하는 케이크 이미지 만들기</b><small>사진·문구를 넣으면 실사 케이크로 만들고, 만들 수 있는 가게까지 찾아 줘요</small></span>
+        <Icon n="right" size="sm" />
+      </button>
     </Sheet>
   );
 }
