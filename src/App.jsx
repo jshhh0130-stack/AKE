@@ -8,6 +8,7 @@ import { Logo } from './components/Logo.jsx';
 import Icon from './components/Icon.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import InstallBanner from './components/InstallBanner.jsx';
+import Tour from './components/Tour.jsx';
 import { Splash, SPLASH_MS, RoleSelect, Guide } from './screens/Start.jsx';
 import CustomerHome from './screens/customer/Home.jsx';
 import StoreDetail from './screens/customer/Store.jsx';
@@ -138,6 +139,7 @@ export default function App() {
       </aside>
       <div className={`phone ${themeOf(path)}`}>
         <Router />
+        <Tour />
         <Toasts />
         {gone && <InstallBanner />}
         {!gone && <Splash out={!splash} onSkip={skipSplash} />}

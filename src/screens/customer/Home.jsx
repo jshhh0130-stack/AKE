@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../../components/Icon.jsx';
 import MapView from '../../components/MapView.jsx';
 import { loadKakao, kakaoKeyOf, sweepSuwon, onKakao, kakaoStatus, kakaoFind } from '../../lib/kakao.js';
-import Coach from '../../components/Coach.jsx';
+import { startTour } from '../../components/Tour.jsx';
 import { LocShareSheet, myLocation } from '../../components/Share.jsx';
 import { CustomerTabBar } from '../../components/TabBar.jsx';
 import { Sheet, CakeView, toast, PhotoPick, Loading, useBackClose } from '../../components/ui.jsx';
@@ -102,14 +102,7 @@ export function CompareSheet({ open, onClose, rows }) {
 }
 
 const SNAP = { mini: 0.12, half: 0.44, full: 0.92 };
-const TOUR = [
-  { sel: '[data-coach="find"]', title: 'AI로 케이크 가게를 찾아요', body: '원하는 케이크 사진을 넣거나 “영통 4만원대 캐릭터”처럼 말로 쓰면 맞는 가게를 찾아요. 사진을 AI 실사 사진으로 만들고 그림판으로 고칠 수도 있어요.', pad: 4 },
-  { sel: '[data-coach="chips"]', title: '조건을 눌러 바로 골라요', body: '위 검색창에는 가게 이름을 써요. 아래 칩으로 동네 · 앱 주문 · 당일 픽업 가게만 골라 봐요.', pad: 2, radius: 20 },
-  { sel: '.bsheet .bl .scard', title: '가게마다 1호 가격이 먼저 보여요', body: '지도 핀에도 가격이 보여요. 분홍 핀은 앱으로 바로 주문되는 가게예요. 핀이나 카드를 누르면 가게를 자세히 봐요.', pad: 4, radius: 16 },
-  { sel: '[data-coach="fabs"]', title: '내 위치 · 위치 공유', body: '내 주변 가게를 찾고, 가게 위치를 친구에게 카톡·문자로 보낼 수 있어요.', pad: 6, radius: 28 },
-  { sel: '[data-coach="tab-saved"]', title: '관심에서 케이크를 모아 봐요', body: '케이크 사진을 둘러보고 하트를 눌러 모아요. 비슷한 케이크와 만드는 가게도 찾아 줘요.', pad: 2, radius: 14 },
-];
-
+let tourShownThisLoad = false; // 새로고침하면 다시 false → 안내가 다시 뜬다
 export default function CustomerHome() {
   const st = useApp();
   const pv = usePlaces();
@@ -130,7 +123,6 @@ export default function CustomerHome() {
   const [cmp, setCmp] = useState([]);
   const [cmpOpen, setCmpOpen] = useState(false);
   const [moved, setMoved] = useState(null); // 지도를 끌어 옮긴 곳(가운데)
-  const [tour, setTour] = useState(false);
   const wrap = useRef(null);
   const cards = useRef(null);
   const fromScroll = useRef(false);
@@ -142,7 +134,10 @@ export default function CustomerHome() {
     return () => ro.disconnect();
   }, []);
   // 처음 들어오면 화면 위에서 짧게 사용법 안내
-  useEffect(() => { if (!getState().seenTour) { const t = setTimeout(() => setTour(true), 900); return () => clearTimeout(t); } }, []);
+  // 앱을 열 때마다(새로고침 포함) 지도에 처음 들어오면 5단계 안내를 보여 준다 · 건너뛰기 가능 · 같은 실행 중엔 다시 안 뜸
+  useEffect(() => { if (!tourShownThisLoad || !getState().seenTour) { const t = setTimeout(() => { tourShownThisLoad = true; startTour(); }, 900); return () => clearTimeout(t); } }, []);
+  // 튜토리얼이 'AI 찾기' 창을 열고 닫을 때
+  useEffect(() => { const f = (e) => setFindOpen(e.detail ? 'all' : false); window.addEventListener('ake-find', f); return () => window.removeEventListener('ake-find', f); }, []);
   const gKey = mapBad === 'google' ? '' : st.settings.googleKey;
   const kKey = mapBad === 'kakao' ? '' : kakaoKeyOf(st.settings);
   // 카카오맵에서 수원 커스텀 케이크 가게 모으기 (3일에 한 번, 이 기기에 저장)
@@ -343,7 +338,6 @@ export default function CustomerHome() {
       <LocShareSheet open={shareOpen} onClose={() => setShareOpen(false)} store={selStore} center={moved ? { ...moved, label: '지도에서 보는 곳' } : st.loc} />
       <LocPermSheet open={permOpen} onClose={() => setPermOpen(false)} onOk={() => { setState({ locOk: true }); setPermOpen(false); setTimeout(doLocate, 350); }} />
       {searchOpen && <SearchView stores={stores} onClose={() => setSearchOpen(false)} openPhoto={() => setTimeout(() => setFindOpen('photo'), 380)} />}
-      {tour && <Coach steps={TOUR} onDone={() => { setTour(false); setState({ seenTour: true, seenGuide: true }); }} />}
     </div>
   );
 }

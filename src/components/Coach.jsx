@@ -2,7 +2,8 @@
 // steps: [{ sel: CSS 선택자, title, body, pad }] — 찾지 못한 칸은 건너뛴다.
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
-export default function Coach({ steps, onDone }) {
+// strict: 지금 단계 칸만 찾는다(여러 화면을 오가는 튜토리얼) · step.enter(): 단계가 바뀔 때 먼저 할 일(화면 이동 등), 기다릴 ms 를 돌려줌
+export default function Coach({ steps, onDone, strict = false }) {
   const [i, setI] = useState(0);
   const [box, setBox] = useState(null); // 네모 칸 위치
   const [size, setSize] = useState({ w: 0, h: 0 });
@@ -16,7 +17,7 @@ export default function Coach({ steps, onDone }) {
     if (!host) return false;
     const hr = host.getBoundingClientRect();
     setSize({ w: hr.width, h: hr.height });
-    for (let k = i; k < steps.length; k++) {
+    for (let k = i; k < (strict ? i + 1 : steps.length); k++) {
       const s = steps[k];
       // 화면 안에 다 보이고, 다른 것(위 검색창 등)에 가려지지 않은 칸만
       const inside = (e) => {
@@ -49,9 +50,12 @@ export default function Coach({ steps, onDone }) {
 
   useLayoutEffect(() => {
     let tries = 0, t;
-    const run = () => { if (!measure() && tries++ < 12) t = setTimeout(run, 150); else if (tries > 12) { if (i < steps.length - 1) setI(i + 1); else onDone?.(); } };
-    run();
-    const again = setTimeout(() => measure(), 450); // 움직이던 칸(아래 목록 등)이 멈춘 뒤 한 번 더 맞춘다
+    const max = strict ? 24 : 12;
+    setBox(null);
+    const wait = steps[i]?.enter?.() || 0; // 화면 이동 · 창 열기
+    const run = () => { if (!measure() && tries++ < max) t = setTimeout(run, 150); else if (tries > max) { if (i < steps.length - 1) setI(i + 1); else onDone?.(); } };
+    t = setTimeout(run, wait);
+    const again = setTimeout(() => measure(), wait + 450); // 움직이던 칸(아래 목록 등)이 멈춘 뒤 한 번 더 맞춘다
     const onR = () => measure();
     window.addEventListener('resize', onR);
     return () => { clearTimeout(t); clearTimeout(again); window.removeEventListener('resize', onR); };
