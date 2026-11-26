@@ -160,7 +160,9 @@ export default function OrderForm({ params, path }) {
   const send = () => {
     setState({ me: { name: name.trim(), phone: phone.trim() } });
     const { _fromPhoto, _ai, ...oo } = o; // eslint-disable-line no-unused-vars
-    const order = createOrder(store, oo, { name: name.trim(), phone: phone.trim() }, gift ? { to: to.trim(), msg: gmsg.trim(), from: name.trim() } : null);
+    // 가게 사진을 골랐으면 그 사진을 주문서 사진으로 함께 (사장님이 바로 알아보게)
+    const withPic = pick?.shopPhoto && !oo.refPhoto ? { ...oo, refPhoto: pick.src } : oo;
+    const order = createOrder(store, withPic, { name: name.trim(), phone: phone.trim() }, gift ? { to: to.trim(), msg: gmsg.trim(), from: name.trim() } : null);
     nav(`/done/${order.id}`, { replace: true });
   };
 
@@ -191,7 +193,7 @@ export default function OrderForm({ params, path }) {
             {/* 가게 대표 디자인 */}
             {designs.map((d) => (
               <button key={d.id} className={`dcard ${sel === d.id ? 'on' : ''}`} onClick={() => setO((x) => applyPick(x, d))}>
-                <div className="im">{d.src ? <img src={d.src} alt="" /> : <CakeView o={d.design} />}{sel === d.id && <span className="ck"><Icon n="check" size="sm" /></span>}</div>
+                <div className="im">{d.src ? <img src={d.thumb || d.src} alt="" loading="lazy" /> : <CakeView o={d.design} />}{sel === d.id && <span className="ck"><Icon n="check" size="sm" /></span>}</div>
                 <div className="dt"><b>{d.name}</b><small>{designLabel(d)}</small></div>
               </button>
             ))}

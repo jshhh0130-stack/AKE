@@ -37,8 +37,11 @@ export const PICK_SEED = (() => {
   });
 })();
 const PICKED = new Set(PICK_SEED.filter(Boolean));
+// 조사한 가게 ↔ 팀 목록 번호(no) — 가게 사진 폴더(번호_이름)와 같은 번호
+const SEED_NO = {};
+PICKS.forEach((p, i) => { if (PICK_SEED[i] && p.no) SEED_NO[PICK_SEED[i]] = p.no; });
 // 고른 목록에 없는 조사 가게는 지도·목록에서 숨긴다 (주문 링크·찜으로 열면 그대로 보임)
-const SEED = SEED_STORES.map((s) => (PICKED.has(s.id) ? s : { ...s, hidden: true }));
+const SEED = SEED_STORES.map((s) => (PICKED.has(s.id) ? (SEED_NO[s.id] ? { ...s, no: SEED_NO[s.id] } : s) : { ...s, hidden: true }));
 export const SEED_UPDATED = seed.updated;
 
 // 구글 장소 정보(사진·별점·정확한 위치)를 받아 오면 여기에 겹쳐 쓴다 (lib/gplaces.js)

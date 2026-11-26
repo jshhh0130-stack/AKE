@@ -10,6 +10,7 @@ import { NotiBell } from '../../components/Noti.jsx';
 import { useApp, setState, getState } from '../../lib/state.js';
 import { nav, navAfterSheet } from '../../lib/router.js';
 import { PICKS } from '../../data/picks.js';
+import { mainPhoto } from '../../lib/shopPhotos.js';
 import { getStores, rankStores, FILTERS, GUS, BUDGETS, findCount, parseFindText, fmtKm, headlinePrice, pinPrice, canOrderInApp, nextOpenDay, searchStores, strengths, SORTS, keywordsOf } from '../../lib/stores.js';
 import { storeLook, cakeSVG } from '../../lib/cake.js';
 import { range } from '../../lib/util.js';
@@ -22,7 +23,8 @@ import { enrich, googleFind, onPlaces } from '../../lib/gplaces.js';
 
 const lookOf = (s) => s.hero || s.portfolio?.[0]?.design || storeLook(s);
 export function StoreThumb({ s }) {
-  const photo = s.g?.photos?.[0]?.src || s.portfolio?.find((p) => p.src)?.src;
+  // 가게 대표 사진(팀이 모은 사진 1번) → 구글 사진 → 사장님 작품 → 없으면 가게 스타일 그림
+  const photo = mainPhoto(s)?.thumb || s.g?.photos?.[0]?.src || s.portfolio?.find((p) => p.src)?.src;
   if (photo) return <img src={photo} alt="" referrerPolicy="no-referrer" />;
   return <CakeView o={lookOf(s)} />;
 }
@@ -206,7 +208,7 @@ export default function CustomerHome() {
   const ranked = useMemo(() => rankStores(stores, { loc: st.loc, radius: st.radius, find, filter, sort, reviews }), [stores.length, st.loc, st.radius, find, filter, sort, st.partners, st.shop, pv, reviews]); // eslint-disable-line react-hooks/exhaustive-deps
   const pins = useMemo(() => ranked.map((r) => ({
     s: r.s, name: r.s.name.length > 10 ? r.s.name.slice(0, 9) + '…' : r.s.name, price: pinPrice(r.s), match: find && findCount(find) && r.match != null ? r.match : null,
-    img: r.s.g?.photos?.[0]?.src || r.s.portfolio?.find((p) => p.src)?.src || null, color: creamOf(lookOf(r.s).cream).hex,
+    img: mainPhoto(r.s)?.thumb || r.s.g?.photos?.[0]?.src || r.s.portfolio?.find((p) => p.src)?.src || null, color: creamOf(lookOf(r.s).cream).hex,
   })), [ranked, find]);
   useEffect(() => { if (find?.at) setFit(ranked.slice(0, 8).map((r) => r.s).concat(find.gu ? [] : [st.loc])); }, [find?.at]); // eslint-disable-line react-hooks/exhaustive-deps
   // 구글 키가 있으면 위쪽 가게들의 실제 사진·별점을 받아 온다 (사용량 아끼려고 앞의 5곳만)

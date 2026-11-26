@@ -5,6 +5,7 @@ import { storeLook } from './cake.js';
 import { estimate } from './price.js';
 import { getState } from './state.js';
 import { designOf, creamOf, sizeOf } from '../data/catalog.js';
+import { cakePhotos, photoName } from './shopPhotos.js';
 
 const BASE = { size: 'h1', shape: 'round', design: 'simple', cream: 'white', flavor: 'vanilla', text: 'a', toppings: [], extras: [] };
 
@@ -12,8 +13,10 @@ export function storeDesigns(s) {
   if (!s) return [];
   // 작품 사진(work)은 위쪽 사진·관심에만, 대표 디자인은 나머지. opt 가 있으면 그 크기·디자인으로 가격을 계산
   const own = (s.portfolio || []).filter((p) => (p.src || p.design) && !p.work).map((p, i) => ({ id: p.id || `p${i}`, name: p.caption || '대표 디자인', src: p.src || null, design: p.design || null, opt: p.opt || null, real: true, sample: !!p.sample }));
+  // 팀이 모은 가게 케이크 사진 (출처 표시) — 사장님 작품이 없으면 이것을 대표 디자인으로
+  const shop = own.length ? [] : cakePhotos(s).map((p) => ({ id: `sp${p.n}`, name: photoName(p), src: p.url, thumb: p.thumb, design: null, real: true, shopPhoto: true, credit: p.credit, link: p.src }));
   const seen = {};
-  const list = own.length ? own : Array.from({ length: 5 }, (_, k) => {
+  const list = own.length ? own : shop.length ? shop : Array.from({ length: 5 }, (_, k) => {
     const d = storeLook(s, k);
     let name = `${designOf(d.design).name} · ${creamOf(d.cream).name}`;
     if (seen[name]) name = `${name} ${sizeOf(d.size).name}`; // 같은 이름이면 크기로 구분

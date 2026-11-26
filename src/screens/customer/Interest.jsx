@@ -1,16 +1,18 @@
-// 관심: 케이크 사진 둘러보기(핀터레스트처럼) + 찜한 가게
+// 관심: 가게 사진(팀이 모은 수원 가게 실제 케이크 사진, 가게별로) + 케이크 사진 둘러보기(핀터레스트처럼) + 찜한 가게
 // 사진은 공개 AI 모델(FLUX.1 schnell)로 만든 '예시 사진'이다 — 실제 가게 작품이 아니라서 화면에 항상 표시한다.
 // 입점 가게 사장님이 올린 작품 사진은 '가게 작품'으로 함께 보여 준다.
 import { useEffect, useMemo, useState } from 'react';
 import Icon from '../../components/Icon.jsx';
 import { CustomerTabBar } from '../../components/TabBar.jsx';
-import { Empty, toast, PhotoPick, Header, Loading, Portal } from '../../components/ui.jsx';
+import { Empty, toast, PhotoPick, Header, Loading, Portal, useBackClose } from '../../components/ui.jsx';
 import AIStudio from '../../components/AIStudio.jsx';
 import Sketch from '../../components/Sketch.jsx';
 import { removePic, saveEdited } from '../../lib/imagegen.js';
 import { useApp, setState } from '../../lib/state.js';
 import { nav, back, queryOf, navAfterSheet } from '../../lib/router.js';
-import { getStores, rankStores, distKm } from '../../lib/stores.js';
+import { getStores, rankStores, distKm, fmtKm } from '../../lib/stores.js';
+import { SHOP_PHOTO_GROUPS, photoName } from '../../lib/shopPhotos.js';
+import { PICKS } from '../../data/picks.js';
 import { loadImage, toDataURL, analyzeImage, loadDataURL } from '../../lib/image.js';
 import { shareText, ago, hash } from '../../lib/util.js';
 import { SHAPES, creamOf, optName, sizeOf, designOf } from '../../data/catalog.js';
@@ -118,16 +120,17 @@ export function Interest({ path }) {
   const st = useApp();
   const q0 = queryOf(path).get('q') || '';
   const cat0 = queryOf(path).get('cat') || 'all';
-  const [tab, setTab] = useState(queryOf(path).get('tab') === 'store' ? 'store' : 'cake');
+  const [tab, setTab] = useState(() => { const qq = queryOf(path); return qq.get('tab') === 'store' ? 'store' : qq.get('q') || qq.get('cat') || qq.get('tab') === 'cake' ? 'cake' : 'shop'; });
   const n = st.favs.length;
   return (
     <div className="screen fade">
       <div className="apphdr"><h1>관심</h1></div>
       <div className="utabs">
+        <button className={tab === 'shop' ? 'on' : ''} onClick={() => setTab('shop')}>가게 사진</button>
         <button className={tab === 'cake' ? 'on' : ''} onClick={() => setTab('cake')}>케이크 둘러보기</button>
         <button className={tab === 'store' ? 'on' : ''} onClick={() => setTab('store')}>찜한 가게{n > 0 && <small>{n}</small>}</button>
       </div>
-      {tab === 'cake' ? <CakeFeed q0={q0} cat0={cat0} /> : <SavedStores />}
+      {tab === 'shop' ? <ShopFeed /> : tab === 'cake' ? <CakeFeed q0={q0} cat0={cat0} /> : <SavedStores />}
       <CustomerTabBar current="/c/saved" />
     </div>
   );
@@ -209,6 +212,87 @@ function CakeFeed({ q0, cat0 = 'all' }) {
       </>)}
       <AIStudio open={studio} onClose={() => setStudio(false)} onUse={(src) => findWithPhoto(src, {})} useLabel="이 사진으로 가게 찾기" />
     </div>
+  );
+}
+
+// ── 가게 사진: 가게마다 묶어서 핀터레스트처럼 (가까운 가게부터) ──
+const GU4 = ['전체', '영통구', '팔달구', '권선구', '장안구'];
+function ShopFeed() {
+  const st = useApp();
+  usePlaces(); // 카카오에서 가게 위치가 오면 거리순으로 다시
+  const [q, setQ] = useState('');
+  const [gu, setGu] = useState('전체');
+  const [n, setN] = useState(8);
+  const [view, setView] = useState(null); // { g, i }
+  const stores = getStores(st);
+  const groups = useMemo(() => {
+    const byNo = new Map(stores.filter((s) => s.no != null && !s.hidden).map((s) => [s.no, s]));
+    const qq = norm(q);
+    return SHOP_PHOTO_GROUPS.map((g) => {
+      const s = byNo.get(g.no) || null;
+      return { ...g, s, gu: s?.gu || PICKS.find((p) => p.no === g.no)?.gu || '', d: s?.lat != null ? distKm(st.loc, s) : 999 };
+    }).filter((g) => (gu === '전체' || g.gu === gu) && (!qq || norm(g.name).includes(qq))).sort((a, b) => a.d - b.d);
+  }, [stores.length, gu, q, st.loc.lat, st.loc.lng]); // eslint-disable-line react-hooks/exhaustive-deps
+  const total = groups.reduce((a, g) => a + g.photos.length, 0);
+  return (
+    <div className="scroll with-tab">
+      <div className="feedtop">
+        <div className="qbox">
+          <Icon n="search" size="sm" />
+          <input value={q} onChange={(e) => { setQ(e.target.value); setN(8); }} placeholder="가게 이름으로 찾기" aria-label="가게 이름으로 찾기" />
+          {q && <button className="x" onClick={() => setQ('')} aria-label="지우기"><Icon n="close" size="sm" /></button>}
+        </div>
+        <div className="chips">{GU4.map((g) => <button key={g} className={`chip sm ${gu === g ? 'on' : ''}`} onClick={() => { setGu(g); setN(8); }}>{g}</button>)}</div>
+      </div>
+      <div className="feedinfo note2"><Icon n="info" />수원 가게 {groups.length}곳의 실제 케이크 사진 {total}장이에요. 가까운 가게부터 보여 주고, 사진을 누르면 크게 보고 바로 주문서를 쓸 수 있어요.</div>
+      {groups.length === 0 && <Empty icon="search">찾는 가게 사진이 없어요.</Empty>}
+      {groups.slice(0, n).map((g) => (
+        <div key={g.no} className="shopgrp">
+          <div className="sg-h">
+            <div className="grow" style={{ minWidth: 0 }}><b>{g.name}</b><small>{[g.gu, g.d < 999 ? fmtKm(g.d) : null, `사진 ${g.photos.length}장`].filter(Boolean).join(' · ')}</small></div>
+            {g.s && <button className="btn xs line" onClick={() => nav(`/store/${g.s.id}`)}>가게 보기 ›</button>}
+          </div>
+          <div className="masonry">
+            {g.photos.map((p, i) => (
+              <div key={p.n} className="mi" role="button" tabIndex={0} onClick={() => setView({ g, i })}>
+                <div className="im" style={{ aspectRatio: `${p.w} / ${p.h}` }}><img src={p.thumb} alt={`${g.name} ${photoName(p)}`} loading="lazy" decoding="async" />{p.main && <span className="own">대표</span>}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+      {groups.length > n && <div style={{ padding: '4px 16px 20px' }}><button className="btn line block" onClick={() => setN(n + 8)}>가게 더 보기 · {groups.length - n}곳 남음</button></div>}
+      <div className="xs muted" style={{ padding: '0 16px 16px' }}>사진은 카카오맵 · 네이버 블로그에 올라온 사진이에요. 크게 보기에서 출처로 갈 수 있어요.</div>
+      {view && <ShopPhotoViewer group={view.g} index={view.i} onClose={() => setView(null)} />}
+    </div>
+  );
+}
+// 가게 사진 크게 보기: 옆으로 넘기기 · 출처 · 가게 보기 · 이 케이크로 주문서 쓰기
+function ShopPhotoViewer({ group, index, onClose }) {
+  const [i, setI] = useState(index);
+  const close = useBackClose(onClose);
+  const x0 = useMemo(() => ({ v: null }), []);
+  const len = group.photos.length;
+  const p = group.photos[i];
+  const go = (path) => { navAfterSheet(path, {}); close(); }; // 창을 닫는 '뒤로가기'가 끝난 뒤 이동
+  return (
+    <Portal>
+      <div className="spv" role="dialog" aria-label={`${group.name} 사진`}>
+        <div className="spv-top"><button onClick={close} aria-label="닫기"><Icon n="close" /></button><b className="grow">{group.name}</b><span>{i + 1} / {len}</span></div>
+        <div className="spv-img" onPointerDown={(e) => { x0.v = e.clientX; }} onPointerUp={(e) => { if (x0.v == null) return; const dx = e.clientX - x0.v; x0.v = null; if (dx < -40 && i < len - 1) setI(i + 1); if (dx > 40 && i > 0) setI(i - 1); }}>
+          <img src={p.url} alt={photoName(p)} draggable={false} />
+          {i > 0 && <button className="nav l" onClick={() => setI(i - 1)} aria-label="이전 사진">‹</button>}
+          {i < len - 1 && <button className="nav r" onClick={() => setI(i + 1)} aria-label="다음 사진">›</button>}
+        </div>
+        <div className="spv-info"><b>{photoName(p)}</b><a href={p.src} target="_blank" rel="noreferrer">사진 출처: {p.credit} ›</a></div>
+        <div className="spv-btns">
+          {group.s ? (<>
+            <button className="btn line" onClick={() => go(`/store/${group.s.id}`)}>가게 보기</button>
+            <button className="btn pri" style={{ flex: 2 }} onClick={() => go(`/order/${group.s.id}?pick=sp${p.n}`)}>이 케이크로 주문서 쓰기</button>
+          </>) : <div className="xs muted center" style={{ width: '100%' }}>이 가게는 지도에서 아직 찾지 못했어요.</div>}
+        </div>
+      </div>
+    </Portal>
   );
 }
 

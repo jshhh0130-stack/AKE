@@ -2,7 +2,7 @@
 // 위: 주문 요약(시안·금액·진행 단계) / 가운데: 지금 해야 할 일 버튼 + 대화 / 아래: 메시지 입력
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../components/Icon.jsx';
-import { CakeView, Header, Empty, StatusTag, Stars, toast, PhotoPick, PriceInput, Sheet, Seg } from '../components/ui.jsx';
+import { CakeView, Header, Empty, StatusTag, Stars, toast, PhotoPick, PriceInput, Sheet, Seg, Portal } from '../components/ui.jsx';
 import { useApp, patchShop } from '../lib/state.js';
 import { nav, queryOf } from '../lib/router.js';
 import { getStores, shopToStore, mapLinks, dayStatus, slotsOf, canOrderInApp, isPeak, depositOf } from '../lib/stores.js';
@@ -106,6 +106,7 @@ function Thread({ order, role }) {
         if (sys || (isSystemish(ev) && ev.t !== 'request' && !ev.msg && ['advance', 'paid'].includes(ev.t))) {
           return <div key={ev.id} className="tsys"><span>{text}</span><small>{ago(ev.at)}</small></div>;
         }
+        if (ev.t === 'change' || (ev.t === 'revise' && ev.changes?.length)) return <ChangeCard key={ev.id} ev={ev} order={order} role={role} mine={mine} />;
         return (
           <div key={ev.id} className={`bub ${mine ? 'me' : ''} ${ev.t !== 'msg' ? 'act' : ''}`}>
             {!mine && <small className="who">{ev.by === 'o' ? `${order.storeName} 사장님` : maskName(order.customer?.name) + '님'}</small>}
@@ -116,6 +117,47 @@ function Thread({ order, role }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+// 수정 제안(사장님) · 수정 요청(손님) 카드: 바뀌는 점 + 최종 금액 + [자세히 보기] → 바뀐 주문서 한 장 (손님은 거기서 바로 확정)
+function ChangeCard({ ev, order, role, mine }) {
+  const [open, setOpen] = useState(false);
+  const owner = ev.t === 'change';
+  const changes = ev.changes || [];
+  const latest = [...(order.ev || [])].reverse().find((e) => e.t === ev.t)?.id === ev.id;
+  const canAccept = role === 'c' && owner && order.status === 'change' && latest;
+  const proposed = { ...order, o: { ...order.o, ...(ev.patch || {}) }, finalPrice: owner ? ev.price ?? null : null, est: ev.est || order.est, ev: [] };
+  const who = owner ? `${order.storeName} 사장님` : `${maskName(order.customer?.name)}님`;
+  return (
+    <div className={`bub chgcard ${mine ? 'me' : ''}`}>
+      {!mine && <small className="who">{who}</small>}
+      <div className="cc-h"><span className="ic"><Icon n="edit" size="sm" /></span>{owner ? '주문 수정 제안' : '주문 수정 요청'}</div>
+      {ev.msg && <div className="cc-msg">{ev.msg}</div>}
+      {changes.length > 0 && (
+        <div className="cc-list">
+          {changes.slice(0, 3).map((c, i) => <div key={i}><span className="k">{c.k}</span><span className="v"><s>{c.from || '없음'}</s><i>→</i><b>{c.to}</b></span></div>)}
+          {changes.length > 3 && <small>외 {changes.length - 3}가지</small>}
+        </div>
+      )}
+      {owner && ev.price != null && <div className="cc-price"><span>최종 금액</span><b>{won(ev.price)}</b></div>}
+      <button className="cc-more" onClick={() => setOpen(true)}>자세히 보기 <Icon n="right" size="sm" /></button>
+      <small className="tm">{ago(ev.at)}</small>
+      <Portal><Sheet open={open} onClose={() => setOpen(false)} title={owner ? '사장님 수정 제안' : '손님 수정 요청'}
+        footer={canAccept ? <div className="btns"><button className="btn line" onClick={() => { setOpen(false); setTimeout(() => document.getElementById('talk-inp')?.focus(), 350); }}>메시지로 묻기</button><button className="btn pri" style={{ flex: 2 }} onClick={() => { act(order.id, 'c', 'accept'); setOpen(false); toast('제안을 받았어요. 주문이 확정됐어요!'); }}>이대로 확정하기{ev.price != null ? ` · ${won(ev.price)}` : ''}</button></div> : null}>
+        {ev.msg && <div className="cc-note">“{ev.msg}”</div>}
+        {changes.length > 0 && (
+          <div className="cc-full">
+            <b>바뀌는 점</b>
+            {changes.map((c, i) => <div key={i}><span className="k">{c.k}</span><span className="v"><s>{c.from || '없음'}</s><i>→</i><b>{c.to}</b></span></div>)}
+          </div>
+        )}
+        {owner && ev.price != null && <div className="cc-full"><div><span className="k">최종 금액</span><span className="v"><b>{won(ev.price)}</b>{order.est?.lo ? <small> (처음 예상가 {range(order.est.lo, order.est.hi, true)})</small> : null}</span></div></div>}
+        <div className="lbl">{owner ? '이렇게 바뀐 주문서' : '손님이 고친 주문서'}</div>
+        <OrderPaper order={proposed} sumLabel={owner ? '제안한 최종 금액' : null} />
+        {!canAccept && role === 'c' && owner && order.status !== 'change' && <div className="xs muted center" style={{ marginTop: 8 }}>이미 처리한 제안이에요.</div>}
+      </Sheet></Portal>
     </div>
   );
 }
@@ -394,39 +436,6 @@ export function CustomerOrder({ params, path }) {
 }
 
 // ───────── 사장님 화면 ─────────
-// 가격 산정 도우미: 이 가게의 비슷한 지난 주문(같은 사이즈·같은 디자인) 3건 + 누르면 더하고 빼는 추가금 칩
-const addsOf = (o) => [...decoList(o), o.plateText ? '판 문구' : null].filter(Boolean);
-function PriceHelper({ order, orders, shop, price, setPrice }) {
-  const x = order.o;
-  const [on, setOn] = useState([]);
-  const past = orders.filter((p) => p.id !== order.id && p.storeId === order.storeId && p.finalPrice != null && p.o && !['declined', 'canceled'].includes(p.status));
-  const sameKind = (p) => (x.pickId && p.o.pickId === x.pickId) || p.o.design === x.design;
-  let sim = past.filter((p) => p.o.size === x.size && sameKind(p));
-  let label = '같은 사이즈 · 같은 디자인';
-  if (sim.length < 3) { const more = past.filter((p) => p.o.size === x.size && !sim.includes(p)); if (more.length) { sim = [...sim, ...more]; label = '같은 사이즈'; } }
-  sim = sim.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')).slice(0, 3);
-  const m = shop?.menu || {};
-  const ADD = [['디자인비', m.designs?.[x.design] || 5000], ['판 문구', m.extras?.plate ?? 1000], ['생과일', m.toppings?.strawberry ?? 5000], ['생화', m.toppings?.freshflower ?? 10000], ['토퍼', m.extras?.topper ?? 4000], ['긴 문구', m.longText ?? 2000], ['그림 난이도', 5000], ['보냉백', m.extras?.icebag ?? 3000]].filter(([, v]) => v > 0);
-  const toggle = (k, v) => { if (on.includes(k)) { setOn(on.filter((i) => i !== k)); setPrice(Math.max(0, (price || 0) - v)); } else { setOn([...on, k]); setPrice((price || 0) + v); } };
-  return (
-    <div className="phelp">
-      <div className="ph-t"><Icon n="wand" size="sm" />가격 산정 도우미</div>
-      {sim.length ? (
-        <div className="ph-sim">
-          <small>{label} 지난 주문 · 누르면 그 금액으로</small>
-          {sim.map((p) => (
-            <button key={p.id} className="ph-row" onClick={() => setPrice(p.finalPrice)}>
-              <span className="grow"><b>{fmtDate(p.o.date)} · {sizeOf(p.o.size).name} {p.o.pickName || designOf(p.o.design).name}</b><em>{addsOf(p.o).join(' · ') || '추가 없음'}</em></span>
-              <strong>{won(p.finalPrice)}</strong>
-            </button>
-          ))}
-        </div>
-      ) : <div className="xs muted">아직 비슷한 지난 주문이 없어요. 주문이 쌓이면 여기에 보여요.</div>}
-      <small className="ph-l">추가금 (눌러서 더하기 · 빼기)</small>
-      <div className="chips wrap">{ADD.map(([k, v]) => <button key={k} className={`chip sm ${on.includes(k) ? 'on' : ''}`} onClick={() => toggle(k, v)}>{on.includes(k) ? '−' : '+'} {k} {won(v)}</button>)}</div>
-    </div>
-  );
-}
 // 사장님 '수정': 금액·문구·판 문구·픽업·크기를 고쳐서 손님에게 제안 → 손님이 받으면 그대로 확정
 function OwnerChangeSheet({ open, onClose, order, shop, price0 }) {
   const x = order.o;
@@ -529,7 +538,6 @@ export function OwnerOrderDetail({ params, path }) {
             {!v.ok && <ul className="rules" style={{ marginBottom: 8 }}>{checks.filter((c) => !c.ok).map((c, i) => <li key={i} className="w"><i>!</i><span>{c.t}</span></li>)}</ul>}
             {isPeak(store, x.date) && <div className="note pink" style={{ marginBottom: 8 }}>성수기 날짜 주문이에요 · 예약금 100% · 손님은 주문을 바꿀 수 없어요</div>}
             <div className="row"><span className="grow"><b>최종 금액</b><div className="xs muted">손님에게는 예상가 {range(o.est?.lo, o.est?.hi, true)}로 보였어요</div></span><div className="pricerow" style={{ border: 0, padding: 0 }}><PriceInput value={price} onChange={(vv) => setPrice(vv ?? 0)} /></div></div>
-            <PriceHelper order={o} orders={st.orders} shop={st.shop} price={price} setPrice={setPrice} />
             <div className="btns" style={{ marginTop: 10 }}>
               <button className="btn ghost" onClick={() => { if (confirm('이 주문을 거절할까요?')) { act(o.id, 'o', 'decline'); toast('주문을 거절했어요'); } }}>거절</button>
               <button className="btn line" onClick={() => setChg(true)}><Icon n="edit" size="sm" />수정</button>

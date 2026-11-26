@@ -10,7 +10,7 @@ import { range, won, mdDate, maskName, maskPhone, ago } from '../lib/util.js';
 const p2 = (n) => String(n).padStart(2, '0');
 export const mdhm = (at) => { const d = new Date(at); return `${d.getMonth() + 1}/${d.getDate()} ${p2(d.getHours())}:${p2(d.getMinutes())}`; };
 
-export default function OrderPaper({ order, compact = false, zoom = false }) {
+export default function OrderPaper({ order, compact = false, zoom = false, sumLabel = null }) {
   const x = order.o;
   const ai = x.pickName === 'AI로 만든 케이크';
   const deco = decoList(x);
@@ -57,7 +57,7 @@ export default function OrderPaper({ order, compact = false, zoom = false }) {
       <div className="pp-rows">{rows.map(([k, v]) => <div key={k} className={`pp-row ${k === '알레르기' ? 'warn' : ''}`}><span>{k}</span><b>{v}</b></div>)}</div>
       {lines.length > 0 && <div className="pp-lines">{lines.map((l, i) => <div key={i}><span>{l.label}</span><span>{range(l.lo, l.hi)}</span></div>)}</div>}
       <div className="pp-sum">
-        <span>{order.finalPrice != null ? '확정 금액' : '예상가'}</span>
+        <span>{sumLabel || (order.finalPrice != null ? '확정 금액' : '예상가')}</span>
         <b>{order.finalPrice != null ? won(order.finalPrice) : range(order.est?.lo, order.est?.hi)}</b>
       </div>
       {log.length > 0 && (

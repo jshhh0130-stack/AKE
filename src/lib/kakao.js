@@ -24,7 +24,7 @@ export function loadKakao(key) {
   return kakaoP;
 }
 
-const CACHE_KEY = 'dearcake:kakao-picks-v3'; // 11/26 가게 100곳으로 바뀌어 새로 찾는다
+const CACHE_KEY = 'dearcake:kakao-picks-v4'; // 11/26 가게 100곳 + 번길 주소 읽기 고침 → 새로 찾는다
 const TTL = 3 * 864e5;
 let found = []; // PICKS 순서대로 카카오 장소(가공 전) 또는 null
 let status = { state: 'idle', at: 0, n: 0, msg: '', missing: [] }; // idle | loading | done | error
@@ -64,7 +64,7 @@ function buildOverlay() {
     if (seen.has(p.id)) return;
     seen.add(p.id);
     extra.push({
-      id: 'kakao-' + p.id, kind: 'kakao', level: 'kakao', name: k.name, lat: k.lat, lng: k.lng, geo: 'exact',
+      id: 'kakao-' + p.id, kind: 'kakao', level: 'kakao', name: k.name, lat: k.lat, lng: k.lng, geo: p.area ? 'area' : 'exact',
       gu: k.gu || pick.gu, dong: k.dong, addr: k.road || k.addr || pick.addr, styles: pick.styles?.length ? pick.styles : stylesOf(k.name, k.cat),
       ...(pick.sameDay ? { sameDay: true } : {}), no: pick.no,
       note: pick.tags ? `잘하는 케이크: ${pick.tags}` : k.cat ? `카카오맵 분류: ${k.cat}` : null, src: [k.url], k, pick: true,
@@ -115,7 +115,15 @@ export async function sweepSuwon(key, { force = false } = {}) {
     const OK = k.maps.services.Status.OK, ERR = k.maps.services.Status.ERROR;
     let errs = 0, calls = 0;
     const geo = new k.maps.services.Geocoder();
-    const addrOf = (addr) => { const a = String(addr).replace(/\(.*?\)/g, ' ').match(/^(.*?(?:로|길)\s*\d+(?:-\d+)?|.*?동\s*\d+(?:-\d+)?)/); return a ? new Promise((res) => geo.addressSearch(a[1].trim(), (d, s2) => res(s2 === OK && d[0] ? d[0] : null))) : Promise.resolve(null); };
+    const geoAsk = (q) => new Promise((res) => geo.addressSearch(q, (d, s2) => res(s2 === OK && d[0] ? d[0] : null)));
+    const addrOf = async (addr) => {
+      const t = String(addr).replace(/\(.*?\)/g, ' ').replace(/\s+/g, ' ').trim();
+      const road = t.match(/^(.*?[가-힣A-Za-z0-9]+(?:로|길)\s+\d+(?:-\d+)?)/); // 도로명 + 건물번호 (번길 포함)
+      const lot = t.match(/^(.*?[가-힣0-9]+(?:동|가)\s*\d+(?:-\d+)?)/); // 지번
+      const dong = t.match(/^(.*?[가-힣]+동)(?:\s|$)/); // 번지 없이 동까지 (대략 위치)
+      for (const [m, area] of [[road, false], [lot, false], [dong, true]]) { if (m) { const r = await geoAsk(m[1].trim()); if (r) return { ...r, area }; } }
+      return null;
+    };
     const ask = (q, c) => new Promise((res) => ps.keywordSearch(q, (data, st) => { calls++; if (st === ERR) errs++; res(st === OK ? data : []); }, { location: new k.maps.LatLng(c.lat, c.lng), radius: 20000, size: 15 }));
     const out = new Array(PICKS.length).fill(null);
     let next = 0;
@@ -129,8 +137,8 @@ export async function sweepSuwon(key, { force = false } = {}) {
         if (!p) p = choose(await ask(`수원 ${pick.name}`, c), pick, seedStore);
         if (!p && seedStore && seedStore.name !== pick.name) p = choose(await ask(seedStore.name, c), pick, seedStore);
         // 이름으로 못 찾으면 팀이 적은 주소로 위치만이라도
-        if (!p && pick.addr) { const a = await addrOf(pick.addr); if (a) p = { id: 'addr' + (pick.no || i), place_name: pick.name, x: a.x, y: a.y, address_name: a.address_name, road_address_name: a.road_address?.address_name || '', phone: '', category_name: '', place_url: `https://map.kakao.com/?q=${encodeURIComponent(`수원 ${pick.name}`)}` }; }
-        if (p) out[i] = { id: p.id, place_name: p.place_name, x: p.x, y: p.y, address_name: p.address_name, road_address_name: p.road_address_name, phone: p.phone, category_name: p.category_name, place_url: p.place_url };
+        if (!p && pick.addr) { const a = await addrOf(pick.addr); if (a) p = { id: 'addr' + (pick.no || i), area: !!a.area, place_name: pick.name, x: a.x, y: a.y, address_name: a.address_name, road_address_name: a.road_address?.address_name || '', phone: '', category_name: '', place_url: `https://map.kakao.com/?q=${encodeURIComponent(`수원 ${pick.name}`)}` }; }
+        if (p) out[i] = { id: p.id, ...(p.area ? { area: true } : {}), place_name: p.place_name, x: p.x, y: p.y, address_name: p.address_name, road_address_name: p.road_address_name, phone: p.phone, category_name: p.category_name, place_url: p.place_url };
       }
     };
     await Promise.all([run(), run(), run(), run()]);
