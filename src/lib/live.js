@@ -6,6 +6,7 @@ import { notify } from './notify.js';
 import { ruleCheck, estimate } from './price.js';
 import { shopToStore } from './stores.js';
 import { ymd, today, addDays, maskName } from './util.js';
+import { setAskTransport, askSide, askById, addAskMsg, askLink } from './asks.js';
 
 let status = 'off';
 const stSubs = new Set();
@@ -60,10 +61,56 @@ setTransport({
   },
 });
 
+// ── 가게 문의(주문 전 대화) ──
+const cut46 = (t) => (t.length > 46 ? t.slice(0, 45) + '…' : t);
+function notifyAsk(a, m, role) {
+  if (role === 'o') notify('o', 'chat', `${m.fwd ? 'iAKE AI가 전달한 문의' : '새 문의'} · ${a.customer?.name ? maskName(a.customer.name) : '손님'}`, cut46(m.text), askLink(a, 'o'));
+  else notify('c', 'chat', `사장님 답장 · ${a.storeName}`, cut46(m.text), askLink(a, 'c'));
+}
+setAskTransport({
+  async onLocal(a, m, store, isNew) {
+    const side = askSide(a);
+    const other = m.by === 'c' ? 'o' : 'c';
+    if (side[other]) notifyAsk(a, m, other); // 같은 기기에서 손님·사장님을 번갈아 볼 때
+    if (side.c && side.o) return;
+    if (isNew && store) {
+      if (!store.pub || !store.inbox) return;
+      const chan = { t: sync.randTopic(), k: sync.randKey() };
+      setState((x) => ({ ...x, asks: (x.asks || []).map((y) => (y.id === a.id ? { ...y, chan } : y)) }));
+      const { seen, mine, ...slim } = a;
+      const ok = await push(store.inbox, await sync.sealForShop(store.pub, { t: 'ask', ask: { ...slim, chan } }));
+      if (ok) refresh();
+      return;
+    }
+    const cur = askById(a.id);
+    if (cur?.chan) push(cur.chan.t, await sync.sealSym(cur.chan.k, { t: 'askmsg', m }));
+  },
+});
+async function onAskChan(id, str) {
+  const a = askById(id);
+  if (!a?.chan) return;
+  let d; try { d = await sync.openSym(a.chan.k, str); } catch { return; }
+  if (d?.t !== 'askmsg' || !d.m?.id || !d.m.text) return;
+  const next = addAskMsg(id, d.m);
+  if (!next) return;
+  const side = askSide(next);
+  if (d.m.by === 'c' && side.o) notifyAsk(next, d.m, 'o');
+  if (d.m.by === 'o' && side.c) notifyAsk(next, d.m, 'c');
+}
+
 async function onInbox(str) {
   const s = getState();
   if (!s.shopKeys || !s.shop) return;
   let msg; try { msg = await sync.openForShop(s.shopKeys.priv, str); } catch { return; }
+  if (msg?.t === 'ask' && msg.ask?.id && msg.ask.chan && Array.isArray(msg.ask.msgs)) {
+    if ((getState().asks || []).some((a) => a.id === msg.ask.id)) return;
+    const a = { ...msg.ask, storeId: s.shop.id, storeName: s.shop.name, mine: false, remote: true, seen: { o: 0 } };
+    setState((x) => ({ ...x, asks: [a, ...(x.asks || [])] }));
+    const last = a.msgs[a.msgs.length - 1];
+    if (last) notifyAsk(a, last, 'o');
+    refresh();
+    return;
+  }
   if (msg?.t !== 'order' || !msg.order?.id || !msg.order.chan) return;
   if (getState().orders.some((o) => o.id === msg.order.id)) return;
   const store = shopToStore(s.shop, 'partner');
@@ -94,6 +141,9 @@ function topicsNow() {
     if (!o.chan?.t) continue;
     if (ACTIVE.includes(o.status) || (o.o?.date || '') >= cut) map.set(o.chan.t, { id: o.id });
   }
+  // 문의는 마지막 대화 뒤 2주 동안 듣는다
+  const since = new Date(Date.now() - 14 * 864e5).toISOString();
+  for (const a of s.asks || []) if (a.chan?.t && (a.at || a.createdAt || '') >= since) map.set(a.chan.t, { ask: a.id });
   return map;
 }
 let lastKey = '';
@@ -106,6 +156,7 @@ export function refresh() {
     const hit = topicsNow().get(topic);
     if (!hit) return;
     if (hit.inbox) onInbox(str);
+    else if (hit.ask) onAskChan(hit.ask, str);
     else { const order = getState().orders.find((o) => o.id === hit.id); if (order) onChan(order, str); }
   }, (v) => { setStatus(v); if (v === 'on') flushOutbox(); });
 }
@@ -164,7 +215,7 @@ export function startLive() {
   onState(() => {
     const s = getState();
     if (s.shop && !s.shopKeys && !making) { making = true; ensureShopKeys().finally(() => { making = false; }); }
-    const key = `${s.orders.length}|${s.orders.filter((o) => o.chan).length}|${s.shop ? s.shopKeys?.inbox || '' : ''}`;
+    const key = `${s.orders.length}|${s.orders.filter((o) => o.chan).length}|${(s.asks || []).filter((a) => a.chan).length}|${s.shop ? s.shopKeys?.inbox || '' : ''}`;
     if (key !== prevKey) { prevKey = key; refresh(); }
     if (s.shop !== prevShop || s.shopKeys !== prevKeys) {
       const first = !prevKeys && s.shopKeys;

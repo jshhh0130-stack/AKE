@@ -1616,3 +1616,115 @@ textarea.mk-inp { min-height: 96px; resize: none; }
 /* 오프닝 '로딩중입니다...' — 화면 맨 아래 고정 (휴대폰에서도 보이게) */
 .splash .sp-loading { position: absolute; left: 0; right: 0; bottom: calc(34px + var(--sb)); z-index: 2; display: flex; justify-content: center; gap: 1px; font-family: Gaegu, sans-serif; font-weight: 700; font-size: 22px; color: #5a4c44; pointer-events: none; }
 .splash .sp-loading span { display: inline-block; min-width: 0.3em; text-shadow: 0 0 6px rgba(246, 239, 226, 0.95), 0 0 2px rgba(246, 239, 226, 0.95); }
+
+/* ── 11/26: 지도 아래 목록 — 정렬 창 · 목록/사진 보기 · 사진 3칸 ── */
+.bsheet .bh { gap: 8px; }
+.sortbtn { flex: none; display: inline-flex; align-items: center; gap: 3px; padding: 6px 2px; font-size: 14px; font-weight: 600; color: #6F6560; }
+.sortbtn svg { width: 16px; height: 16px; }
+.vtog { flex: none; display: flex; gap: 2px; padding: 3px; border-radius: 12px; background: #F3EFEA; }
+.vtog button { width: 36px; height: 32px; border-radius: 9px; display: grid; place-items: center; color: #A49891; }
+.vtog button.on { background: #fff; color: #2B2321; box-shadow: 0 1px 3px rgba(60, 40, 30, 0.14); }
+.vtog svg { width: 18px; height: 18px; }
+.legendrow .cmpbtn { margin-left: auto; padding: 4px 11px; border-radius: 9px; background: #F5F2EE; font-size: 12px; font-weight: 700; color: #2B2321; }
+.legendrow .cmpbtn.on { background: #2B2321; color: #fff; }
+.osm-line { display: block; padding: 0 20px 4px; font-size: 10.5px; color: var(--faint); text-decoration: none; }
+.sgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 10px; padding: 8px 0 4px; }
+.gcard { display: block; min-width: 0; padding: 0; text-align: left; background: none; border: 0; }
+.gcard .gth { position: relative; aspect-ratio: 1; border-radius: 16px; overflow: hidden; background: #F6F1EB; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05); }
+.gcard .gth > img, .gcard .gth > svg, .gcard .gth > div:first-child { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gcard .stamp { position: absolute; left: 6px; top: 6px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: #fff; color: #C83A4C; border: 2px solid #C83A4C; box-shadow: inset 0 0 0 1.5px #fff, inset 0 0 0 3px #C83A4C; transform: rotate(-14deg); }
+.gcard .stamp svg { width: 12px; height: 12px; }
+.gcard .gfav { position: absolute; right: 6px; top: 6px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, 0.94); color: #B5ABA5; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08); }
+.gcard .gfav svg { width: 17px; height: 17px; }
+.gcard .gfav.on { color: #E5404F; }
+.gcard .gfav.pick.on { background: var(--rose); color: #fff; }
+.gcard .gtag { position: absolute; left: 6px; bottom: 6px; max-width: calc(100% - 12px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 3px 7px; border-radius: 8px; background: #FCECEE; color: #B03444; font-size: 11.5px; font-weight: 800; }
+.gcard .gtag.mute { background: rgba(255, 255, 255, 0.94); color: #6F6560; }
+.gcard .gnm { margin-top: 8px; font-size: 15px; font-weight: 800; letter-spacing: -0.03em; color: #2B2321; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gcard .gpr { margin-top: 2px; font-size: 14.5px; font-weight: 800; letter-spacing: -0.02em; color: #2B2321; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gcard .gpr small { font-size: 12px; font-weight: 600; color: #A0958F; }
+.gcard .gmeta { margin-top: 2px; font-size: 12.5px; font-weight: 600; color: #8A7F7A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gcard.sel .gth { box-shadow: 0 0 0 2.5px var(--rose); }
+.sortlist { display: flex; flex-direction: column; }
+.sortlist button { display: flex; align-items: center; gap: 10px; padding: 14px 2px; border-bottom: 1px solid #F0EBE6; text-align: left; }
+.sortlist button:last-child { border-bottom: 0; }
+.sortlist b { display: block; font-size: 17px; font-weight: 700; letter-spacing: -0.02em; color: #2B2321; }
+.sortlist small { display: block; margin-top: 2px; font-size: 13.5px; font-weight: 500; color: #8A7F7A; }
+.sortlist button.on b { color: #B03444; }
+.sortlist button svg { width: 22px; height: 22px; color: #B03444; stroke-width: 3; }
+
+/* 튜토리얼: 화면 전체 안내(살짝만 흐리게) · 1차 안내는 네모 칸 안을 눌러도 넘어가지 않게 */
+.coach .dim.soft { background: rgba(40, 28, 28, 0.3); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.coach .hole { position: absolute; }
+
+/* ── 가게 화면 머리: 가격 + [거리] [키워드] [영업시간 · 휴무] ── */
+.shead .pricehead { align-items: baseline; gap: 8px; margin-top: 12px; }
+.shead .pricehead b { font-size: 28px; font-weight: 800; letter-spacing: -0.03em; }
+.shead .pricehead span { font-size: 15px; font-weight: 600; color: #8A7F7A; }
+.factchips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.factchips > span { display: inline-flex; align-items: center; gap: 5px; min-height: 36px; padding: 0 14px; border-radius: 999px; background: #F3F1EE; font-size: 14.5px; font-weight: 700; color: #4A403C; }
+.factchips svg { flex: none; width: 15px; height: 15px; color: #8A7F7A; }
+.factchips small { font-size: 14px; font-weight: 600; color: #8A7F7A; }
+
+/* ── iAKE AI에게 물어보기 ── */
+.aiava { flex: none; display: inline-grid; place-items: center; border-radius: 50%; background: #FDF0F2; border: 1.5px dotted #D9A0AC; }
+.aiava svg { width: 78%; height: 78%; }
+.askcard { padding: 6px 0 4px; }
+.askcard .ah { display: flex; align-items: center; gap: 12px; }
+.askcard .ah b { display: block; font-size: 19px; font-weight: 800; letter-spacing: -0.03em; color: #2B2321; }
+.askcard .ah small { display: block; margin-top: 2px; font-size: 13.5px; font-weight: 500; color: #8A7F7A; }
+.askcard .chips { margin-top: 14px; gap: 8px; }
+.askcard .chip { min-height: 38px; padding: 0 15px; font-size: 14.5px; font-weight: 700; color: #2B2321; border-color: #E6E0DA; }
+.askcard .askin { margin-top: 12px; gap: 8px; }
+.askcard .askin .inp { height: 50px; border-radius: 16px; }
+.askgo { flex: none; height: 50px; min-width: 64px; padding: 0 16px; border-radius: 16px; background: #FCECEE; color: #B03444; font-size: 15px; font-weight: 800; }
+.gingham-pink { background-color: #FFF9FA; background-image: linear-gradient(90deg, rgba(248, 218, 225, 0.3) 50%, transparent 50%), linear-gradient(rgba(248, 218, 225, 0.3) 50%, transparent 50%); background-size: 48px 48px; }
+.gingham-green { background-color: #F9FBF5; background-image: linear-gradient(90deg, rgba(207, 224, 188, 0.3) 50%, transparent 50%), linear-gradient(rgba(207, 224, 188, 0.3) 50%, transparent 50%); background-size: 48px 48px; }
+.aibody { flex: 1; overflow-y: auto; padding: 14px 14px 18px; display: flex; flex-direction: column; gap: 14px; overscroll-behavior: contain; }
+.aibanner { align-self: center; max-width: 100%; padding: 6px 12px; border-radius: 999px; background: rgba(240, 235, 230, 0.95); font-size: 12.5px; font-weight: 600; color: #8A7F7A; text-align: center; }
+.am { display: flex; align-items: flex-start; gap: 10px; max-width: 100%; }
+.am .col { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; max-width: calc(100% - 54px); }
+.am .nm { margin: 2px 0 6px; font-size: 14px; font-weight: 800; color: #6B5D54; }
+.am .bub { background: #fff; border: 1px solid #F0E2E5; border-radius: 20px; padding: 12px 15px; font-size: 15px; line-height: 1.55; color: #2B2321; white-space: pre-wrap; word-break: keep-all; overflow-wrap: anywhere; box-shadow: 0 1px 3px rgba(60, 40, 30, 0.04); }
+.am .tm { margin-top: 5px; padding: 0 4px; font-size: 12px; color: #A0958F; }
+.am.me { flex-direction: column; align-items: flex-end; gap: 0; }
+.am.me > .bub, .am.me .col .bub { background: var(--pink100); border-color: var(--pink200); }
+.am.me > .bub { max-width: 80%; }
+.am.me .col { align-items: flex-end; max-width: 84%; }
+.aitag { font-size: 12.5px; font-weight: 500; color: #A0958F; }
+.am .bub.greet { padding: 0; overflow: hidden; }
+.bub.greet .gt { padding: 14px 16px; }
+.bub.greet .sugg { border-top: 1px solid #F3E6E9; }
+.bub.greet .sugg b { display: block; padding: 10px 16px 6px; border-bottom: 1px solid #F3E6E9; font-size: 13.5px; font-weight: 800; color: #B03444; }
+.bub.greet .sugg button { display: block; width: 100%; padding: 13px 16px; border-bottom: 1px solid #F3E6E9; text-align: left; font-size: 15px; font-weight: 700; color: #3F5FA8; }
+.bub.greet .sugg button:last-child { border-bottom: 0; }
+.fwdbtn { margin-top: 8px; padding: 9px 16px; border-radius: 14px; border: 1.5px solid #EFB9C4; background: #fff; color: #B03444; font-size: 14.5px; font-weight: 800; }
+.fwdtag { margin: 0 4px 4px; font-size: 12px; font-weight: 700; color: #B03444; }
+.ctbtns { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 8px; }
+.ctbtns a { display: inline-flex; align-items: center; gap: 4px; padding: 8px 12px; border-radius: 12px; background: #fff; border: 1px solid #E6E0DA; font-size: 13.5px; font-weight: 700; color: #2B2321; text-decoration: none; }
+.am .bub.typing { display: flex; gap: 4px; padding: 15px 16px; }
+.bub.typing i { width: 7px; height: 7px; border-radius: 50%; background: #D8C9CC; animation: tdot 1s infinite; }
+.bub.typing i:nth-child(2) { animation-delay: 0.15s; }
+.bub.typing i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes tdot { 0%, 80%, 100% { opacity: 0.35; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+.oava { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: #F3EDE7; color: #6B5D54; font-size: 15px; font-weight: 800; }
+.aifoot { flex: none; padding: 10px 14px calc(12px + var(--sb)); background: #fff; border-top: 1px solid #F0EBE6; }
+.aifoot .pills { display: flex; justify-content: center; gap: 10px; margin-bottom: 10px; }
+.pillbtn { height: 42px; padding: 0 20px; border-radius: 999px; border: 1.5px solid #E6E0DA; background: #fff; font-size: 15px; font-weight: 800; color: #2B2321; }
+.pillbtn.pink { border-color: #EFB9C4; background: #FDF0F2; color: #B03444; }
+.pillbtn.pink.on { border-color: #E98DA0; background: #F8D9DF; }
+.sendrow { align-items: center; gap: 8px; }
+.sendrow .inp { height: 50px; padding: 0 18px; border-radius: 999px; }
+.sendbtn { flex: none; width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center; background: #DCD2CE; color: #fff; transition: background 0.15s; }
+.sendbtn.on { background: var(--rose); }
+.sendbtn svg { width: 22px; height: 22px; }
+.askrow .th { display: grid; place-items: center; background: #FDF0F2; }
+/* 주문 대화방의 .bub 규칙(왼쪽 붙기·84%)을 AI 대화에서는 풀어 준다 */
+.am .bub { align-self: auto; max-width: 100%; }
+.am.me > .bub { align-self: flex-end; max-width: 80%; }
+.am.me .col .bub { align-self: flex-end; }
+.am .bub .tm { display: none; }
+.factchips { gap: 6px; }
+.factchips > span { min-height: 34px; padding: 0 12px; font-size: 13.5px; }
+.factchips svg { width: 14px; height: 14px; }
+.factchips small { font-size: 13px; }

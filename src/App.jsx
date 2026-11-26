@@ -17,6 +17,7 @@ import { OrderDone, MyOrders, My } from './screens/customer/Mine.jsx';
 import { Interest, CakeDetail } from './screens/customer/Interest.jsx';
 import { MakeHome, MakeForm, MakeResult, MakeShops } from './screens/customer/Make.jsx';
 import { CustomerOrder, PayScreen } from './screens/OrderRoom.jsx';
+import { AskAI, AskRoomC, AskRoomO } from './screens/Ask.jsx';
 
 // 사장님·설정·데이터 화면은 필요할 때 불러와서 첫 화면을 빠르게
 const owner = () => import('./screens/owner/Owner.jsx');
@@ -41,6 +42,7 @@ const ROUTES = [
   ['/role', RoleSelect], ['/guide', Guide],
   ['/c', CustomerHome], ['/c/saved', Interest], ['/c/cake/:id', CakeDetail], ['/c/orders', MyOrders], ['/c/order/:id', CustomerOrder], ['/c/pay/:id', PayScreen],['/c/my', My],
   ['/c/make', MakeHome], ['/c/make/result', MakeResult], ['/c/make/shops', MakeShops], ['/c/make/:cat', MakeForm],
+  ['/c/ai/:id', AskAI], ['/c/ask/:id', AskRoomC], ['/o/ask/:id', AskRoomO],
   ['/store/:id', StoreDetail], ['/order/:id', OrderForm], ['/done/:id', OrderDone],
   ['/o', OwnerHome], ['/o/orders', OwnerOrders], ['/o/order/:id', OwnerOrderDetail], ['/o/shop', OwnerShop], ['/o/shop/:sec', ShopEdit], ['/o/sales', Sales], ['/o/setup', Setup],
   ['/settings', Settings], ['/about', About], ['/s/:code', SharedOrder], ['/g/:code', GiftView], ['/j/:code', JoinShop], ['/insight', Insight],

@@ -1,16 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Icon from '../../components/Icon.jsx';
 import MapView from '../../components/MapView.jsx';
 import { LocShareSheet } from '../../components/Share.jsx';
 import { CakeView, Header, Stars, toast, Empty } from '../../components/ui.jsx';
 import { useApp, setState } from '../../lib/state.js';
 import { nav, back, queryOf } from '../../lib/router.js';
-import { getStores, distKm, fmtKm, kindLabel, canOrderInApp, closedDaysOf, nextOpenDay, mapLinks, strengths, SEED_UPDATED } from '../../lib/stores.js';
+import { getStores, distKm, fmtKm, kindLabel, canOrderInApp, mapLinks, keywordsOf, hoursOf, SEED_UPDATED } from '../../lib/stores.js';
 import { estimate, basisText } from '../../lib/price.js';
 import { storeLook } from '../../lib/cake.js';
-import { range, DOW, hash, won, shade } from '../../lib/util.js';
-import { askClaude } from '../../lib/ai.js';
-import { SIZES, styleName } from '../../data/catalog.js';
+import { range, hash, shade } from '../../lib/util.js';
+import { SIZES } from '../../data/catalog.js';
+import { AskCard } from '../Ask.jsx';
 import { usePlaces } from './Home.jsx';
 import { enrich } from '../../lib/gplaces.js';
 import { refreshPartner } from '../../lib/live.js';
@@ -36,58 +36,6 @@ function KakaoCard({ s }) {
   );
 }
 
-// ── 가게에 물어보기: 가게 정보만 근거로 답한다 (키 없으면 규칙 기반) ──
-function ruleAnswer(s, q) {
-  const t = q.replace(/\s/g, '');
-  const closed = closedDaysOf(s);
-  const has = (re) => [s.note, s.priceNote, s.lead, s.hours, ...(s.notices || [])].filter(Boolean).find((x) => re.test(x));
-  const faq = (s.faq || []).find((f) => f.q.replace(/\s/g, '').split('').filter((c) => t.includes(c)).length >= Math.min(4, f.q.length - 1));
-  if (faq) return faq.a;
-  if (/당일|오늘|급하/.test(t)) return s.ops ? (s.ops.sameDay ? `네! 당일 주문은 ${s.ops.cutoff}까지 받아요.` : `당일 주문은 어려워요. 픽업 ${s.ops.leadDays}일 전까지 주문해 주세요.`) : s.sameDay ? `공개 정보로는 당일 케이크도 판매해요(${s.lead || '디자인이 정해져 있을 수 있어요'}). 정확한 건 가게에 확인해 주세요.` : '공개 정보에는 당일 주문 내용이 없어요. 보통 2~3일 전 예약이 필요해요.';
-  if (/휴무|쉬는|쉬어|영업|몇시|시간|오픈|마감/.test(t)) return `${s.ops ? `픽업 시간: ${s.ops.pickupStart}~${s.ops.pickupEnd}` : s.hours ? `영업 시간: ${s.hours}` : '영업 시간 정보는 없어요'} · 휴무: ${closed.length ? closed.map((d) => DOW[d]).join('·') + '요일' : s.closed || (s.ops ? '없음' : '정보 없음')}`;
-  if (/가격|얼마|비싸|원$|만원/.test(t)) { const r = SIZES.map((z) => ({ z, e: estimate(s, { size: z.id, design: 'simple', shape: 'round', cream: 'white', flavor: 'vanilla', text: 'a' }) })).filter(({ z }) => !s.menu || s.menu.sizes?.[z.id] != null); return `기본 레터링 기준 ${r.map(({ z, e }) => `${z.name} ${range(e.lo, e.hi, true)}`).join(', ')}이에요${s.menu ? '.' : ' (추정).'} 장식·맛을 고르면 주문서에서 바로 계산돼요.`; }
-  if (/주차/.test(t)) { const x = has(/주차/); return x ? `가게 정보: ${x}` : '주차 정보는 없어요. 가게에 문의해 주세요.'; }
-  if (/캐릭터|그림|저작권/.test(t)) return s.styles?.includes('character') ? '그림·캐릭터 케이크를 만들어요. 저작권이 있는 캐릭터는 사장님이 가능 여부를 확인해요.' : '이 가게 목록에는 그림·캐릭터 케이크가 없어요. 주문서에 요청하면 사장님이 확인해 드려요.';
-  if (/도시락|미니|작은/.test(t)) return s.menu ? (s.menu.sizes?.mini != null ? `미니(10~12cm, 1~2인용)는 ${won(s.menu.sizes.mini)}부터예요.` : '미니 사이즈는 만들지 않아요.') : s.price?.mini ? `공개 정보로는 미니(10~12cm)가 ${range(s.price.mini[0], s.price.mini[1], true)}부터예요.` : '미니 사이즈 정보는 없어요. 가게에 확인해 주세요.';
-  if (/떡|쌀|앙금/.test(t)) return s.styles?.includes('rice') ? '떡케이크(설기·앙금 장식)를 만들어요.' : '떡케이크 정보는 없어요.';
-  if (/사진|포토/.test(t)) return s.styles?.includes('photo') ? '포토 케이크를 만들어요. 주문서에서 사진을 첨부하면 돼요.' : '포토 케이크 정보는 없어요. 요청사항에 적으면 사장님이 확인해요.';
-  if (/보냉|포장|멀리/.test(t)) { const x = has(/보냉/); return x ? `가게 정보: ${x}` : s.menu?.extras?.icebag != null ? `보냉백은 ${won(s.menu.extras.icebag)}이에요.` : '30분 넘게 이동하면 보냉백을 요청해 보세요.'; }
-  if (/예약금|입금|결제|계좌/.test(t)) return s.ops?.deposit ? `확정 뒤 예약금 ${s.ops.deposit}%를 입금하면 제작을 시작해요. 계좌는 사장님이 안내해요.` : '결제 방법은 주문 확정 뒤 가게에서 안내해요.';
-  if (/변경|취소|환불/.test(t)) { const x = has(/변경|취소/); return x ? `가게 안내: ${x}` : '변경·취소 규정은 가게마다 달라요. 주문 전 안내사항을 확인해 주세요.'; }
-  if (/픽업|언제|빠른/.test(t)) { const n = nextOpenDay(s, []); return n ? `가장 빠른 픽업은 ${n.diff === 0 ? '오늘' : n.diff === 1 ? '내일' : `${n.diff}일 뒤`}이에요.` : '가까운 날짜에는 픽업이 어려워요.'; }
-  return '가게 정보에 없는 질문이에요. 주문서 요청사항에 적거나 가게 SNS로 문의해 주세요.';
-}
-function AskBox({ s }) {
-  const st = useApp();
-  const [q, setQ] = useState('');
-  const [log, setLog] = useState([]);
-  const [busy, setBusy] = useState(false);
-  const ask = async (question) => {
-    const qq = (question ?? q).trim();
-    if (!qq) return;
-    setQ('');
-    setBusy(true);
-    let a = ruleAnswer(s, qq), ai = false;
-    if (st.settings.claudeKey) {
-      try {
-        const info = { 이름: s.name, 주소: s.addr, 스타일: (s.styles || []).map(styleName), 영업: s.hours, 휴무: s.closed || closedDaysOf(s).map((d) => DOW[d]), 당일: s.sameDay, 주문마감: s.lead, 가격표: s.menu?.sizes || s.price || '공개 가격 없음(평균 추정)', 가격메모: s.priceNote, 메모: s.note, 안내사항: s.notices, 자주묻는질문: s.faq, 예약금: s.ops?.deposit };
-        a = await askClaude({ key: st.settings.claudeKey, system: '너는 케이크 가게 정보를 바탕으로 손님 질문에 답하는 도우미야. 주어진 가게 정보에 있는 내용만 근거로 2~3문장 존댓말로 답해. 정보에 없으면 모른다고 말하고 가게에 문의하거나 주문서 요청사항에 적으라고 안내해. 공개 가격·평균 가격은 추정이라고 밝혀.', content: [{ type: 'text', text: `가게 정보: ${JSON.stringify(info)}\n\n손님 질문: ${qq}` }] });
-        ai = true;
-      } catch { /* 규칙 답 사용 */ }
-    }
-    setLog((l) => [...l, { q: qq, a, ai }]);
-    setBusy(false);
-  };
-  return (
-    <div>
-      <div className="chips">{['당일 주문 돼요?', '1호 가격은?', '휴무일은?', '캐릭터 그림 돼요?', '주차 돼요?', '예약금은?'].map((x) => <button key={x} className="chip sm" onClick={() => ask(x)}>{x}</button>)}</div>
-      {log.map((m, i) => <div key={i}><div className="msg me" style={{ marginTop: 10 }}>{m.q}</div><div className="msg"><small>{m.ai ? 'AI 도우미 · 가게 정보 기준' : '도우미 · 가게 정보 기준'}</small>{m.a}</div></div>)}
-      {busy && <div className="small muted" style={{ marginTop: 8 }}>답을 찾는 중…</div>}
-      <div className="row" style={{ marginTop: 10 }}><input className="inp grow" value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && ask()} placeholder="궁금한 걸 물어보세요" /><button className="btn dark sm" style={{ minHeight: 48 }} onClick={() => ask()}>질문</button></div>
-    </div>
-  );
-}
-
 // 가게 대표 배경: 테마 색을 크림에 섞은 단색 (그라데이션 없이)
 export function heroBg(s) {
   const c = s.theme?.color || ['#F4A2A8', '#F6B98A', '#C7B2EE', '#9FD4BF', '#A9C8F0', '#F3B7C9'][hash(s.id) % 6];
@@ -104,15 +52,12 @@ export default function StoreDetail({ params, path }) {
   const [gPhoto, setGPhoto] = useState(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [pi, setPi] = useState(0);
-  const askRef = useRef(null);
   // 구글 키가 있으면 실제 사진·별점을 받아 오고, 입점 가게면 최신 가격표를 받아 온다
   useEffect(() => { if (s && st.settings.googleKey) enrich(st.settings.googleKey, s); if (s?.remote) refreshPartner(s.id); }, [params.id, st.settings.googleKey]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!s) return <div className="screen"><Header title="가게" fallback="/c" /><Empty icon="search">가게 정보를 찾을 수 없어요.</Empty></div>;
   const d = distKm(st.loc, s);
   const fav = st.favs.includes(s.id);
   const inApp = canOrderInApp(s);
-  const open = nextOpenDay(s, st.orders);
-  const closed = closedDaysOf(s);
   const links = mapLinks(s);
   const reviews = st.orders.filter((o) => o.storeId === s.id && o.review);
   const realPhotos = [...(s.g?.photos || []).map((p) => ({ src: p.src, by: p.by, g: true })), ...(s.portfolio || []).filter((p) => p.src).map((p) => ({ src: p.src, cap: p.caption, sample: !!p.sample }))];
@@ -124,12 +69,11 @@ export default function StoreDetail({ params, path }) {
   const hp = rows.find((r) => r.z.id === 'h1') || rows[0];
   const hero = s.hero || gallery[0]?.design || storeLook(s);
   const toggleFav = () => { setState((x) => ({ ...x, favs: fav ? x.favs.filter((i) => i !== s.id) : [...x.favs, s.id] })); if (!fav) toast('찜한 가게에 담았어요'); };
-  const rating = s.g?.rating ? [s.g.rating, s.g.n, '구글 리뷰'] : reviews.length ? [reviews.reduce((a, o) => a + o.review.stars, 0) / reviews.length, reviews.length, '앱 후기'] : null;
   const unsure = s.kind === 'public' && !s.verified;
   const kindTag = inApp ? <span className="tag pink">앱 주문</span> : s.verified ? <span className="tag ok"><Icon n="check" />영업 확인</span> : s.kind === 'public' ? <span className="tag mute">영업 확인 필요</span> : <span className="tag blue">{s.kind === 'kakao' ? '카카오맵 등록 가게' : '지도 검색 결과'}</span>;
   const kKey = kakaoKeyOf(st.settings);
   const kl = s.k ? kakaoLinks(s.k) : null;
-  const chips = strengths(s);
+  const hrs = hoursOf(s);
   return (
     <div className="screen">
       <div className="scroll">
@@ -157,25 +101,17 @@ export default function StoreDetail({ params, path }) {
         <div className="shead">
           <div className="row" style={{ gap: 6 }}>{kindTag}{s.sameDay && <span className="tag pink">당일 픽업</span>}</div>
           <h2>{s.name}</h2>
-          <div className="meta">
-            <span>{s.dong || s.gu} · 여기서 {fmtKm(d)}{s.geo === 'area' ? ' (위치 대략)' : ''}</span>
-            {rating && <span>{' · ★ '}{rating[0].toFixed(1)} ({rating[1]})</span>}
-          </div>
-          {chips.length > 0 && <div className="tags" style={{ marginTop: 10 }}>{chips.map((t) => <span key={t} className="tag">{t} 강점</span>)}</div>}
-          {s.g?.closed && <div className="note warn" style={{ marginTop: 10 }}>구글 지도에는 ‘폐업’으로 표시돼 있어요. 방문 전에 꼭 확인해 주세요.</div>}
+          {/* 가게마다 같은 틀: 1호 기본 가격 / [거리] [키워드] [영업시간 · 휴무] */}
           <div className="pricehead">
-            <span>{hp?.z.name} 기본</span>
-            <b>{hp ? range(hp.e.lo, hp.e.hi, true) : '가격 정보 없음'}</b>
-            {hp && !s.menu && <small>{s.price ? '공개가 기준 추정' : '수원 평균 추정'}</small>}
+            <b>{hp ? manwon(hp.e.lo) : '가격 정보 없음'}</b>
+            {hp && <span>{hp.z.name} {s.menu || s.price ? '기본' : '평균 추정'}</span>}
           </div>
-          {s.intro && <p style={{ margin: '12px 0 0', fontSize: 14.5, color: 'var(--ink2)' }}>{s.intro}</p>}
-          {s.note && !s.intro && <p className="small muted" style={{ margin: '10px 0 0' }}>{s.note}</p>}
-          <div className="info4">
-            <div>주문 마감<b>{s.ops ? (s.ops.sameDay ? `당일 ${s.ops.cutoff}까지` : `픽업 ${s.ops.leadDays}일 전`) : s.lead || '가게에 확인'}</b></div>
-            <div>가장 빠른 픽업<b>{inApp && open ? (open.diff === 0 ? '오늘' : open.diff === 1 ? '내일' : `${open.diff}일 뒤`) : '가게에 확인'}</b></div>
-            <div>{s.ops ? '픽업 시간' : '영업 시간'}<b>{s.ops ? `${s.ops.pickupStart}~${s.ops.pickupEnd}` : s.hours || '확인 필요'}</b></div>
-            <div>휴무<b>{closed.length ? closed.map((x) => DOW[x]).join('·') + '요일' : s.closed || (s.ops ? '없음' : '확인 필요')}</b></div>
+          <div className="factchips">
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="6.5" /><path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4" /></svg>{fmtKm(d)}{s.geo === 'area' ? ' (대략)' : ''}</span>
+            {keywordsOf(s, 1).map((k) => <span key={k}>{k}</span>)}
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg>{hrs.time || '영업시간 확인 필요'}{hrs.off && <small> · {hrs.off}</small>}</span>
           </div>
+          {s.g?.closed && <div className="note warn" style={{ marginTop: 10 }}>구글 지도에는 ‘폐업’으로 표시돼 있어요. 방문 전에 꼭 확인해 주세요.</div>}
           {s.k && <KakaoCard s={s} />}
           {!inApp && <div className="note" style={{ marginTop: 10 }}>아직 에이크 입점 전인 가게예요. 주문서를 완성하면 <b>가게 카톡·인스타로 그대로 보낼 수 있게</b> 정리해 드려요.{unsure && s.kind === 'public' ? <><br /><span className="xs">공개 목록 기준 정보예요. 방문 전에 영업 여부를 확인해 주세요.</span></> : null}</div>}
         </div>
@@ -183,6 +119,7 @@ export default function StoreDetail({ params, path }) {
 
         <div className="pad" style={{ paddingTop: 4 }}>
           <div className="sec-t"><h3>이런 케이크를 만들어요</h3><span className="more">{gallery[0]?.gen ? '스타일 예시 그림' : '대표 디자인'}</span></div>
+          {s.intro && <p className="small muted" style={{ margin: '-4px 0 10px' }}>{s.intro}</p>}
           <div className="gal big">
             {gallery.map((g, i) => (
               <button key={g.id} className="gi" onClick={() => setGalIdx(i)}>
@@ -230,9 +167,8 @@ export default function StoreDetail({ params, path }) {
         </div>
         <div className="band" />
 
-        <div className="pad" style={{ paddingTop: 4 }} ref={askRef}>
-          <div className="sec-t"><h3>가게에 물어보기</h3><span className="more">{st.settings.claudeKey ? 'AI가 가게 정보로 답해요' : '가게 정보로 바로 답해요'}</span></div>
-          <AskBox s={s} />
+        <div className="pad" style={{ paddingTop: 6 }}>
+          <AskCard s={s} />
         </div>
         <div className="band" />
 
@@ -270,7 +206,7 @@ export default function StoreDetail({ params, path }) {
       {ai && <div className="aibar"><img src={ai.src} alt="" /><span className="grow"><b>만든 케이크로 주문해요</b><small>주문서 쓰기를 누르면 이 이미지가 주문서에 들어가요</small></span></div>}
       <div className="stickybar">
         <button className={`favbtn ${fav ? 'on' : ''}`} onClick={toggleFav} aria-label="찜"><Icon n="heart" />찜</button>
-        <button className="btn line" style={{ flex: 1 }} onClick={() => askRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>물어보기</button>
+        <button className="btn line" style={{ flex: 1 }} onClick={() => nav(`/c/ai/${s.id}`)}>물어보기</button>
         <button className="btn pri" style={{ flex: 1.6 }} onClick={() => nav(`/order/${s.id}${ai ? '?ai=1' : ''}`)}>주문서 쓰기</button>
       </div>
       <LocShareSheet open={shareOpen} onClose={() => setShareOpen(false)} store={s} />

@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 // strict: 지금 단계 칸만 찾는다(여러 화면을 오가는 튜토리얼) · step.enter(): 단계가 바뀔 때 먼저 할 일(화면 이동 등), 기다릴 ms 를 돌려줌
-export default function Coach({ steps, onDone, strict = false }) {
+// step.center: 칸 없이 화면 전체를 살짝 흐리게 하고 설명만 가운데에 · block: 네모 칸 안을 눌러도 화면이 넘어가지 않게
+export default function Coach({ steps, onDone, strict = false, block = false }) {
   const [i, setI] = useState(0);
   const [box, setBox] = useState(null); // 네모 칸 위치
   const [size, setSize] = useState({ w: 0, h: 0 });
@@ -19,6 +20,7 @@ export default function Coach({ steps, onDone, strict = false }) {
     setSize({ w: hr.width, h: hr.height });
     for (let k = i; k < (strict ? i + 1 : steps.length); k++) {
       const s = steps[k];
+      if (s.center) { if (k !== i) { setI(k); return true; } setBox(null); return true; }
       // 화면 안에 다 보이고, 다른 것(위 검색창 등)에 가려지지 않은 칸만
       const inside = (e) => {
         const r = e.getBoundingClientRect();
@@ -86,8 +88,9 @@ export default function Coach({ steps, onDone, strict = false }) {
   const arrowX = box ? Math.max(28, Math.min(W - 42, box.x + box.w / 2)) - 14 - 7 : 0;
   return (
     <div className="coach" ref={root} role="dialog" aria-label="사용 안내">
-      <div className="dim" style={clip ? { clipPath: clip, WebkitClipPath: clip } : undefined} onClick={next} />
+      <div className={`dim ${s.center ? 'soft' : ''}`} style={clip ? { clipPath: clip, WebkitClipPath: clip } : undefined} onClick={next} />
       {box && <div className="ring" style={{ left: box.x, top: box.y, width: box.w, height: box.h, borderRadius: box.r }} />}
+      {box && block && <div className="hole" style={{ left: box.x, top: box.y, width: box.w, height: box.h }} onClick={(e) => e.stopPropagation()} />}
       <div className="tip" ref={tipRef} style={{ top: tipTop }}>
         {box && <span className="arrow" style={{ left: arrowX, [below ? 'top' : 'bottom']: -6 }} />}
         <div className="stp"><span>{num(i)} / {total}</span><span className="dots">{Array.from({ length: total }, (_, k) => <i key={k} className={k + 1 === num(i) ? 'on' : ''} />)}</span></div>

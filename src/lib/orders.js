@@ -6,6 +6,7 @@ import { orderNo, today, addDays, ymd, rng, pick, won, fmtDate } from './util.js
 import { canOrderInApp, shopToStore } from './stores.js';
 import { QUICK_TEXTS, sizeOf, designOf, creamOf, optName, TEXT_COLORS, FONTS } from '../data/catalog.js';
 import { SAMPLE_PORTFOLIO } from '../data/examples.js';
+import { askUnread } from './asks.js';
 
 export const STATUS = {
   requested: { name: '사장님 확인 중', tone: 'warn', step: 1 },
@@ -86,7 +87,8 @@ export const notiOf = (ev) => NOTI[ev.t] || ['status', '주문 소식'];
 // 이 기기에서 그 주문의 손님/사장님 역할을 맡고 있나?
 export const sideOf = (o, s = getState()) => ({ c: !!o.mine, o: !!s.shop && s.shop.id === o.storeId });
 export const unreadOf = (o, role) => Math.max(0, (o.ev || []).filter((e) => e.by !== role && e.t !== 'img').length - (o.seen?.[role] || 0));
-export const unreadTotal = (s, role) => s.orders.filter((o) => (role === 'c' ? o.mine : s.shop && o.storeId === s.shop.id)).reduce((a, o) => a + (unreadOf(o, role) > 0 ? 1 : 0), 0);
+export const unreadTotal = (s, role) => s.orders.filter((o) => (role === 'c' ? o.mine : s.shop && o.storeId === s.shop.id)).reduce((a, o) => a + (unreadOf(o, role) > 0 ? 1 : 0), 0)
+  + (s.asks || []).filter((a) => (role === 'c' ? a.mine : s.shop && a.storeId === s.shop.id) && askUnread(a, role) > 0).length; // 가게 문의(주문 전 대화)
 export const markSeen = (id, role) => setState((s) => {
   const o = s.orders.find((x) => x.id === id); if (!o) return s;
   const cnt = (o.ev || []).filter((e) => e.by !== role && e.t !== 'img').length;

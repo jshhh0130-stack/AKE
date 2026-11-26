@@ -13,6 +13,7 @@ import { SIZES, DESIGNS, sizeOf, designOf } from '../../data/catalog.js';
 import { readiness } from './Editors.jsx';
 import OrderThumb from '../../components/OrderThumb.jsx';
 import OrderPaper from '../../components/OrderPaper.jsx';
+import { askUnread, askLast } from '../../lib/asks.js';
 
 const amount = (o) => o.finalPrice ?? o.est?.lo ?? 0;
 // 시간대별 인사말 (11/23 UI): 아침 05~11시 · 낮 11~17시 · 저녁·밤 17~05시. 한 시간 동안은 같은 말을 보여 준다.
@@ -130,6 +131,10 @@ export function OwnerHome() {
   const monthSales = list.filter((o) => SALES.includes(o.status) && o.o.date.startsWith(ym)).reduce((a, o) => a + amount(o), 0);
   const rd = readiness(shop);
   const samples = list.some((o) => o.sample);
+  // 주문 전 손님 문의 (iAKE AI가 답하지 못해 전달한 질문 포함) — 안 읽은 것 먼저, 최근 2주
+  const since = new Date(Date.now() - 14 * 864e5).toISOString();
+  const asks = (st.asks || []).filter((a) => a.storeId === shop.id && ((a.at || '') >= since || askUnread(a, 'o') > 0))
+    .sort((a, b) => (askUnread(b, 'o') > 0) - (askUnread(a, 'o') > 0) || (b.at || '').localeCompare(a.at || ''));
   return (
     <div className="screen fade">
       <div className="scroll with-tab">
@@ -149,6 +154,15 @@ export function OwnerHome() {
           {samples && <div className="note row" style={{ marginBottom: 12 }}><span className="grow">예시 주문이 들어 있어요. 실제로 쓰기 전에 지워 주세요.</span><button className="btn xs line" onClick={() => { removeSampleOrders(); toast('예시 주문을 지웠어요'); }}>예시 지우기</button></div>}
           <div className="sec-t"><h3><i className="num">1</i>확인이 필요한 주문</h3><button className="more" onClick={() => nav('/o/orders', { replace: true })}>전체 ›</button></div>
           {reqs.length === 0 ? <div className="card pad small muted">새로 온 요청이 없어요.</div> : reqs.map((o) => <ReqSheet key={o.id} o={o} />)}
+          {asks.length > 0 && (<>
+            <div className="sec-t"><h3>손님 문의 {asks.some((a) => askUnread(a, 'o') > 0) && <span className="pink">{asks.filter((a) => askUnread(a, 'o') > 0).length}</span>}</h3><span className="more">주문 전 질문</span></div>
+            <div className="card" style={{ padding: '0 14px' }}>{asks.slice(0, 6).map((a) => { const un = askUnread(a, 'o'), last = askLast(a); return (
+              <button key={a.id} className="list-row" onClick={() => nav(`/o/ask/${a.id}`)}>
+                <span className="tag" style={{ minWidth: 54, justifyContent: 'center' }}>{last?.fwd ? 'AI 전달' : '문의'}</span>
+                <div className="grow" style={{ minWidth: 0 }}><div className="t small">{a.customer?.name ? `${maskName(a.customer.name)}님` : '손님'} ·{last ? ago(last.at) : ''}</div><div className="s" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{last ? `${last.by === 'o' ? '나: ' : ''}${last.text}` : ''}</div></div>
+                {un > 0 ? <span className="tag pink">새 {un}</span> : <Icon n="right" size="sm" />}
+              </button>); })}</div>
+          </>)}
           {talk.length > 0 && (<><div className="sec-t"><h3><i className="num">2</i>새 소식 (자동 확정 · 손님 메시지)</h3></div>{talk.map((o) => <OCard key={o.id} o={o} quick={false} />)}</>)}
           <div className="sec-t"><h3><i className="num">{talk.length ? 3 : 2}</i>오늘 픽업 · {fmtDate(t)}</h3></div>
           {todays.length === 0 ? <div className="card pad small muted">오늘 픽업 예정이 없어요.</div> : todays.map((o) => <PickRow key={o.id} o={o} />)}

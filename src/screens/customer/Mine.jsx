@@ -19,6 +19,8 @@ import { range, won, fmtDate, mdDate, ago, shareText, copyText, maskPhone } from
 import { SHAPES, sizeOf, designOf, creamOf, optName } from '../../data/catalog.js';
 import { flavorName } from '../../lib/ordertext.js';
 import { fromSeed } from '../../lib/claim.js';
+import { askUnread, askLast } from '../../lib/asks.js';
+import { AiAvatar } from '../Ask.jsx';
 
 // 주문서 보냄 화면 한 줄 (디자인 핸드오프 문구 3가지)
 const DONE_LINES = ['세상에 하나뿐인 케이크를 만들어 드릴게요!', '마음을 담아 정성껏 준비할게요.', '특별한 날, 더 달콤해지도록 만들어 드릴게요!'];
@@ -99,12 +101,26 @@ export function MyOrders() {
   const stores = getStores(st);
   const mine = st.orders.filter((o) => o.mine).sort((a, b) => (b.ev?.[b.ev.length - 1]?.at || b.createdAt).localeCompare(a.ev?.[a.ev.length - 1]?.at || a.createdAt));
   const list = mine.filter((o) => (tab === 'now' ? [...ACTIVE, 'external'].includes(o.status) : !ACTIVE.includes(o.status) && o.status !== 'external'));
+  // 주문 전 사장님 문의 (iAKE AI가 전달한 질문 포함)
+  const asks = tab === 'now' ? (st.asks || []).filter((a) => a.mine).sort((a, b) => (b.at || '').localeCompare(a.at || '')) : [];
   return (
     <div className="screen fade">
       <div className="apphdr"><h1>주문·대화</h1></div>
       <div className="utabs"><button className={tab === 'now' ? 'on' : ''} onClick={() => setTab('now')}>진행 중</button><button className={tab === 'past' ? 'on' : ''} onClick={() => setTab('past')}>지난 주문</button></div>
       <div className="scroll pad with-tab gingham">
-        {list.length === 0 && <Empty icon="chat">{tab === 'now' ? <>진행 중인 주문이 없어요.<br />지도에서 마음에 드는 가게를 찾아보세요.<div style={{ marginTop: 14 }}><button className="btn pri sm" onClick={() => nav('/c', { replace: true })}>케이크 가게 찾기</button></div></> : '지난 주문이 없어요.'}</Empty>}
+        {asks.map((a) => {
+          const un = askUnread(a, 'c'), last = askLast(a);
+          return (
+            <div key={a.id} className="ocard cord askrow" role="button" tabIndex={0} onClick={() => nav(`/c/ask/${a.storeId}`)}>
+              <div className="th"><AiAvatar size={52} /></div>
+              <div className="grow" style={{ minWidth: 0 }}>
+                <div className="t1"><span className="grow">{a.storeName}</span><span className="tag pink">사장님 문의</span></div>
+                <div className="lastmsg">{un > 0 && <span className="un">{un}</span>}<span>{last ? `${last.by === 'o' ? '사장님: ' : '나: '}${last.text}` : ''}</span><small>{last ? ago(last.at) : ''}</small></div>
+              </div>
+            </div>
+          );
+        })}
+        {list.length === 0 && asks.length === 0 && <Empty icon="chat">{tab === 'now' ? <>진행 중인 주문이 없어요.<br />지도에서 마음에 드는 가게를 찾아보세요.<div style={{ marginTop: 14 }}><button className="btn pri sm" onClick={() => nav('/c', { replace: true })}>케이크 가게 찾기</button></div></> : '지난 주문이 없어요.'}</Empty>}
         {list.map((o) => {
           const un = unreadOf(o, 'c');
           const last = [...(o.ev || [])].reverse().find((e) => e.t !== 'img');

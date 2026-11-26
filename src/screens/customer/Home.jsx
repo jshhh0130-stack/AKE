@@ -9,7 +9,7 @@ import { Sheet, CakeView, toast, PhotoPick, Loading, useBackClose } from '../../
 import { NotiBell } from '../../components/Noti.jsx';
 import { useApp, setState, getState } from '../../lib/state.js';
 import { nav, navAfterSheet } from '../../lib/router.js';
-import { getStores, rankStores, FILTERS, GUS, BUDGETS, findCount, parseFindText, fmtKm, headlinePrice, pinPrice, canOrderInApp, nextOpenDay, searchStores, strengths } from '../../lib/stores.js';
+import { getStores, rankStores, FILTERS, GUS, BUDGETS, findCount, parseFindText, fmtKm, headlinePrice, pinPrice, canOrderInApp, nextOpenDay, searchStores, strengths, SORTS, keywordsOf } from '../../lib/stores.js';
 import { storeLook, cakeSVG } from '../../lib/cake.js';
 import { range } from '../../lib/util.js';
 import { estimate } from '../../lib/price.js';
@@ -52,7 +52,7 @@ export function StoreCard({ r, sel, onClick, fav, onFav, picked, className = '' 
   else if (s.kind !== 'public') chips.push(<span key="ext" className="tag mute">지도 검색</span>);
   return (
     <button className={`scard ${sel ? 'sel' : ''} ${className}`} onClick={onClick} id={className ? undefined : `card-${s.id}`}>
-      <div className="th"><StoreThumb s={s} />{inApp && <span className="stamp" title="에이크 입점 · 앱 주문"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h16M5.5 20v-6a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v6M5.5 15.6c1.4.9 2.8.9 4.2 0s2.8-.9 4.2 0 2.8.9 4.1 0M12 12V8.6" /><path d="M12 3.6c1 1.1 1 2.2 0 2.8-1-.6-1-1.7 0-2.8z" fill="currentColor" /></svg></span>}</div>
+      <div className="th"><StoreThumb s={s} />{inApp && STAMP}</div>
       <div className="grow">
         <div className="nm"><span>{s.name}</span>{match != null && <span className="match">{match}%</span>}</div>
         <div className="meta">
@@ -68,6 +68,48 @@ export function StoreCard({ r, sel, onClick, fav, onFav, picked, className = '' 
       {picked != null ? <span className={`fav ${picked ? 'on' : ''}`} aria-label="비교 선택"><Icon n={picked ? 'check' : 'plus'} style={{ width: 26, height: 26, padding: 4, borderRadius: 9, background: picked ? 'var(--rose)' : 'var(--bg2)', color: picked ? '#fff' : 'var(--faint)' }} /></span>
         : onFav && <span className={`fav ${fav ? 'on' : ''}`} onClick={(e) => { e.stopPropagation(); onFav(); }} role="button" aria-label="찜"><Icon n="heart" fill={fav} /></span>}
     </button>
+  );
+}
+
+// 입점 가게 도장 (케이크 모양)
+const STAMP = <span className="stamp" title="iAKE 입점 · 앱 주문"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h16M5.5 20v-6a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v6M5.5 15.6c1.4.9 2.8.9 4.2 0s2.8-.9 4.2 0 2.8.9 4.1 0M12 12V8.6" /><path d="M12 3.6c1 1.1 1 2.2 0 2.8-1-.6-1-1.7 0-2.8z" fill="currentColor" /></svg></span>;
+
+// 사진으로 보기(3칸): [사진 · 찜 · 태그] 이름 / 1호 가격 / 거리 · 키워드
+export function StoreTile({ r, sel, onClick, fav, onFav, picked }) {
+  const { s, d } = r;
+  const hp = headlinePrice(s);
+  const inApp = canOrderInApp(s);
+  const unsure = !inApp && !s.verified;
+  const tag = s.sameDay ? ['당일 픽업', ''] : inApp ? ['앱 주문', ''] : unsure ? ['정보 확인 필요', 'mute'] : null;
+  return (
+    <button className={`gcard ${sel ? 'sel' : ''}`} onClick={onClick}>
+      <div className="gth">
+        <StoreThumb s={s} />
+        {inApp && STAMP}
+        {picked != null ? <span className={`gfav pick ${picked ? 'on' : ''}`} aria-label="비교 선택"><Icon n={picked ? 'check' : 'plus'} /></span>
+          : onFav && <span className={`gfav ${fav ? 'on' : ''}`} onClick={(e) => { e.stopPropagation(); onFav(); }} role="button" aria-label="찜"><Icon n="heart" fill={fav} /></span>}
+        {tag && <span className={`gtag ${tag[1]}`}>{tag[0]}</span>}
+      </div>
+      <div className="gnm">{s.name}</div>
+      <div className="gpr">{hp ? range(hp.lo, hp.hi, true) : <small>가격 정보 없음</small>}</div>
+      <div className="gmeta">{[d != null ? fmtKm(d) : null, keywordsOf(s, 1)[0]].filter(Boolean).join(' · ')}</div>
+    </button>
+  );
+}
+
+// 정렬 창
+function SortSheet({ open, onClose, sort, onPick }) {
+  return (
+    <Sheet open={open} onClose={onClose} title="정렬">
+      <div className="sortlist">
+        {SORTS.map(([id, name, sub]) => (
+          <button key={id} className={sort === id ? 'on' : ''} onClick={() => { onPick(id); onClose(); }}>
+            <span className="grow"><b>{name}</b><small>{sub}</small></span>
+            {sort === id && <Icon n="check" />}
+          </button>
+        ))}
+      </div>
+    </Sheet>
   );
 }
 
@@ -103,12 +145,15 @@ export function CompareSheet({ open, onClose, rows }) {
 
 const SNAP = { mini: 0.12, half: 0.44, full: 0.92 };
 let tourShownThisLoad = false; // 새로고침하면 다시 false → 안내가 다시 뜬다
+let aiTourShownThisLoad = false; // 'AI 찾기'를 처음 누를 때 AI 안내 (새로고침하면 다시)
 export default function CustomerHome() {
   const st = useApp();
   const pv = usePlaces();
   const [sel, setSel] = useState(null);
   const [filter, setFilter] = useState('all');
   const [sort, setSort] = useState('rec');
+  const [sortOpen, setSortOpen] = useState(false);
+  const view = st.homeView || 'grid'; // 'grid'(사진 3칸) | 'list'
   const [snap, setSnap] = useState('half');
   const [drag, setDrag] = useState(null);
   const [locOpen, setLocOpen] = useState(false);
@@ -133,9 +178,18 @@ export default function CustomerHome() {
     ro.observe(wrap.current);
     return () => ro.disconnect();
   }, []);
-  // 처음 들어오면 화면 위에서 짧게 사용법 안내
-  // 앱을 열 때마다(새로고침 포함) 지도에 처음 들어오면 5단계 안내를 보여 준다 · 건너뛰기 가능 · 같은 실행 중엔 다시 안 뜸
-  useEffect(() => { if (!tourShownThisLoad || !getState().seenTour) { const t = setTimeout(() => { tourShownThisLoad = true; startTour(); }, 900); return () => clearTimeout(t); } }, []);
+  // 앱을 열 때마다(새로고침 포함) 지도에 처음 들어오면 4단계 안내 · 건너뛰기 가능 · 같은 실행 중엔 다시 안 뜸
+  useEffect(() => {
+    if (tourShownThisLoad && getState().seenTour) return undefined;
+    if (tourShownThisLoad) aiTourShownThisLoad = false; // 마이 › '사용법 다시 보기'면 AI 찾기 안내도 다시
+    const t = setTimeout(() => { tourShownThisLoad = true; startTour('main'); }, 900);
+    return () => clearTimeout(t);
+  }, []);
+  // 'AI 찾기'를 누르면 창을 열고, 이번 실행에서 처음이면 AI 찾기 5단계 안내
+  const openFind = () => {
+    setFindOpen('all');
+    if (!aiTourShownThisLoad) { aiTourShownThisLoad = true; setTimeout(() => startTour('ai'), 450); }
+  };
   // 튜토리얼이 'AI 찾기' 창을 열고 닫을 때
   useEffect(() => { const f = (e) => setFindOpen(e.detail ? 'all' : false); window.addEventListener('ake-find', f); return () => window.removeEventListener('ake-find', f); }, []);
   const gKey = mapBad === 'google' ? '' : st.settings.googleKey;
@@ -147,7 +201,8 @@ export default function CustomerHome() {
 
   const stores = getStores(st);
   const find = st.find;
-  const ranked = useMemo(() => rankStores(stores, { loc: st.loc, radius: st.radius, find, filter, sort }), [stores.length, st.loc, st.radius, find, filter, sort, st.partners, st.shop, pv]); // eslint-disable-line react-hooks/exhaustive-deps
+  const reviews = useMemo(() => { const m = {}; for (const o of st.orders) if (o.review) m[o.storeId] = (m[o.storeId] || 0) + 1; return m; }, [st.orders]);
+  const ranked = useMemo(() => rankStores(stores, { loc: st.loc, radius: st.radius, find, filter, sort, reviews }), [stores.length, st.loc, st.radius, find, filter, sort, st.partners, st.shop, pv, reviews]); // eslint-disable-line react-hooks/exhaustive-deps
   const pins = useMemo(() => ranked.map((r) => ({
     s: r.s, name: r.s.name.length > 10 ? r.s.name.slice(0, 9) + '…' : r.s.name, price: pinPrice(r.s), match: find && findCount(find) && r.match != null ? r.match : null,
     img: r.s.g?.photos?.[0]?.src || r.s.portfolio?.find((p) => p.src)?.src || null, color: creamOf(lookOf(r.s).cream).hex,
@@ -239,13 +294,11 @@ export default function CustomerHome() {
     setFinding(false);
   };
 
-  const card = (r, extra) => (
-    <StoreCard r={r} sel={sel === r.s.id} fav={st.favs.includes(r.s.id)} onFav={() => toggleFav(r.s.id)} {...extra}
-      onClick={() => {
-        if (cmpMode) { setCmp((a) => (a.includes(r.s.id) ? a.filter((x) => x !== r.s.id) : a.length >= 3 ? (toast('최대 3곳까지 비교할 수 있어요'), a) : [...a, r.s.id])); return; }
-        nav(`/store/${r.s.id}`);
-      }} />
-  );
+  const tap = (r) => {
+    if (cmpMode) { setCmp((a) => (a.includes(r.s.id) ? a.filter((x) => x !== r.s.id) : a.length >= 3 ? (toast('최대 3곳까지 비교할 수 있어요'), a) : [...a, r.s.id])); return; }
+    nav(`/store/${r.s.id}`);
+  };
+  const card = (r, extra) => <StoreCard r={r} sel={sel === r.s.id} fav={st.favs.includes(r.s.id)} onFav={() => toggleFav(r.s.id)} {...extra} onClick={() => tap(r)} />;
 
   return (
     <div className="screen fade" ref={wrap}>
@@ -262,7 +315,7 @@ export default function CustomerHome() {
               <span className="q">{bySearch ? find.text : '가게·동네 검색'}</span>
               {bySearch && <span className="x" role="button" aria-label="검색 지우기" onClick={(e) => { e.stopPropagation(); clearFind(); toast('검색을 지웠어요'); }}><Icon n="close" size="sm" /></span>}
               {!bySearch && <span className="cam2" role="button" aria-label="사진으로 찾기" onClick={(e) => { e.stopPropagation(); setFindOpen('photo'); }}><Icon n="camera" /></span>}
-              <span className={`aibtn ${byAI ? 'on' : ''}`} data-coach="find" role="button" aria-label="AI로 케이크 가게 찾기" onClick={(e) => { e.stopPropagation(); setFindOpen('all'); }}>
+              <span className={`aibtn ${byAI ? 'on' : ''}`} data-coach="find" role="button" aria-label="AI로 케이크 가게 찾기" onClick={(e) => { e.stopPropagation(); openFind(); }}>
                 {byAI && find.photo?.thumb ? <img src={find.photo.thumb} alt="" /> : <Icon n="sparkle" size="sm" />}{byAI ? `AI 조건 ${nFind || 1}` : 'AI 찾기'}
                 {byAI && <i role="button" aria-label="조건 지우기" onClick={(e) => { e.stopPropagation(); clearFind(); toast('찾기 조건을 지웠어요'); }}><Icon n="close" size="sm" /></i>}
               </span>
@@ -292,18 +345,34 @@ export default function CustomerHome() {
             <div className="grab" onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag}><i /></div>
             <div className="bh" onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag}>
               <h3>{nFind || find?.text ? '찾은 가게' : '이 근처 커스텀 케이크'} <b>{nFind ? exactN : ranked.length}</b></h3>
-              <select className="sortsel" value={sort} onChange={(e) => setSort(e.target.value)} onPointerDown={(e) => e.stopPropagation()} aria-label="정렬">
-                <option value="rec">추천순</option><option value="near">가까운순</option><option value="price">가격순</option>
-              </select>
-              <button className={`btn xs ${cmpMode ? 'dark' : 'ghost'}`} onPointerDown={(e) => e.stopPropagation()} onClick={() => { setCmpMode(!cmpMode); setCmp([]); if (!cmpMode) toast('비교할 가게를 2~3곳 눌러 주세요'); }}>{cmpMode ? '비교 취소' : '비교'}</button>
+              <button className="sortbtn" onPointerDown={(e) => e.stopPropagation()} onClick={() => setSortOpen(true)} aria-label="정렬 바꾸기">
+                {SORTS.find((x) => x[0] === sort)?.[1]}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 4v16M4.5 7.5 8 4l3.5 3.5M16 20V4M12.5 16.5 16 20l3.5-3.5" /></svg>
+              </button>
+              <div className="vtog" onPointerDown={(e) => e.stopPropagation()}>
+                <button className={view === 'list' ? 'on' : ''} onClick={() => setState({ homeView: 'list' })} aria-label="목록으로 보기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M5 6.5h14M5 12h14M5 17.5h14" /></svg></button>
+                <button className={view === 'grid' ? 'on' : ''} onClick={() => setState({ homeView: 'grid' })} aria-label="사진으로 보기"><svg viewBox="0 0 24 24" fill="currentColor">{[5, 12, 19].flatMap((y) => [5, 12, 19].map((x) => <circle key={`${x}-${y}`} cx={x} cy={y} r="2.3" />))}</svg></button>
+              </div>
             </div>
-            <div className="legendrow"><span><i className="l1" />케이크 가게</span><span><i className="lstamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h16M5.5 20v-6a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v6M12 12V8.6" /></svg></i>에이크 입점 · 앱 주문</span>{!gKey && !kKey && <a className="osm" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">지도 © OpenStreetMap</a>}</div>
-            <div className="bl">
+            <div className="legendrow">
+              <span><i className="lstamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h16M5.5 20v-6a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v6M12 12V8.6" /></svg></i>iAKE 입점 · 앱 주문</span><span><i className="l1" />케이크 가게</span>
+              <button className={`cmpbtn ${cmpMode ? 'on' : ''}`} onClick={() => { setCmpMode(!cmpMode); setCmp([]); if (!cmpMode) toast('비교할 가게를 2~3곳 눌러 주세요'); }}>{cmpMode ? '비교 취소' : '비교'}</button>
+            </div>
+            {!gKey && !kKey && <a className="osm-line" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">지도 © OpenStreetMap</a>}
+            <div className={`bl ${view === 'grid' ? 'grid' : ''}`}>
               {ranked.length === 0 && (
                 <div className="empty">이 조건에 맞는 가게가 없어요.<br />조건을 줄이거나 범위를 넓혀 보세요.
                   <div className="row" style={{ marginTop: 12, justifyContent: 'center' }}>{(nFind > 0 || find?.text) && <button className="btn sec sm" onClick={clearFind}>조건 지우기</button>}<button className="btn line sm" onClick={() => setLocOpen(true)}>범위 넓히기</button></div></div>
               )}
-              {ranked.map((r) => (<div key={r.s.id}>
+              {view === 'grid' ? (() => {
+                // 사진 3칸: 조건에 딱 맞는 가게 / 조금 다른 가게를 나눠서
+                const cut = firstPartial ? ranked.indexOf(firstPartial) : ranked.length;
+                const tile = (r) => <StoreTile key={r.s.id} r={r} sel={sel === r.s.id} fav={st.favs.includes(r.s.id)} onFav={() => toggleFav(r.s.id)} picked={cmpMode ? cmp.includes(r.s.id) : undefined} onClick={() => tap(r)} />;
+                return (<>
+                  {cut > 0 && <div className="sgrid">{ranked.slice(0, cut).map(tile)}</div>}
+                  {firstPartial && <div className="sec-t" style={{ margin: '16px 0 4px' }}><h3 style={{ fontSize: 15 }}>{exactN ? '조건과 조금 다른 가게' : '딱 맞는 곳은 없어요 · 비슷한 가게'}</h3><span className="more">{ranked.length - exactN}곳</span></div>}
+                  {firstPartial && <div className="sgrid">{ranked.slice(cut).map(tile)}</div>}
+                </>);
+              })() : ranked.map((r) => (<div key={r.s.id}>
                 {r === firstPartial && <div className="sec-t" style={{ margin: '16px 0 4px' }}><h3 style={{ fontSize: 15 }}>{exactN ? '조건과 조금 다른 가게' : '딱 맞는 곳은 없어요 · 비슷한 가게'}</h3><span className="more">{ranked.length - exactN}곳</span></div>}
                 {card(r, { picked: cmpMode ? cmp.includes(r.s.id) : undefined })}
               </div>))}
@@ -333,6 +402,7 @@ export default function CustomerHome() {
       )}
       <CustomerTabBar current="/c" />
       <CompareSheet open={cmpOpen} onClose={() => setCmpOpen(false)} rows={cmp.map((id) => ranked.find((r) => r.s.id === id)).filter(Boolean)} />
+      <SortSheet open={sortOpen} onClose={() => setSortOpen(false)} sort={sort} onPick={setSort} />
       <LocationSheet open={locOpen} onClose={() => setLocOpen(false)} />
       <FindSheet open={!!findOpen} focus={findOpen} onClose={() => setFindOpen(false)} stores={stores} />
       <LocShareSheet open={shareOpen} onClose={() => setShareOpen(false)} store={selStore} center={moved ? { ...moved, label: '지도에서 보는 곳' } : st.loc} />

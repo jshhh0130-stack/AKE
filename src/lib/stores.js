@@ -181,6 +181,16 @@ export function searchStores(list, q, loc) {
 // 가게 강점 칩 (최대 2개): 사장님이 고른 강점이 먼저, 없으면 스타일
 const STRONG = { lettering: '레터링', character: '그림', flower: '플라워', photo: '포토', rice: '떡케이크', '3d': '입체', tiered: '2단', custom: '주문제작' };
 export const strengths = (s) => (s.strong?.length ? s.strong : s.styles || []).filter((x) => STRONG[x]).slice(0, 2).map((x) => STRONG[x]);
+// 가게마다 같은 틀로 넣는 짧은 정보 (가게 화면 머리 · 목록 카드): 키워드 · 영업시간(휴무를 녹여서)
+const KEYWORD = { lettering: '레터링', character: '그림·캐릭터', flower: '플라워', photo: '포토', rice: '떡케이크', '3d': '입체', tiered: '2단', custom: '주문제작' };
+export const keywordsOf = (s, n = 1) => (s.strong?.length ? s.strong : s.styles || []).filter((x) => KEYWORD[x]).slice(0, n).map((x) => KEYWORD[x]);
+export function hoursOf(s) {
+  const time = s.ops ? `${s.ops.pickupStart}~${s.ops.pickupEnd}` : (s.hours || '').replace(/\s*픽업$/, '').trim();
+  const cd = closedDaysOf(s);
+  const raw = (s.closed || '').trim();
+  const off = cd.length ? `${cd.map((d) => '일월화수목금토'[d]).join('·')} 휴무` : s.ops ? '휴무 없음' : raw && !/확인|정보/.test(raw) ? (/휴무|쉼/.test(raw) ? raw : `${raw} 휴무`) : '';
+  return { time: time && !/확인 필요/.test(time) ? time : '', off };
+}
 
 export const GUS = ['영통구', '권선구', '팔달구', '장안구'];
 export const BUDGETS = [
@@ -192,7 +202,18 @@ export const BUDGETS = [
 // 찾기 조건이 몇 개 걸려 있나
 export const findCount = (f) => (f ? (f.styles?.length ? 1 : 0) + (f.budget ? 1 : 0) + (f.gu ? 1 : 0) + (f.sameDay ? 1 : 0) + (f.appOnly ? 1 : 0) + (f.photo ? 1 : 0) + (f.q ? 1 : 0) : 0);
 
-export function rankStores(list, { loc, radius = 5, find = null, filter = 'all', sort = 'rec', q = '' }) {
+// 정렬 (지도 아래 목록의 '정렬' 창)
+export const SORTS = [
+  ['rec', '추천순', 'iAKE가 고른 순서'],
+  ['pop', '인기순', '리뷰가 많은 순'],
+  ['near', '거리순', '가까운 가게부터'],
+  ['new', '최신순', '새로 입점한 가게부터'],
+  ['price', '가격 낮은순', '1호 기본 가격이 낮은 순'],
+];
+// 리뷰 수: 구글 리뷰(키 연결 시) + 앱 후기 / 입점 날짜: 이 기기 가게는 등록일, 링크로 받은 가게는 받은 날
+const reviewN = (s, rv) => (s.g?.n || 0) + (rv?.[s.id] || 0);
+const joinedAt = (s) => (s.kind !== 'partner' ? 0 : Date.parse(s.createdAt || '') || s.joinedAt || 1);
+export function rankStores(list, { loc, radius = 5, find = null, filter = 'all', sort = 'rec', q = '', reviews = null }) {
   const fobj = FILTERS.find((f) => f.id === filter);
   const ql = (q || find?.q || '').trim().toLowerCase();
   const want = find?.styles || [];
@@ -224,6 +245,8 @@ export function rankStores(list, { loc, radius = 5, find = null, filter = 'all',
     rec: (a, b) => b.score - a.score,
     near: (a, b) => (a.partial - b.partial) || a.d - b.d,
     price: (a, b) => (a.partial - b.partial) || (minPrice(a.s) ?? 9e9) - (minPrice(b.s) ?? 9e9),
+    pop: (a, b) => (a.partial - b.partial) || reviewN(b.s, reviews) - reviewN(a.s, reviews) || b.score - a.score,
+    new: (a, b) => (a.partial - b.partial) || joinedAt(b.s) - joinedAt(a.s) || b.score - a.score,
   };
   return rows.sort(by[sort] || by.rec);
 }
