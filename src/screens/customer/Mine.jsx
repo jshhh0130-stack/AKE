@@ -120,6 +120,7 @@ export function MyOrders() {
             </div>
           );
         })}
+        {tab === 'past' && list.length > 0 && <div style={{ textAlign: 'right', marginBottom: 8 }}><button className="btn xs line" onClick={() => { if (confirm('지난 주문을 모두 지울까요?')) { setState((s) => ({ ...s, orders: s.orders.filter((o) => !(o.mine && !ACTIVE.includes(o.status) && o.status !== 'external')) })); toast('지난 주문을 지웠어요'); } }}>지난 주문 지우기</button></div>}
         {list.length === 0 && asks.length === 0 && <Empty icon="chat">{tab === 'now' ? <>진행 중인 주문이 없어요.<br />지도에서 마음에 드는 가게를 찾아보세요.<div style={{ marginTop: 14 }}><button className="btn pri sm" onClick={() => nav('/c', { replace: true })}>케이크 가게 찾기</button></div></> : '지난 주문이 없어요.'}</Empty>}
         {list.map((o) => {
           const un = unreadOf(o, 'c');
@@ -153,7 +154,7 @@ export function My() {
       <div className="scroll pad with-tab" style={{ paddingTop: 4 }}>
         <div className="myprof">
           <span className="av"><img src={`${import.meta.env.BASE_URL}brand/candle.webp`} alt="" /></span>
-          <div className="grow"><b>{st.me?.name ? `${st.me.name}님` : '에이크 고객님'}</b><small>{st.me?.phone ? maskPhone(st.me.phone) : '주문하면 이름이 저장돼요'}</small></div>
+          <div className="grow"><b>{st.me?.name ? 'OOO님' : '에이크 고객님'}</b><small>{st.me?.phone ? maskPhone(st.me.phone) : '주문하면 이름이 저장돼요'}</small></div>
         </div>
         <div className="kpis light" style={{ marginTop: 10 }}>
           <button onClick={() => nav('/c/orders', { replace: true })}><small>주문</small><b>{mine.length}</b></button>

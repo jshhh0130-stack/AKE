@@ -12,6 +12,8 @@ import { useApp, setState } from '../../lib/state.js';
 import { nav, back, queryOf, navAfterSheet } from '../../lib/router.js';
 import { getStores, rankStores, distKm, fmtKm } from '../../lib/stores.js';
 import { SHOP_PHOTO_GROUPS, photoName } from '../../lib/shopPhotos.js';
+import CAKE_CATS from '../../data/cakeCats.json';
+import { MAKE_CATS } from '../../data/makeCats.js';
 import { PICKS } from '../../data/picks.js';
 import { loadImage, toDataURL, analyzeImage, loadDataURL } from '../../lib/image.js';
 import { shareText, ago, hash } from '../../lib/util.js';
@@ -130,87 +132,53 @@ export function Interest({ path }) {
         <button className={tab === 'cake' ? 'on' : ''} onClick={() => setTab('cake')}>케이크 둘러보기</button>
         <button className={tab === 'store' ? 'on' : ''} onClick={() => setTab('store')}>찜한 가게{n > 0 && <small>{n}</small>}</button>
       </div>
-      {tab === 'shop' ? <ShopFeed /> : tab === 'cake' ? <CakeFeed q0={q0} cat0={cat0} /> : <SavedStores />}
+      {tab === 'shop' ? <ShopFeed /> : tab === 'cake' ? <CakeFeed cat0={cat0} /> : <SavedStores />}
       <CustomerTabBar current="/c/saved" />
     </div>
   );
 }
 
-function CakeFeed({ q0, cat0 = 'all' }) {
+// 케이크 둘러보기: 수원 가게들의 실제 케이크 사진을 AI 찾기와 같은 카테고리로 나눠서 (핀터레스트처럼)
+const BROWSE_CATS = [['all', '전체'], ['liked', '저장한 케이크'], ...MAKE_CATS.filter((c) => c.id !== 'remake').map((c) => [c.id, c.name])];
+function CakeFeed({ cat0 = 'all' }) {
   const st = useApp();
+  usePlaces();
   const [likes, toggleLike] = useLike();
-  const [q, setQ] = useState(q0);
-  const [cat, setCat] = useState(cat0);
-  const [studio, setStudio] = useState(false);
-  const [photo, setPhoto] = useState(null); // { thumb, an }
-  const [busy, setBusy] = useState(false);
-  const qq = q.trim();
-  usePlaces(); // 카카오 가게 목록이 도착하면 가게 이름도 다시
-  const makers = useMakers(st);
-  // 입점 가게 사장님이 올린 작품 사진 (진짜 사진)
-  const works = useMemo(() => getStores(st).filter((s) => s.kind === 'partner').flatMap((s) => (s.portfolio || []).filter((p) => p.src).map((p, k) => ({ id: `${s.id}-${k}`, src: p.src, t: p.caption || `${s.name} 작품`, store: s, sample: !!p.sample, h: ['1 / 1.2', '1 / 1.3', '1 / 1', '1 / 1.05'][k % 4] }))), [st.shop, st.partners]);
+  const [cat, setCat] = useState(BROWSE_CATS.some((c) => c[0] === cat0) ? cat0 : 'all');
+  const [n, setN] = useState(40);
+  const [view, setView] = useState(null);
+  const stores = getStores(st);
+  const all = useMemo(() => {
+    const byNo = new Map(stores.filter((s) => s.no != null && !s.hidden).map((s) => [s.no, s]));
+    return SHOP_PHOTO_GROUPS.flatMap((g) => g.photos.map((p) => ({ ...p, id: `${g.no}-${p.n}`, cat: CAKE_CATS[`${g.no}-${p.n}`] || 'letter', shopName: g.name, store: byNo.get(g.no) || null })))
+      .filter((p) => p.cat !== 'none');
+  }, [stores.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  const counts = useMemo(() => { const c = {}; all.forEach((p) => { c[p.cat] = (c[p.cat] || 0) + 1; }); return c; }, [all]);
   const list = useMemo(() => {
-    let arr = GALLERY.map((it) => ({ it, sc: 0 }));
-    if (cat === 'liked') arr = arr.filter((x) => likes.includes(x.it.id)).sort((a, b) => likes.indexOf(a.it.id) - likes.indexOf(b.it.id));
-    else if (cat !== 'all') arr = arr.filter((x) => inCat(x.it, cat));
-    if (photo) { arr = arr.map((x) => ({ ...x, sc: photoScore(x.it, photo.an) })).sort((a, b) => b.sc - a.sc); }
-    else if (qq) arr = arr.map((x) => ({ ...x, sc: textScore(x.it, qq) })).filter((x) => x.sc > 0).sort((a, b) => b.sc - a.sc);
+    let arr = cat === 'all' ? all : cat === 'liked' ? all.filter((p) => likes.includes(p.id)) : all.filter((p) => p.cat === cat);
+    if (cat === 'all') arr = [...arr].sort((x, y) => (hash(x.id) % 997) - (hash(y.id) % 997)); // 가게가 골고루 섞이게
     return arr;
-  }, [qq, cat, photo, likes.join()]); // eslint-disable-line react-hooks/exhaustive-deps
-  const max = Math.max(1, ...list.map((x) => x.sc));
-  // 관련 검색어: 위쪽 결과에 많이 나오는 태그
-  const related = useMemo(() => {
-    if (!qq && !photo) return [];
-    const cnt = {};
-    list.slice(0, 12).forEach(({ it }) => it.tags.forEach((t) => { if (!norm(qq).includes(norm(t))) cnt[t] = (cnt[t] || 0) + 1; }));
-    return Object.entries(cnt).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([t]) => (qq ? `${qq} ${t}` : t));
-  }, [list, qq, photo]);
-  const onPhoto = async (file) => {
-    setBusy(true);
-    try { const el = await loadImage(file); setPhoto({ thumb: toDataURL(el, 240, 0.8, true), an: analyzeImage(el) }); setQ(''); setCat('all'); }
-    catch (e) { toast(e.message || '사진을 읽지 못했어요'); }
-    setBusy(false);
-  };
-  const showWorks = !qq && !photo && (cat === 'all') && works.length > 0;
+  }, [all, cat, likes.join()]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <div className="scroll with-tab">
       <div className="feedtop">
-        <div className="qbox">
-          <Icon n="search" size="sm" />
-          <input value={q} onChange={(e) => { setQ(e.target.value); setPhoto(null); }} placeholder="곰돌이, 하트, 어버이날, 핑크…" enterKeyHint="search" aria-label="케이크 검색" />
-          {q && <button className="x" onClick={() => setQ('')} aria-label="지우기"><Icon n="close" size="sm" /></button>}
-          <PhotoPick onPick={onPhoto} className="cam"><Icon n="camera" /></PhotoPick>
-        </div>
-        <div className="chips">{CATS.map((c) => <button key={c.id} className={`chip sm ${cat === c.id ? 'on' : ''}`} onClick={() => setCat(cat === c.id && c.id !== 'all' ? 'all' : c.id)}>{c.name}{c.id === 'liked' && likes.length > 0 ? ` ${likes.length}` : ''}{c.id === 'mine' && (st.aiPics || []).length + (st.aiJobs || []).length > 0 ? ` ${(st.aiPics || []).length + (st.aiJobs || []).length}` : ''}</button>)}</div>
+        <div className="chips">{BROWSE_CATS.filter(([id]) => id === 'all' || id === 'liked' || counts[id]).map(([id, name]) => <button key={id} className={`chip sm ${cat === id ? 'on' : ''}`} onClick={() => { setCat(id); setN(40); }}>{name}{id === 'liked' ? (likes.filter((x) => /^\d+-\d+$/.test(x)).length ? ` ${likes.filter((x) => /^\d+-\d+$/.test(x)).length}` : '') : id !== 'all' ? ` ${counts[id]}` : ''}</button>)}</div>
       </div>
-      {cat === 'mine' ? <MyPics onNew={() => setStudio(true)} /> : (<>
-      {busy && <Loading text="사진을 보는 중…" />}
-      {photo && (
-        <div className="photo-q" style={{ margin: '0 16px 12px' }}>
-          <img src={photo.thumb} alt="" />
-          <div className="grow"><div className="b small">내 사진과 비슷한 케이크</div><div className="xs muted">색 · 장식이 가까운 순서예요</div></div>
-          <button className="btn xs ghost" onClick={() => setPhoto(null)}>빼기</button>
+      {list.length === 0 ? <Empty icon="heart">아직 저장한 케이크가 없어요.<br />마음에 드는 사진의 하트를 눌러 보세요.</Empty> : (
+        <div className="masonry">
+          {list.slice(0, n).map((p, i) => (
+            <div key={p.id} className="mi" role="button" tabIndex={0} onClick={() => setView({ items: list, i })}>
+              <div className="im" style={{ aspectRatio: `${p.w} / ${p.h}` }}>
+                <img src={p.thumb} alt={p.shopName} loading="lazy" decoding="async" />
+                <button className={`heart ${likes.includes(p.id) ? 'on' : ''}`} onClick={(e) => { e.stopPropagation(); toggleLike(p.id); }} aria-label="관심"><Icon n="heart" /></button>
+              </div>
+              {p.store ? <button className="mk" onClick={(e) => { e.stopPropagation(); nav(`/store/${p.store.id}`); }}>{p.shopName} ›</button> : <div className="t">{p.shopName}</div>}
+            </div>
+          ))}
         </div>
       )}
-      {related.length > 0 && <div className="related">{related.map((t) => <button key={t} onClick={() => { setQ(t); setPhoto(null); }}><Icon n="search" />{t}</button>)}</div>}
-      <div className="feedinfo note2">{showWorks ? <>입점된 가게들의 포트폴리오 사진이에요! 사진을 누르면 가게 페이지로 갈 수 있어요. 그 아래 ‘예시’ 사진은 AI로 만든 사진이에요.</> : <><Icon n="info" />AI로 만든 예시 사진이에요. 사진 아래 가게 이름을 누르면 이런 케이크를 만드는 가게로 가요.</>}</div>
-      {showWorks && (<>
-        <div className="sec-t" style={{ margin: '4px 16px 10px' }}><h3 style={{ fontSize: 15 }}>입점 가게 작품</h3></div>
-        <div className="masonry">{works.map((w) => <WorkTile key={w.id} w={w} />)}</div>
-      </>)}
-      {list.length === 0 ? (
-        <Empty icon={cat === 'liked' ? 'heart' : 'search'}>{cat === 'liked' ? <>아직 저장한 케이크가 없어요.<br />마음에 드는 사진의 하트를 눌러 보세요.</> : <>‘{qq}’와 비슷한 사진이 없어요.<br />다른 말로 찾아보세요.</>}</Empty>
-      ) : (
-        <div className="masonry">{list.map(({ it, sc }) => <Tile key={it.id} it={it} liked={likes.includes(it.id)} onLike={() => toggleLike(it.id)} sc={photo ? Math.round(45 + 55 * sc / max) : null} maker={makers[it.id]} />)}</div>
-      )}
-      <div className="sec-t" style={{ margin: '12px 16px 10px' }}><h3 style={{ fontSize: 15 }}>더 많은 사진 보기</h3></div>
-      <div className="outlinks">
-        <a href={`https://www.pinterest.co.kr/search/pins/?q=${encodeURIComponent(`${qq || '레터링'} 케이크`)}`} target="_blank" rel="noreferrer"><Icon n="ext" size="sm" />핀터레스트</a>
-        <a href={`https://www.instagram.com/explore/tags/${encodeURIComponent(`${(qq || '레터링').replace(/\s/g, '')}케이크`)}/`} target="_blank" rel="noreferrer"><Icon n="insta" size="sm" />인스타그램</a>
-      </div>
-      <div className="xs muted" style={{ padding: '8px 16px 0' }}>바깥 사이트는 링크로만 열어요. 다른 사람 사진을 앱에 옮겨 오지 않아요.</div>
-      </>)}
-      <AIStudio open={studio} onClose={() => setStudio(false)} onUse={(src) => findWithPhoto(src, {})} useLabel="이 사진으로 가게 찾기" />
+      {list.length > n && <div style={{ padding: '8px 16px 20px' }}><button className="btn line block" onClick={() => setN(n + 40)}>더 보기 · {list.length - n}장 남음</button></div>}
+      {view && <ShopPhotoViewer group={{ name: '', s: null, photos: view.items }} index={view.i} onClose={() => setView(null)} />}
     </div>
   );
 }
@@ -272,11 +240,12 @@ function ShopPhotoViewer({ group, index, onClose }) {
   const x0 = useMemo(() => ({ v: null }), []);
   const len = group.photos.length;
   const p = group.photos[i];
+  const gs = p.store !== undefined ? p.store : group.s, gname = p.shopName || group.name;
   const go = (path) => { navAfterSheet(path, {}); close(); }; // 창을 닫는 '뒤로가기'가 끝난 뒤 이동
   return (
     <Portal>
       <div className="spv" role="dialog" aria-label={`${group.name} 사진`}>
-        <div className="spv-top"><button onClick={close} aria-label="닫기"><Icon n="close" /></button><b className="grow">{group.name}</b><span>{i + 1} / {len}</span></div>
+        <div className="spv-top"><button onClick={close} aria-label="닫기"><Icon n="close" /></button><b className="grow">{gname}</b><span>{i + 1} / {len}</span></div>
         <div className="spv-img" onPointerDown={(e) => { x0.v = e.clientX; }} onPointerUp={(e) => { if (x0.v == null) return; const dx = e.clientX - x0.v; x0.v = null; if (dx < -40 && i < len - 1) setI(i + 1); if (dx > 40 && i > 0) setI(i - 1); }}>
           <img src={p.url} alt={photoName(p)} draggable={false} />
           {i > 0 && <button className="nav l" onClick={() => setI(i - 1)} aria-label="이전 사진">‹</button>}
@@ -284,9 +253,9 @@ function ShopPhotoViewer({ group, index, onClose }) {
         </div>
         <div className="spv-info"><b>{photoName(p)}</b><a href={p.src} target="_blank" rel="noreferrer">사진 출처: {p.credit} ›</a></div>
         <div className="spv-btns">
-          {group.s ? (<>
-            <button className="btn line" onClick={() => go(`/store/${group.s.id}`)}>가게 보기</button>
-            <button className="btn pri" style={{ flex: 2 }} onClick={() => go(`/order/${group.s.id}?pick=sp${p.n}`)}>이 케이크로 주문서 쓰기</button>
+          {gs ? (<>
+            <button className="btn line" onClick={() => go(`/store/${gs.id}`)}>가게 보기</button>
+            <button className="btn pri" style={{ flex: 2 }} onClick={() => go(`/order/${gs.id}?pick=sp${p.n}`)}>이 케이크로 주문서 쓰기</button>
           </>) : <div className="xs muted center" style={{ width: '100%' }}>이 가게는 지도에서 아직 찾지 못했어요.</div>}
         </div>
       </div>

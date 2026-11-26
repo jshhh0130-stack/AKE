@@ -105,6 +105,8 @@ export default function Tour() {
   // 튜토리얼 도중 앱을 닫았으면 남은 예시를 지운다
   useEffect(() => { const st = getState(); if (st.aiDraft?.tour || st.orders.some((x) => x.tour)) setState((s) => ({ ...s, orders: s.orders.filter((x) => !x.tour), aiDraft: s.aiDraft?.tour ? null : s.aiDraft })); }, []);
   useEffect(() => { document.body.classList.toggle('touring', !!kind); }, [kind]);
+  // 1차(지도) 안내 중에 다른 화면으로 가면 안내를 닫는다
+  useEffect(() => { if (kind !== 'main') return undefined; const f = () => { if (here() !== '/c') { clearLater(); setKind(null); setState({ seenTour: true, seenGuide: true }); } }; window.addEventListener('hashchange', f); return () => window.removeEventListener('hashchange', f); }, [kind]);
   if (!kind) return null;
   // 끝(건너뛰기 포함): 먼저 지도 첫 화면으로 바로 옮기고, 화면이 바뀐 다음에 안내를 닫고 예시를 지운다 (주문 화면이 잠깐 보이지 않게)
   const done = () => {
