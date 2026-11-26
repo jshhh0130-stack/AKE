@@ -13,7 +13,7 @@ import { styleName } from '../../data/catalog.js';
 import { InfoEditor, StylesEditor, MenuEditor, OpsEditor, LookEditor } from './Editors.jsx';
 import { heroBg } from '../customer/Store.jsx';
 
-const STEPS = ['기본 정보', '가격표', '운영·마감', '꾸미기'];
+const STEPS = ['기본 정보', '가격표', '운영·마감']; // 11/26 '꾸미기' 단계는 없앴다
 
 export default function Setup() {
   const st = useApp();
@@ -64,7 +64,7 @@ export default function Setup() {
     <div className="screen">
       <div className="hdr">
         <button className="ib" onClick={() => (step === 1 ? setStep(0) : setStep(step - 1))} aria-label="이전"><Icon n="back" /></button>
-        <h1>가게 등록 {step}/4 · {STEPS[step - 1]}</h1>
+        <h1>가게 등록 {step}/{STEPS.length} · {STEPS[step - 1]}</h1>
       </div>
       <div className="wiz-steps" style={{ paddingTop: 10, background: '#fff' }}>{STEPS.map((_, i) => <i key={i} className={i < step ? 'on' : ''} />)}</div>
       <div className="scroll pad" style={{ paddingBottom: 100 }}>
@@ -78,20 +78,14 @@ export default function Setup() {
           <MenuEditor shop={draft} set={set} compact />
           <div className="note" style={{ marginTop: 12 }}>모양·디자인·맛·토핑 추가금은 지역 평균값으로 미리 넣어 뒀어요. 등록 후 <b>내 가게 › 가격표</b>에서 언제든 바꿀 수 있어요.</div>
         </>)}
-        {step === 3 && <OpsEditor shop={draft} set={set} />}
-        {step === 4 && (<>
-          <LookEditor shop={draft} set={set} />
-          <div className="lbl">손님에게 이렇게 보여요</div>
-          <div className="pv">
-            <div style={{ ...heroBg(draft), height: 150, position: 'relative' }}><CakeView o={draft.hero} bg={false} fancy style={{ position: 'absolute', left: '50%', bottom: -4, width: 230, height: 'auto', transform: 'translateX(-50%)' }} /></div>
-            <div className="pad"><span className="tag pink">에이크 입점 · 앱 주문</span><div className="b" style={{ fontSize: 19, marginTop: 6 }}>{draft.name || '가게 이름'}</div><div className="small muted">{draft.gu} {draft.dong}</div><div className="small" style={{ marginTop: 6 }}>{draft.intro || '소개글을 써 주세요'}</div></div>
-          </div>
+        {step === 3 && (<>
+          <OpsEditor shop={draft} set={set} />
           <div className="card pad row" style={{ marginTop: 12 }}><span className="grow"><b className="small">예시 주문 넣어서 둘러보기</b><div className="xs muted">주문·매출 화면이 어떻게 보이는지 미리 볼 수 있어요. 언제든 지울 수 있어요.</div></span><Toggle on={sample} onChange={setSample} label="예시 주문" /></div>
         </>)}
       </div>
       <div className="stickybar" style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}>
         {step > 1 && <button className="btn line" onClick={() => setStep(step - 1)}>이전</button>}
-        {step < 4 ? <button className="btn pri grow" disabled={!canNext} onClick={() => setStep(step + 1)}>{canNext ? '다음' : '가게 이름을 적어 주세요'}</button>
+        {step < STEPS.length ? <button className="btn pri grow" disabled={!canNext} onClick={() => setStep(step + 1)}>{canNext ? '다음' : '가게 이름을 적어 주세요'}</button>
           : <button className="btn pri grow" onClick={finish}><Icon n="check" size="sm" /> 등록 완료</button>}
       </div>
     </div>

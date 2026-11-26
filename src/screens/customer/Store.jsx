@@ -75,9 +75,17 @@ export default function StoreDetail({ params, path }) {
   const kl = s.k ? kakaoLinks(s.k) : null;
   const hrs = hoursOf(s);
   return (
-    <div className="screen">
+    <div className="screen storepage">
+      {/* 내려도 위에 계속 보이는 뒤로가기 · 공유 · 찜 */}
+      <div className="hb fixed">
+        <button onClick={() => back('/c')} aria-label="뒤로"><Icon n="back" /></button>
+        <div className="row">
+          <button onClick={() => setShareOpen(true)} aria-label="공유"><Icon n="share" /></button>
+          <button className={fav ? 'on' : ''} onClick={toggleFav} aria-label="찜"><Icon n="heart" fill={fav} /></button>
+        </div>
+      </div>
       <div className="scroll">
-        <div className="hero" style={realPhotos.length ? undefined : heroBg(s)}>
+        <div className="hero" style={realPhotos.length ? undefined : { background: 'var(--yel)' }}>
           {slides.length ? (<>
             <div className="photos" onScroll={(e) => setPi(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}>
               {slides.map((p, i) => (p.src ? <img key={i} src={p.src} alt="" referrerPolicy="no-referrer" onClick={() => p.g && setGPhoto(p)} />
@@ -89,13 +97,6 @@ export default function StoreDetail({ params, path }) {
             <div className="cake"><CakeView o={hero} bg={false} fancy /></div>
             <span className="hcap">스타일 예시 그림</span>
           </>)}
-          <div className="hb">
-            <button onClick={() => back('/c')} aria-label="뒤로"><Icon n="back" /></button>
-            <div className="row">
-              <button onClick={() => setShareOpen(true)} aria-label="공유"><Icon n="share" /></button>
-              <button className={fav ? 'on' : ''} onClick={toggleFav} aria-label="찜"><Icon n="heart" fill={fav} /></button>
-            </div>
-          </div>
         </div>
 
         <div className="shead">
@@ -104,15 +105,15 @@ export default function StoreDetail({ params, path }) {
           {/* 가게마다 같은 틀: 1호 기본 가격 / [거리] [키워드] [영업시간 · 휴무] */}
           <div className="pricehead">
             <b>{hp ? manwon(hp.e.lo) : '가격 정보 없음'}</b>
-            {hp && <span>{hp.z.name} {s.menu || s.price ? '기본' : '평균 추정'}</span>}
+            {hp && <span>{hp.z.name} {s.menu || s.price ? '예상가' : '평균 추정'}</span>}
           </div>
           <div className="factchips">
             <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="6.5" /><path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4" /></svg>{fmtKm(d)}{s.geo === 'area' ? ' (대략)' : ''}</span>
             {keywordsOf(s, 1).map((k) => <span key={k}>{k}</span>)}
             <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg>{hrs.time || '영업시간 확인 필요'}{hrs.off && <small> · {hrs.off}</small>}</span>
           </div>
+          {(s.k?.road || s.addr) && <div className="saddr"><Icon n="pin" size="sm" /><span>{s.k?.road || s.addr}</span></div>}
           {s.g?.closed && <div className="note warn" style={{ marginTop: 10 }}>구글 지도에는 ‘폐업’으로 표시돼 있어요. 방문 전에 꼭 확인해 주세요.</div>}
-          {s.k && <KakaoCard s={s} />}
           {!inApp && <div className="note" style={{ marginTop: 10 }}>아직 에이크 입점 전인 가게예요. 주문서를 완성하면 <b>가게 카톡·인스타로 그대로 보낼 수 있게</b> 정리해 드려요.{unsure && s.kind === 'public' ? <><br /><span className="xs">공개 목록 기준 정보예요. 방문 전에 영업 여부를 확인해 주세요.</span></> : null}</div>}
         </div>
         <div className="band" />
@@ -135,12 +136,13 @@ export default function StoreDetail({ params, path }) {
               {(!kl || s.insta) && <a className="btn sm line" href={s.insta ? links.insta : links.google} target="_blank" rel="noreferrer">{s.insta ? '인스타' : '구글 지도'}</a>}
             </div>
           )}
+          {s.k && <KakaoCard s={s} />}
           {s.g?.hours && <details className="small" style={{ marginTop: 10 }}><summary className="muted" style={{ cursor: 'pointer' }}>구글에 등록된 영업시간 보기</summary>{s.g.hours.map((h) => <div key={h} className="xs muted">{h}</div>)}</details>}
         </div>
         <div className="band" />
 
         <div className="pad" style={{ paddingTop: 4 }}>
-          <div className="sec-t"><h3>가격 {s.menu ? '' : '(예상)'}</h3><span className="more">기본 레터링 기준</span></div>
+          <div className="sec-t"><h3>예상 가격</h3><span className="more">기본 레터링 기준 · 최종 금액은 사장님이 정해요</span></div>
           <table className="ptable"><tbody>
             {rows.map(({ z, e }) => <tr key={z.id}><td>{z.name} <span className="xs muted">· {z.cm}cm · {z.serves}</span></td><td>{range(e.lo, e.hi)}</td></tr>)}
           </tbody></table>

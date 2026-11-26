@@ -133,6 +133,7 @@ export function MyOrders() {
                 <div className="t2">{mdDate(o.o.date)} {o.o.time} · {sizeOf(o.o.size).name} ·<b style={{ color: 'var(--ink)' }}>{o.finalPrice != null ? won(o.finalPrice) : `약 ${range(o.est?.lo, o.est?.hi, true)}`}</b></div>
                 <div className="lastmsg">{un > 0 && <span className="un">{un}</span>}<span>{last ? `${last.by === 'o' ? `${o.storeName}: ` : last.by === 's' ? '' : '나: '}${evText(last, o).split('\n')[0]}` : ''}</span><small>{last ? ago(last.at) : ''}</small></div>
                 {pay && <button className="paylink" onClick={(e) => { e.stopPropagation(); nav(`/c/pay/${o.id}`); }}>{won(o.finalPrice)} 결제하기 →</button>}
+                {!pay && ['confirmed', 'proof', 'making', 'ready'].includes(o.status) && <button className="mtalk" onClick={(e) => { e.stopPropagation(); nav(`/c/order/${o.id}?chat=1`); }}>주문 확정 · 사장님과 톡방 →</button>}
               </div>
             </div>
           );

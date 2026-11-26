@@ -13,7 +13,11 @@ export const DEFAULT_MENU = {
 };
 export const DEFAULT_OPS = {
   closedDays: [1], holidays: [], leadDays: 2, sameDay: false, cutoff: '15:00', dailyMax: 6,
-  pickupStart: '11:00', pickupEnd: '19:00', slotMin: 60, deposit: 50, account: '', autoConfirm: true, paused: false,
+  pickupStart: '11:00', pickupEnd: '19:00', slotMin: 60, deposit: 50, account: '', paused: false,
+  // 가격 확정은 사장님 몫(사장님 설문 7곳) → 가격표 안 주문 자동 확정은 사장님이 켤 때만
+  autoConfirm: false,
+  // 성수기 날짜: 그날은 예약금 100% · 주문 변경 불가 · 하루 최대 주문 수를 따로
+  peakDates: [], peakMax: 10,
 };
 export const DEFAULT_FORM = { fontChoice: true, refPhoto: true, allergy: true, extras: true, plateText: true };
 

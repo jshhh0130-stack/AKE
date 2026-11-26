@@ -38,6 +38,8 @@ function load() {
     const raw = localStorage.getItem(KEY);
     if (!raw) return { ...initial };
     const s = JSON.parse(raw);
+    // 11/26: 자동 확정 기본값을 껐다 → 예전 기본값(켜짐)으로 저장된 가게도 한 번만 끈다 (사장님이 다시 켤 수 있음)
+    if (s.shop?.ops && !s.mig1126) { s.shop = { ...s.shop, ops: { ...s.shop.ops, autoConfirm: false } }; s.mig1126 = true; }
     return { ...initial, ...s, settings: { ...initial.settings, ...(s.settings || {}) }, notiSet: { c: { ...NOTI_DEFAULT, ...(s.notiSet?.c || {}) }, o: { ...NOTI_DEFAULT, ...(s.notiSet?.o || {}) } } };
   } catch { return { ...initial }; }
 }

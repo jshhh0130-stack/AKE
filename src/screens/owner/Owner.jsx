@@ -8,12 +8,14 @@ import { nav } from '../../lib/router.js';
 import { act, nextStatus, NEXT_LABEL, OWNER_NAME, ACTIVE, SALES, ordersCSV, downloadText, unreadOf, evText, removeSampleOrders } from '../../lib/orders.js';
 import { flavorName } from '../../lib/ordertext.js';
 import { orderView } from '../../lib/ordertext.js';
-import { won, range, fmtDate, mdDate, relDay, ymd, today, addDays, parseYmd, DOW, ago, maskName, man, pad } from '../../lib/util.js';
+import { won, range, fmtDate, mdDate, relDay, ymd, today, addDays, parseYmd, DOW, ago, maskName, man, pad, copyText } from '../../lib/util.js';
 import { SIZES, DESIGNS, sizeOf, designOf } from '../../data/catalog.js';
 import { readiness } from './Editors.jsx';
 import OrderThumb from '../../components/OrderThumb.jsx';
 import OrderPaper from '../../components/OrderPaper.jsx';
 import { askUnread, askLast } from '../../lib/asks.js';
+import KakaoPaste from './KakaoPaste.jsx';
+import { pickupNotice } from '../../lib/ordertext.js';
 
 const amount = (o) => o.finalPrice ?? o.est?.lo ?? 0;
 // 시간대별 인사말 (11/23 UI): 아침 05~11시 · 낮 11~17시 · 저녁·밤 17~05시. 한 시간 동안은 같은 말을 보여 준다.
@@ -45,7 +47,7 @@ export function OCard({ o, quick = true, list = false }) {
   const req = o.status === 'requested';
   const price = o.finalPrice != null ? o.finalPrice : o.est?.lo;
   const decline = () => { if (confirm('이 주문을 거절할까요?')) { act(o.id, 'o', 'decline'); toast('주문을 거절했어요'); } };
-  const approve = () => { act(o.id, 'o', 'approve', { price: o.est.lo }); toast(`수락했어요 · ${won(o.est.lo)} 확정`); nav(`/o/order/${o.id}`); };
+  const approve = () => { act(o.id, 'o', 'approve', { price: o.est.lo }); toast(`주문을 받았어요 · ${won(o.est.lo)} 확정 · 손님에게 '주문되었습니다'를 보냈어요`); nav(`/o/order/${o.id}`); };
   // 주문·대화 목록: [이름 · 픽업 시간] / [사진] 크기·맛 “문구” 금액 / [거절][수락하고 금액 보내기]
   if (list) {
     return (
@@ -58,9 +60,10 @@ export function OCard({ o, quick = true, list = false }) {
         </div>
         {un > 0 && last && !req && <div className="lastmsg"><span className="un">{un}</span><span>{evText(last, o).split('\n')[0]}</span></div>}
         {quick && req && (
-          <div className="acts2" onClick={(e) => e.stopPropagation()}>
+          <div className="acts3" onClick={(e) => e.stopPropagation()}>
             <button className="btn sm ghost" onClick={decline}>거절</button>
-            <button className="btn sm ok2" onClick={approve}>수락하고 금액 보내기</button>
+            <button className="btn sm line" onClick={() => nav(`/o/order/${o.id}?edit=1`)}><Icon n="edit" size="sm" />수정</button>
+            <button className="btn sm ok2" onClick={approve}>주문 받기 · {man(o.est.lo)}</button>
           </div>
         )}
         {!req && <div className={`stline ${['declined', 'canceled'].includes(o.status) ? 'no' : ''}`}>{o.status === 'declined' ? '거절함' : o.status === 'canceled' ? '손님이 취소했어요' : o.status === 'done' ? '✓ 픽업 완료' : `✓ ${OWNER_NAME[o.status] || ''}${needDeposit ? (o.paid ? ' · 입금 완료' : ' · 입금 전') : ''}`}</div>}
@@ -84,7 +87,8 @@ export function OCard({ o, quick = true, list = false }) {
       {quick && req && (
         <div className="acts2" onClick={(e) => e.stopPropagation()}>
           <button className="btn sm ghost" onClick={decline}>거절</button>
-          <button className="btn sm ok2" onClick={approve}>수락 · {man(o.est.lo)}</button>
+          <button className="btn sm line" onClick={() => nav(`/o/order/${o.id}?edit=1`)}>수정</button>
+          <button className="btn sm ok2" onClick={approve}>주문 받기 · {man(o.est.lo)}</button>
         </div>
       )}
       {quick && n && (
@@ -101,18 +105,21 @@ function ReqSheet({ o }) {
       <OrderPaper order={o} compact />
       <div className="acts3" onClick={(e) => e.stopPropagation()}>
         <button className="btn sm ghost" onClick={decline}>거절</button>
-        <button className="btn sm line" onClick={() => nav(`/o/order/${o.id}`)}><Icon n="chat" size="sm" />채팅</button>
+        <button className="btn sm line" onClick={() => nav(`/o/order/${o.id}?edit=1`)}><Icon n="edit" size="sm" />수정</button>
         <button className="btn sm ok2" onClick={approve}>주문 받기 · {man(o.est.lo)}</button>
       </div>
     </div>
   );
 }// 오늘 픽업 한 줄: [시간] 이름 · 크기 / “문구” [다음 단계]
 function PickRow({ o }) {
+  const st = useApp();
   const n = nextStatus(o.status);
+  const copy = async (e) => { e.stopPropagation(); const ok = await copyText(pickupNotice(o, st.shop)); toast(ok ? '픽업 전 안내를 복사했어요. 손님 카톡에 붙여 넣어 주세요' : '복사하지 못했어요'); };
   return (
     <div className="pickrow" role="button" onClick={() => nav(`/o/order/${o.id}`)}>
       <b className="tm">{o.o.time}</b>
-      <div className="grow" style={{ minWidth: 0 }}><div className="t1">{maskName(o.customer?.name)} · {sizeOf(o.o.size).name}</div><div className="t2">{o.o.noText ? '문구 없음' : `“${o.o.text}”`}</div></div>
+      <div className="grow" style={{ minWidth: 0 }}><div className="t1">{o.customer?.name ? maskName(o.customer.name) : '손님'} · {sizeOf(o.o.size).name}{o.src === 'kakao' && <span className="tag mute" style={{ marginLeft: 4 }}>카톡</span>}</div><div className="t2">{o.o.noText ? '문구 없음' : `“${o.o.text}”`}</div></div>
+      {o.status !== 'done' && <button className="btn xs line" onClick={copy} aria-label="픽업 전 안내 복사"><Icon n="copy" size="sm" />안내</button>}
       {n ? <button className="btn xs ok2" onClick={(e) => { e.stopPropagation(); act(o.id, 'o', 'advance', { to: n }); toast(`${NEXT_LABEL[o.status]} 처리했어요`); }}>{NEXT_LABEL[o.status]}</button> : <StatusTag status={o.status} owner />}
     </div>
   );
@@ -121,12 +128,15 @@ function PickRow({ o }) {
 export function OwnerHome() {
   const { st, shop, list } = useShopOrders();
   const [gi, setGi] = useState(() => Math.floor(Math.random() * 4));
+  const [paste, setPaste] = useState(false);
   if (!shop) return <NoShop />;
   const t = ymd(today());
   const reqs = list.filter((o) => o.status === 'requested').sort((a, b) => a.o.date.localeCompare(b.o.date));
   const talk = list.filter((o) => o.status !== 'requested' && ACTIVE.includes(o.status) && unreadOf(o, 'o') > 0);
   const todays = list.filter((o) => o.o.date === t && ['confirmed', 'proof', 'making', 'ready', 'done'].includes(o.status)).sort((a, b) => a.o.time.localeCompare(b.o.time));
-  const week = list.filter((o) => ACTIVE.includes(o.status) && o.o.date > t && o.o.date <= ymd(addDays(today(), 7))).sort((a, b) => (a.o.date + a.o.time).localeCompare(b.o.date + b.o.time));
+  const tm = ymd(addDays(today(), 1));
+  const tomorrow = list.filter((o) => o.o.date === tm && ['confirmed', 'proof', 'making', 'ready'].includes(o.status)).sort((a, b) => a.o.time.localeCompare(b.o.time));
+  const week = list.filter((o) => ACTIVE.includes(o.status) && o.o.date > tm && o.o.date <= ymd(addDays(today(), 7))).sort((a, b) => (a.o.date + a.o.time).localeCompare(b.o.date + b.o.time));
   const ym = t.slice(0, 7);
   const monthSales = list.filter((o) => SALES.includes(o.status) && o.o.date.startsWith(ym)).reduce((a, o) => a + amount(o), 0);
   const rd = readiness(shop);
@@ -151,6 +161,11 @@ export function OwnerHome() {
           </div>
         </div>
         <div className="pad">
+          <button className="kpastebtn" onClick={() => setPaste(true)}>
+            <span className="ic"><Icon n="chat" /></span>
+            <span className="grow"><b>카톡 주문 붙여넣기</b><small>카톡으로 받은 주문 글을 붙여 넣으면 주문서 칸으로 나눠 드려요</small></span>
+            <Icon n="right" size="sm" />
+          </button>
           {samples && <div className="note row" style={{ marginBottom: 12 }}><span className="grow">예시 주문이 들어 있어요. 실제로 쓰기 전에 지워 주세요.</span><button className="btn xs line" onClick={() => { removeSampleOrders(); toast('예시 주문을 지웠어요'); }}>예시 지우기</button></div>}
           <div className="sec-t"><h3><i className="num">1</i>확인이 필요한 주문</h3><button className="more" onClick={() => nav('/o/orders', { replace: true })}>전체 ›</button></div>
           {reqs.length === 0 ? <div className="card pad small muted">새로 온 요청이 없어요.</div> : reqs.map((o) => <ReqSheet key={o.id} o={o} />)}
@@ -166,6 +181,10 @@ export function OwnerHome() {
           {talk.length > 0 && (<><div className="sec-t"><h3><i className="num">2</i>새 소식 (자동 확정 · 손님 메시지)</h3></div>{talk.map((o) => <OCard key={o.id} o={o} quick={false} />)}</>)}
           <div className="sec-t"><h3><i className="num">{talk.length ? 3 : 2}</i>오늘 픽업 · {fmtDate(t)}</h3></div>
           {todays.length === 0 ? <div className="card pad small muted">오늘 픽업 예정이 없어요.</div> : todays.map((o) => <PickRow key={o.id} o={o} />)}
+          {tomorrow.length > 0 && (<>
+            <div className="sec-t"><h3>내일 픽업 · {fmtDate(tm)}</h3><span className="more">‘안내’로 픽업 전 안내 복사</span></div>
+            {tomorrow.map((o) => <PickRow key={o.id} o={o} />)}
+          </>)}
           {week.length > 0 && (<>
             <div className="sec-t"><h3>이번 주 일정</h3></div>
             <div className="card" style={{ padding: '0 14px' }}>{week.slice(0, 8).map((o) => (
@@ -188,6 +207,7 @@ export function OwnerHome() {
           </div>
         </div>
       </div>
+      <KakaoPaste open={paste} onClose={() => setPaste(false)} />
       <OwnerTabBar current="/o" />
     </div>
   );

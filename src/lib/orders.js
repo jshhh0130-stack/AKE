@@ -36,9 +36,9 @@ export function applyEvent(o, ev) {
   const n = { ...o, ev: [...(o.ev || []), ev].sort((a, b) => a.at.localeCompare(b.at)) };
   switch (ev.t) {
     case 'auto': case 'approve': n.status = 'confirmed'; n.finalPrice = ev.price ?? n.est?.lo ?? null; n.proposedPrice = null; break;
-    case 'change': n.status = 'change'; n.proposedPrice = ev.price ?? null; break;
+    case 'change': n.status = 'change'; n.proposedPrice = ev.price ?? null; n.proposedPatch = ev.patch || null; break;
     case 'decline': n.status = 'declined'; break;
-    case 'accept': n.status = 'confirmed'; n.finalPrice = n.proposedPrice ?? n.finalPrice ?? n.est?.lo ?? null; n.proposedPrice = null; break;
+    case 'accept': n.status = 'confirmed'; n.finalPrice = n.proposedPrice ?? n.finalPrice ?? n.est?.lo ?? null; n.proposedPrice = null; if (n.proposedPatch) n.o = { ...n.o, ...n.proposedPatch }; n.proposedPatch = null; break; // 사장님 수정 제안을 손님이 받으면 주문 내용도 그대로 바뀐다
     case 'revise': n.o = { ...n.o, ...(ev.patch || {}) }; if (ev.est) n.est = ev.est; n.prevPrice = n.finalPrice ?? n.prevPrice ?? null; n.finalPrice = null; n.status = 'requested'; break;
     case 'proof': n.status = 'proof'; n.proofImg = ev.img || null; n.needProof = false; break;
     case 'proofok': n.status = 'making'; break;
@@ -60,7 +60,7 @@ export function evText(ev, o) {
     case 'request': return o?.gift ? `${o.gift.to}님께 보내는 선물 주문서를 보냈어요` : '주문 요청서를 보냈어요';
     case 'auto': return `사장님이 정해 둔 규칙 안이라 바로 확정됐어요 · ${p(ev.price)}`;
     case 'approve': return ev.msg || `주문되었습니다 · 최종 ${p(ev.price)}`;
-    case 'change': return `${ev.msg || '이렇게 바꾸면 가능해요.'}${ev.price != null ? ` (제안 금액 ${p(ev.price)})` : ''}`;
+    case 'change': return `${ev.msg || '이렇게 바꾸면 가능해요.'}${ev.changes?.length ? `\n바뀌는 점: ${ev.changes.map((c) => `${c.k} ${c.from} → ${c.to}`).join(', ')}` : ''}${ev.price != null ? `\n최종 금액 ${p(ev.price)}` : ''}`;
     case 'decline': return ev.msg || '죄송해요, 이번 주문은 어려워요.';
     case 'accept': return '수정 제안을 수락했어요. 이대로 확정해 주세요!';
     case 'revise': return `주문 내용을 바꾸고 싶어요${ev.summary ? ` — ${ev.summary}` : ''}${ev.msg ? `\n${ev.msg}` : ''}`;
@@ -72,17 +72,19 @@ export function evText(ev, o) {
     case 'cancel': return '주문을 취소했어요';
     case 'review': return `후기를 남겼어요 ${'★'.repeat(ev.stars || 5)}`;
     case 'msg': return ev.text || '';
+    case 'kakao': return '카톡으로 받은 주문을 사장님이 직접 넣었어요';
     case 'img': return '';
     default: return '';
   }
 }
-export const isSystemish = (ev) => ['auto', 'advance', 'paid', 'request', 'cancel', 'review', 'accept', 'proofok'].includes(ev.t);
+export const isSystemish = (ev) => ['auto', 'advance', 'paid', 'request', 'cancel', 'review', 'accept', 'proofok', 'kakao'].includes(ev.t);
 const NOTI = { // 이벤트 → [알림 종류, 제목]
   request: ['status', '새 주문 요청'], auto: ['status', '주문 자동 확정'], approve: ['status', '주문되었습니다'], change: ['status', '사장님 수정 제안'], decline: ['status', '주문이 어렵대요'],
   accept: ['status', '손님이 제안을 수락했어요'], revise: ['status', '손님이 주문 수정을 요청했어요'], proof: ['proof', '시안이 도착했어요'], proofok: ['proof', '손님이 시안을 승인했어요'], prooffix: ['proof', '손님이 시안 수정을 요청했어요'],
   advance: ['status', '주문 진행 소식'], paid: ['status', '입금 확인'], cancel: ['status', '손님이 주문을 취소했어요'], review: ['status', '새 후기'], msg: ['chat', '새 메시지'], img: ['chat', '사진이 도착했어요'],
 };
-export const notiOf = (ev) => NOTI[ev.t] || ['status', '주문 소식'];
+const ADV = { making: '제작을 시작했어요', ready: '케이크가 준비됐어요! 픽업하러 오세요', done: '픽업 완료 · 맛있게 드세요' };
+export const notiOf = (ev) => (ev.t === 'advance' && ADV[ev.to] ? ['status', ADV[ev.to]] : NOTI[ev.t] || ['status', '주문 소식']);
 
 // 이 기기에서 그 주문의 손님/사장님 역할을 맡고 있나?
 export const sideOf = (o, s = getState()) => ({ c: !!o.mine, o: !!s.shop && s.shop.id === o.storeId });
@@ -127,6 +129,29 @@ export function createOrder(store, o, customer, gift = null) {
   return order;
 }
 
+// 사장님: 카톡으로 받은 주문을 직접 넣기 → 바로 '확정' (종이 주문서 · 오늘 픽업 · 장부에 들어간다)
+export function createKakaoOrder(shop, o, customer, price) {
+  const store = shopToStore(shop, 'partner');
+  const est = estimate(store, o);
+  let order = { id: orderNo(), storeId: shop.id, storeName: shop.name, createdAt: new Date().toISOString(), status: 'confirmed', o, customer, est, checks: [], finalPrice: price ?? est.lo, ev: [], imgs: {}, seen: { o: 0 }, src: 'kakao' };
+  order = applyEvent(order, mkEvent('kakao', 'o'));
+  setState((s) => ({ ...s, orders: [order, ...s.orders] }));
+  return order;
+}
+// 손님이 주문 내용을 고칠 때: 무엇이 어떻게 바뀌었나 (종이 주문서 아래 '변경 기록')
+export function changeList(before, patch) {
+  const out = [];
+  const add = (k, a, b) => { if (b != null && a !== b) out.push({ k, from: a ?? '', to: b }); };
+  if (patch.text != null) add('문구', before.noText ? '문구 없음' : before.text, patch.noText ? '문구 없음' : patch.text);
+  if (patch.cream) add('크림', creamOf(before.cream).name, creamOf(patch.cream).name);
+  if (patch.textColor) add('글씨 색', optName(TEXT_COLORS, before.textColor), optName(TEXT_COLORS, patch.textColor));
+  if (patch.font) add('글씨체', optName(FONTS, before.font), optName(FONTS, patch.font));
+  if (patch.size) add('크기', sizeOf(before.size).name, sizeOf(patch.size).name);
+  if (patch.design) add('디자인', designOf(before.design).name, designOf(patch.design).name);
+  if (patch.plateText != null) add('판 문구', before.plateText || '없음', patch.plateText || '없음');
+  if (patch.date || patch.time) add('픽업', `${fmtDate(before.date)} ${before.time}`, `${fmtDate(patch.date || before.date)} ${patch.time || before.time}`);
+  return out;
+}
 // 손님이 주문 내용을 고칠 때: 바뀐 점 요약
 export function diffSummary(before, patch) {
   const out = [];

@@ -1,6 +1,7 @@
 // 첫 화면 안내(코치마크): 화면을 살짝 흐리게 하고, 설명할 칸에 네모를 쳐서 하나씩 알려 준다.
 // steps: [{ sel: CSS 선택자, title, body, pad }] — 찾지 못한 칸은 건너뛴다.
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+// 단계가 바뀌면: 칸 위치를 먼저 잰 다음 네모·설명을 한 번에 그 자리에 띄운다 (가운데서 미끄러져 내려오는 움직임 없이)
 
 // strict: 지금 단계 칸만 찾는다(여러 화면을 오가는 튜토리얼) · step.enter(): 단계가 바뀔 때 먼저 할 일(화면 이동 등), 기다릴 ms 를 돌려줌
 // step.center: 칸 없이 화면 전체를 살짝 흐리게 하고 설명만 가운데에 · block: 네모 칸 안을 눌러도 화면이 넘어가지 않게
@@ -11,6 +12,7 @@ export default function Coach({ steps, onDone, strict = false, block = false }) 
   const root = useRef(null);
   const tipRef = useRef(null);
   const [tipH, setTipH] = useState(150);
+  const [ready, setReady] = useState(false); // 이번 단계 칸을 쟀나
 
   // 지금 단계의 칸 찾기 (지도 핀처럼 늦게 그려지는 칸을 위해 잠깐 다시 찾는다)
   const measure = useCallback(() => {
@@ -20,14 +22,23 @@ export default function Coach({ steps, onDone, strict = false, block = false }) 
     setSize({ w: hr.width, h: hr.height });
     for (let k = i; k < (strict ? i + 1 : steps.length); k++) {
       const s = steps[k];
-      if (s.center) { if (k !== i) { setI(k); return true; } setBox(null); return true; }
+      if (s.center) { if (k !== i) { setI(k); return true; } setBox(null); setReady(true); return true; }
+      // step.rect(): 요소 대신 직접 정한 네모 (예: 지도 영역) — 화면 좌표 { left, top, width, height }
+      if (s.rect) {
+        const r = s.rect();
+        if (r && r.width > 0 && r.height > 0) { if (k !== i) { setI(k); return true; } const pad = s.pad ?? 0; setBox({ x: r.left - hr.left - pad, y: r.top - hr.top - pad, w: r.width + pad * 2, h: r.height + pad * 2, r: s.radius ?? 16 }); setReady(true); return true; }
+        continue;
+      }
       // 화면 안에 다 보이고, 다른 것(위 검색창 등)에 가려지지 않은 칸만
       const inside = (e) => {
         const r = e.getBoundingClientRect();
         if (!(r.width > 0 && r.height > 0 && r.top >= hr.top - 2 && r.bottom <= hr.bottom + 2 && r.left >= hr.left - 2 && r.right <= hr.right + 2)) return false;
-        const me = root.current; const v = me.style.visibility; me.style.visibility = 'hidden';
+        // 안내 막·설명 카드(앞 단계 것 포함)는 빼고 본다 — 카드에 'visible'이 직접 걸려 있어 pointer-events 로도 끈다
+        const me = root.current; const v = me.style.visibility, pe = me.style.pointerEvents;
+        me.style.visibility = 'hidden'; me.style.pointerEvents = 'none';
+        const tip = tipRef.current; const tv = tip?.style.visibility; if (tip) tip.style.visibility = 'hidden';
         const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-        me.style.visibility = v;
+        me.style.visibility = v; me.style.pointerEvents = pe; if (tip) tip.style.visibility = tv;
         return !!top && (top === e || e.contains(top));
       };
       let cands = [];
@@ -44,6 +55,7 @@ export default function Coach({ steps, onDone, strict = false, block = false }) 
         const r = el.getBoundingClientRect();
         const pad = s.pad ?? 6;
         setBox({ x: r.left - hr.left - pad, y: r.top - hr.top - pad, w: r.width + pad * 2, h: r.height + pad * 2, r: s.radius ?? 16 });
+        setReady(true);
         return true;
       }
     }
@@ -52,19 +64,19 @@ export default function Coach({ steps, onDone, strict = false, block = false }) 
 
   useLayoutEffect(() => {
     let tries = 0, t;
-    const max = strict ? 24 : 12;
-    setBox(null);
+    const max = strict ? 60 : 20;
+    setReady(false); // 새 칸을 잴 때까지 네모·설명은 숨긴다
     const wait = steps[i]?.enter?.() || 0; // 화면 이동 · 창 열기
-    const run = () => { if (!measure() && tries++ < max) t = setTimeout(run, 150); else if (tries > max) { if (i < steps.length - 1) setI(i + 1); else onDone?.(); } };
-    t = setTimeout(run, wait);
-    const again = setTimeout(() => measure(), wait + 450); // 움직이던 칸(아래 목록 등)이 멈춘 뒤 한 번 더 맞춘다
+    const run = () => { if (!measure() && tries++ < max) t = setTimeout(run, 50); else if (tries > max) { if (i < steps.length - 1) setI(i + 1); else onDone?.(); } };
+    if (wait) t = setTimeout(run, wait); else run(); // 같은 화면이면 바로 (그리기 전에)
+    const again = setTimeout(() => measure(), wait + 400); // 늦게 그려지는 칸(지도 핀 등)이 있으면 한 번 더 맞춘다
     const onR = () => measure();
     window.addEventListener('resize', onR);
     return () => { clearTimeout(t); clearTimeout(again); window.removeEventListener('resize', onR); };
   }, [i]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { if (tipRef.current) setTipH(tipRef.current.offsetHeight); });
+  useLayoutEffect(() => { if (tipRef.current && tipRef.current.offsetHeight !== tipH) setTipH(tipRef.current.offsetHeight); });
   // step.auto(ms): 칸을 찾은 뒤 그 시간이 지나면 저절로 다음으로 (한 단계 안에서 화면이 슥 넘어가는 느낌)
-  useEffect(() => { const a = steps[i]?.auto; if (!a || !box) return undefined; const t = setTimeout(() => setI((x) => (x === i ? x + 1 : x)), a); return () => clearTimeout(t); }, [i, !!box]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { const a = steps[i]?.auto; if (!a || !box || !ready) return undefined; const t = setTimeout(() => setI((x) => (x === i ? x + 1 : x)), a); return () => clearTimeout(t); }, [i, !!box, ready]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const last = i >= steps.length - 1;
   const next = () => (last ? onDone?.() : setI(i + 1));
@@ -88,10 +100,10 @@ export default function Coach({ steps, onDone, strict = false, block = false }) 
   const arrowX = box ? Math.max(28, Math.min(W - 42, box.x + box.w / 2)) - 14 - 7 : 0;
   return (
     <div className="coach" ref={root} role="dialog" aria-label="사용 안내">
-      <div className={`dim ${s.center ? 'soft' : ''}`} style={clip ? { clipPath: clip, WebkitClipPath: clip } : undefined} onClick={next} />
-      {box && <div className="ring" style={{ left: box.x, top: box.y, width: box.w, height: box.h, borderRadius: box.r }} />}
-      {box && block && <div className="hole" style={{ left: box.x, top: box.y, width: box.w, height: box.h }} onClick={(e) => e.stopPropagation()} />}
-      <div className="tip" ref={tipRef} style={{ top: tipTop }}>
+      <div className={`dim ${s.center ? 'soft' : ''}`} style={clip && ready ? { clipPath: clip, WebkitClipPath: clip } : undefined} onClick={next} />
+      {box && ready && <div className="ring" style={{ left: box.x, top: box.y, width: box.w, height: box.h, borderRadius: box.r }} />}
+      {box && ready && block && <div className="hole" style={{ left: box.x, top: box.y, width: box.w, height: box.h }} onClick={(e) => e.stopPropagation()} />}
+      <div className="tip" ref={tipRef} style={{ top: tipTop, visibility: ready ? 'visible' : 'hidden' }}>
         {box && <span className="arrow" style={{ left: arrowX, [below ? 'top' : 'bottom']: -6 }} />}
         <div className="stp"><span>{num(i)} / {total}</span><span className="dots">{Array.from({ length: total }, (_, k) => <i key={k} className={k + 1 === num(i) ? 'on' : ''} />)}</span></div>
         <h4>{s.title}</h4>

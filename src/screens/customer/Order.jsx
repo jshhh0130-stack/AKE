@@ -10,7 +10,7 @@ import Sketch from '../../components/Sketch.jsx';
 import { fitImage, saveEdited } from '../../lib/imagegen.js';
 import { useApp, setState } from '../../lib/state.js';
 import { nav, queryOf } from '../../lib/router.js';
-import { getStores, dayStatus, slotsOf, canOrderInApp } from '../../lib/stores.js';
+import { getStores, dayStatus, slotsOf, canOrderInApp, isPeak } from '../../lib/stores.js';
 import { estimate } from '../../lib/price.js';
 import { createOrder } from '../../lib/orders.js';
 import { photoToOptions, aiAnalyzePhoto } from '../../lib/ai.js';
@@ -225,9 +225,11 @@ export default function OrderForm({ params, path }) {
           <div className="chips wrap">{flavors.map((f) => { const [a, b] = f.add[1] === 0 ? [0, 0] : addOf(store, 'flavors', f.id, f.add, o.size); return <button key={f.id} className={`chip ${o.flavor === f.id ? 'on' : ''}`} onClick={() => set({ flavor: f.id })}>{f.name}{plus(a, b)}</button>; })}</div>
 
           <div className="flbl row" id="f-text"><span className="grow">레터링 문구</span><span className={`cnt2 ${tl > lim ? 'over' : ''}`}>{tl}/{lim}</span></div>
-          <input className="inp" maxLength={40} value={o.text} disabled={o.noText} placeholder="예) 다희야 생일 축하해" onChange={(e) => set({ text: e.target.value, noText: false })} />
+          <input className="inp" maxLength={40} value={o.text} disabled={o.noText} placeholder="예) 다희야 생일 축하해" onChange={(e) => set({ text: e.target.value, noText: false, textOk: null })} />
           {!o.noText && tl === 0 && <div className="chips" style={{ marginTop: 8 }}>{QUICK_TEXTS.slice(0, 6).map((t) => <button key={t} className="chip sm" onClick={() => set({ text: t, noText: false })}>{t}</button>)}</div>}
-          {tl > 0 && <div className="spell">한 글자씩 확인: <b>{[...o.text].map((c) => (c === ' ' ? '␣' : c)).join(' ')}</b>{tl > lim && <div style={{ color: 'var(--warn)', fontWeight: 700, marginTop: 4 }}>권장 {lim}자를 넘었어요. 글씨가 작아질 수 있어 사장님이 확인해요.</div>}</div>}
+          {tl > 0 && <div className="spell">한 글자씩 확인: <b>{[...o.text].map((c) => (c === ' ' ? '␣' : c)).join(' ')}</b>{tl > lim && <div style={{ color: 'var(--warn)', fontWeight: 700, marginTop: 4 }}>권장 {lim}자를 넘었어요. 글씨가 작아질 수 있어 사장님이 확인해요.</div>}
+            {/* 손님이 확인하면 종이 주문서 문구 옆에 '손님 확인' 도장이 찍힌다 */}
+            <button className={`spellok ${o.textOk ? 'on' : ''}`} onClick={() => set({ textOk: o.textOk ? null : new Date().toISOString() })}>{o.textOk ? <><Icon n="check" size="sm" />문구 확인 완료 · 사장님 주문서에 도장이 찍혀요</> : '한 글자씩 맞는지 확인했어요'}</button></div>}
           <label className="check" style={{ marginTop: 4 }}><input type="checkbox" checked={o.noText} onChange={(e) => set({ noText: e.target.checked })} />문구 없이 주문할게요</label>
 
           <div className="flbl" id="f-pick">픽업</div>
@@ -235,10 +237,11 @@ export default function OrderForm({ params, path }) {
             {days.map(({ key, d, i, ds }) => (
               <button key={key} disabled={!ds.ok} className={`dchip ${o.date === key ? 'on' : ''}`} onClick={() => set({ date: key, time: null })}>
                 <small>{i === 0 ? '오늘' : i === 1 ? '내일' : DOW[d.getDay()]}</small><b>{d.getMonth() + 1}/{d.getDate()}</b>
-                {!ds.ok && <em>{ds.code === 'closed' ? '휴무' : ds.code === 'full' ? '마감' : ''}</em>}
+                {!ds.ok ? <em>{ds.code === 'closed' ? '휴무' : ds.code === 'full' ? '마감' : ''}</em> : ds.peak ? <em className="peak">성수기</em> : null}
               </button>
             ))}
           </div>
+          {o.date && isPeak(store, o.date) && <div className="peaknote"><span className="tag pink">성수기</span><span>이 날은 <b>예약금 100%</b>이고 <b>주문 변경이 어려워요</b>.</span></div>}
           {o.date ? (times.length ? <div className="g4" style={{ marginTop: 8 }}>{times.map((t) => <button key={t} className={`opt2 ${o.time === t ? 'on' : ''}`} onClick={() => set({ time: t })}>{t}</button>)}</div>
             : <div className="small muted" style={{ marginTop: 8 }}>이 날은 고를 수 있는 시간이 없어요. 다른 날을 골라 주세요.</div>)
             : <div className="xs muted" style={{ marginTop: 6 }}>{store.ops ? (store.ops.sameDay ? `당일은 ${store.ops.cutoff}까지 주문돼요.` : `픽업 ${store.ops.leadDays}일 전까지 주문할 수 있어요.`) : '이 가게 마감 규칙은 공개 정보 기준(보통 2일 전)이라 사장님이 다시 확인해요.'}</div>}
@@ -291,12 +294,12 @@ export default function OrderForm({ params, path }) {
               </div>
             )}
           </div>
-          <div className="xs muted center" style={{ margin: '14px 0' }}>최종 금액은 사장님이 확인하고 확정해요</div>
+          <div className="xs muted center" style={{ margin: '14px 0' }}>앱 금액은 모두 예상가예요. 최종 금액은 사장님이 주문을 받을 때 정해요</div>
         </div>
       )}
 
       <div className="stickybar ordbar">
-        <div className="pp">예상 금액 · 사장님이 확정해요<b>약 {won(est.lo)}</b></div>
+        <div className="pp">예상가 · 최종 금액은 사장님이 정해요<b>약 {won(est.lo)}</b></div>
         {step === 1
           ? <button className="btn pri grow" disabled={!sel} onClick={() => setStep(2)}>{sel ? '이 디자인으로 계속' : '디자인을 골라 주세요'}</button>
           : need.length ? <button className="btn pri grow" style={{ opacity: 0.85, fontSize: 14.5 }} onClick={goNeed}>{need[0][1]}{need.length > 1 ? ` 외 ${need.length - 1}개` : ''} 남았어요</button>

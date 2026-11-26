@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { usePath, match, nav } from './lib/router.js';
 import { setState, getState, resetAll } from './lib/state.js';
 import { startLive } from './lib/live.js';
+import { startReminders } from './lib/reminders.js';
 import { resumeAIJobs } from './lib/imagegen.js';
 import { Toasts, QR, Loading, toast } from './components/ui.jsx';
 import { Logo } from './components/Logo.jsx';
@@ -116,7 +117,7 @@ export default function App() {
     return () => { clearTimeout(a); clearTimeout(b); };
   }, []);
   const skipSplash = () => { setSplash(false); setTimeout(() => setGone(true), 500); };
-  useEffect(() => { startLive(); resumeAIJobs(); }, []); // 실시간 주문 연결 + 무료 대기열에서 만들던 AI 사진 이어서 기다리기
+  useEffect(() => { startLive(); startReminders(); resumeAIJobs(); }, []); // 실시간 주문 연결 + 무료 대기열에서 만들던 AI 사진 이어서 기다리기
   const appUrl = location.href.split('#')[0];
   return (
     <div className="desk">

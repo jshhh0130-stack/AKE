@@ -42,7 +42,7 @@ export function OwnerShop() {
           <div className="pad">
             <div className="row" style={{ gap: 8 }}><b className="nm">{shop.name}</b><span className="tag pink">{shop.ops.paused ? '잠시 쉬는 중' : '주문 받는 중'}</span></div>
             <div className="sub">{shop.dong || shop.gu} · {shop.styles.map(styleName).join(' · ')}</div>
-            <div className="intro">{shop.intro || '소개글이 아직 없어요. ‘가게 꾸미기’에서 적어 보세요.'}</div>
+            {shop.intro && <div className="intro">{shop.intro}</div>}
             <div className="g2" style={{ marginTop: 14 }}>
               <button className="btn sm line" onClick={() => nav(`/store/${shop.id}`)}>손님 화면 보기</button>
               <button className="btn sm sec" onClick={() => nav('/o/shop/share')}>주문 링크·QR</button>
@@ -51,8 +51,8 @@ export function OwnerShop() {
         </div>
         <div className="sec-t"><h3>꼭 필요한 설정</h3></div>
         {['info', 'menu', 'ops'].map((k) => <SetRow key={k} k={k} ok={done[k]} shop={shop} />)}
-        <div className="sec-t"><h3>더 꾸미기</h3></div>
-        {['look', 'portfolio', 'notice', 'form', 'noti'].map((k) => <SetRow key={k} k={k} ok={done[k] ?? true} shop={shop} />)}
+        <div className="sec-t"><h3>더 설정하기</h3></div>
+        {['portfolio', 'notice', 'form', 'noti'].map((k) => <SetRow key={k} k={k} ok={done[k] ?? true} shop={shop} />)}
         <div className="sec-t"><h3>그 밖에</h3></div>
         <div className="card" style={{ padding: '0 14px' }}>
           <button className="list-row" onClick={() => { setState({ role: 'customer' }); nav(st.seenGuide ? '/c' : '/guide', { replace: true }); }}><Icon n="swap" /><div className="grow"><div className="t">고객 모드로 바꾸기</div></div><Icon n="right" size="sm" /></button>

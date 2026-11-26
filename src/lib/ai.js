@@ -96,6 +96,29 @@ export async function aiParseOrder(key, sentence) {
   });
 }
 
+// 2-0) 카톡 주문 글 → 주문서 칸 (사장님 '카톡 주문 붙여넣기')
+const KAKAO_SCHEMA = {
+  type: 'object', additionalProperties: false,
+  required: ['name', 'phone', 'date', 'time', 'size', 'flavor', 'cream', 'text', 'plate_text', 'candles', 'allergy', 'request'],
+  properties: {
+    name: { type: 'string' }, phone: { type: 'string' }, date: { type: 'string' }, time: { type: 'string' },
+    size: { type: 'string', enum: [...ids(SIZES), 'none'] },
+    flavor: { type: 'string', enum: [...ids(FLAVORS), ...ids(RICE_FLAVORS), 'none'] },
+    cream: { type: 'string', enum: [...ids(CREAMS), 'none'] },
+    text: { type: 'string' }, plate_text: { type: 'string' }, candles: { type: 'string' }, allergy: { type: 'string' }, request: { type: 'string' },
+  },
+};
+export async function aiParseKakao(key, message) {
+  const t = today();
+  const r = await askClaude({
+    key, schema: KAKAO_SCHEMA,
+    system: `너는 케이크 가게 사장님의 주문 정리 도우미야. 손님이 카톡으로 보낸 주문 글을 주문서 칸으로 나눠. 오늘은 ${ymd(t)} (${DOW[t.getDay()]}요일). 날짜는 YYYY-MM-DD, 시간은 HH:MM(24시간). text는 케이크 위에 쓰는 문구, plate_text는 케이크 아래 판(접시)에 쓰는 문구. candles는 초 종류와 개수를 짧게(예: 큰 초 2개, 작은 초 5개). 글에 없는 칸은 빈 문자열 또는 'none'. 추측해서 채우지 마.`,
+    content: [{ type: 'text', text: message }],
+  });
+  const v = (x) => (x && x !== 'none' ? x : '');
+  return { name: v(r.name), phone: v(r.phone), date: /^\d{4}-\d{2}-\d{2}$/.test(r.date) ? r.date : '', time: /^\d{2}:\d{2}$/.test(r.time) ? r.time : '', size: v(r.size), flavor: v(r.flavor), cream: v(r.cream), text: v(r.text), plateText: v(r.plate_text), candles: v(r.candles), allergy: v(r.allergy), request: v(r.request) };
+}
+
 // 2-1) 말로 찾기: "영통 근처 4만원대 캐릭터 케이크" → 찾기 조건
 const FIND_SCHEMA = {
   type: 'object', additionalProperties: false,

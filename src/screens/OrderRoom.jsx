@@ -4,17 +4,17 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../components/Icon.jsx';
 import { CakeView, Header, Empty, StatusTag, Stars, toast, PhotoPick, PriceInput, Sheet, Seg } from '../components/ui.jsx';
 import { useApp, patchShop } from '../lib/state.js';
-import { nav } from '../lib/router.js';
-import { getStores, shopToStore, mapLinks, dayStatus, slotsOf, canOrderInApp } from '../lib/stores.js';
+import { nav, queryOf } from '../lib/router.js';
+import { getStores, shopToStore, mapLinks, dayStatus, slotsOf, canOrderInApp, isPeak, depositOf } from '../lib/stores.js';
 import { estimate, ruleCheck, verdictOf } from '../lib/price.js';
-import { act, evText, markSeen, STATUS, nextStatus, NEXT_LABEL, diffSummary, isSystemish } from '../lib/orders.js';
+import { act, evText, markSeen, STATUS, nextStatus, NEXT_LABEL, diffSummary, changeList, isSystemish } from '../lib/orders.js';
 import { readLink } from '../lib/notify.js';
 import { liveStatus, onLiveStatus } from '../lib/live.js';
-import { orderView, orderText, decoList, flavorName } from '../lib/ordertext.js';
+import { orderView, orderText, decoList, flavorName, pickupNotice } from '../lib/ordertext.js';
 import { orderLink, giftLink } from '../lib/share.js';
 import { loadImage, toDataURL } from '../lib/image.js';
-import { won, range, fmtDate, relDay, ago, maskName, maskPhone, shareText, copyText, today, addDays, ymd, DOW, textLen } from '../lib/util.js';
-import { SHAPES, CREAMS, TEXT_COLORS, FONTS, sizeOf, designOf, creamOf, fontOf, textColorOf, optName } from '../data/catalog.js';
+import { won, man, range, fmtDate, relDay, ago, maskName, maskPhone, shareText, copyText, today, addDays, ymd, DOW, textLen } from '../lib/util.js';
+import { SHAPES, SIZES, CREAMS, TEXT_COLORS, FONTS, sizeOf, designOf, creamOf, fontOf, textColorOf, optName } from '../data/catalog.js';
 import OrderThumb from '../components/OrderThumb.jsx';
 import { PaidCake } from '../components/HandDrawn.jsx';
 import OrderPaper from '../components/OrderPaper.jsx';
@@ -138,7 +138,7 @@ function Composer({ order, role, quick = [] }) {
       {quick.length > 0 && <div className="chips" style={{ padding: '0 0 6px' }}>{quick.map((q) => <button key={q} className="chip sm" onClick={() => setText(q)}>{q.length > 16 ? q.slice(0, 15) + '…' : q}</button>)}</div>}
       <div className="row">
         <PhotoPick onPick={sendPhoto} className="cbtn"><Icon n="image" /></PhotoPick>
-        <input className="inp grow" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && !e.nativeEvent.isComposing && send()} placeholder={role === 'o' ? '손님에게 메시지' : '사장님에게 메시지'} maxLength={500} />
+        <input id="talk-inp" className="inp grow" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && !e.nativeEvent.isComposing && send()} placeholder={role === 'o' ? '손님에게 메시지' : '사장님에게 메시지'} maxLength={500} />
         <button className="cbtn send" onClick={send} aria-label="보내기" disabled={!text.trim()}><Icon n="right" /></button>
       </div>
       {order.chan && live !== 'on' && <div className="xs muted" style={{ marginTop: 4 }}>{live === 'offline' ? '인터넷이 끊겼어요. 연결되면 자동으로 보내요.' : '상대 폰과 연결하는 중…'}</div>}
@@ -161,19 +161,21 @@ function ReviseSheet({ open, onClose, order, store }) {
   const lim = sizeOf(cur.size).limit;
   const submit = () => {
     if (!summary && !msg.trim()) { toast('바꿀 내용을 고르거나 적어 주세요'); return; }
-    act(order.id, 'c', 'revise', { patch: p, est, summary, msg: msg.trim() });
+    const patch = p.text != null && p.text !== x.text ? { ...p, textOk: p.textOk ?? null } : p;
+    act(order.id, 'c', 'revise', { patch, est, summary, changes: changeList(x, p), msg: msg.trim() });
     // 가게 규칙 안이고 가격표로 정확히 계산되면 다시 자동 확정
     if (store && canOrderInApp(store) && store.ops?.autoConfirm && est.exact && !msg.trim() && verdictOf(ruleCheck(store, cur, { orders: st.orders.filter((o) => o.id !== order.id) })).ok) act(order.id, 's', 'auto', { price: est.lo });
     onClose();
     toast('수정 요청을 보냈어요');
   };
   return (
-    <Sheet open={open} onClose={onClose} title="주문 내용 고치기" footer={<button className="btn pri block" onClick={submit}>{summary ? `수정 요청 보내기 · ${range(est.lo, est.hi, true)}` : '수정 요청 보내기'}</button>}>
+    <Sheet open={open} onClose={onClose} title="주문 내용 고치기" footer={<button className="btn pri block" onClick={submit}>{summary ? `수정 요청 보내기 · 예상 ${range(est.lo, est.hi, true)}` : '수정 요청 보내기'}</button>}>
       <div style={{ height: 170, borderRadius: 14, overflow: 'hidden', background: 'var(--p50)' }}><CakeView o={{ ...orderView(order), ...p, text: cur.noText ? '' : cur.text }} /></div>
       {summary && <div className="note pink" style={{ marginTop: 8 }}>바뀌는 점: <b>{summary}</b></div>}
       <div className="lbl">문구</div>
       <div className="inp-w"><input className="inp" style={{ paddingRight: 64 }} maxLength={40} value={cur.text || ''} onChange={(e) => setP({ ...p, text: e.target.value, noText: false })} /><span className={`cnt ${textLen(cur.text) > lim ? 'over' : ''}`}>{textLen(cur.text)}/{lim}</span></div>
-      {cur.text && <div className="spell">한 글자씩 확인: <b>{[...cur.text].map((c) => (c === ' ' ? '␣' : c)).join(' ')}</b></div>}
+{cur.text && <div className="spell">한 글자씩 확인: <b>{[...cur.text].map((c) => (c === ' ' ? '␣' : c)).join(' ')}</b>
+        {p.text != null && p.text !== x.text && <button className={`spellok ${p.textOk ? 'on' : ''}`} onClick={() => setP({ ...p, textOk: p.textOk ? null : new Date().toISOString() })}>{p.textOk ? <><Icon n="check" size="sm" />새 문구 확인 완료</> : '한 글자씩 맞는지 확인했어요'}</button>}</div>}
       <div className="lbl">글씨 색 · 글씨체</div>
       <div className="swatches">{TEXT_COLORS.map((c) => <button key={c.id} className={`sw ${cur.textColor === c.id ? 'on' : ''}`} style={{ width: 50 }} onClick={() => setP({ ...p, textColor: c.id })}><i style={{ background: c.hex, width: 30, height: 30 }} />{c.name}</button>)}</div>
       <div className="chips" style={{ marginTop: 8 }}>{FONTS.map((f) => <button key={f.id} className={`chip sm soft ${cur.font === f.id ? 'on' : ''}`} style={{ fontFamily: f.css }} onClick={() => setP({ ...p, font: f.id })}>{f.name}</button>)}</div>
@@ -213,8 +215,8 @@ export function PayScreen({ params }) {
   const st = useApp();
   const order = st.orders.find((x) => x.id === params.id);
   const store = order ? getStores(st).find((s) => s.id === order.storeId) : null;
-  const dep = store?.ops?.deposit || 0;
-  const [how, setHow] = useState(dep ? 'dep' : 'all');
+  const dep = order ? depositOf(store, order.o?.date) : 0;
+  const [how, setHow] = useState(dep && dep < 100 ? 'dep' : 'all');
   const [m, setM] = useState('kakao');
   const [agree, setAgree] = useState(false);
   const [done, setDone] = useState(null);
@@ -276,8 +278,8 @@ export function PayScreen({ params }) {
         </div>
         <div className="flbl">얼마나 결제할까요?</div>
         <div className="g2">
-          {dep > 0 && <button className={`payopt ${how === 'dep' ? 'on' : ''}`} onClick={() => setHow('dep')}><small>예약금 {dep}%</small><b>{won(depAmt)}</b><span>잔금 {won(total - depAmt)}은 픽업 때</span></button>}
-          <button className={`payopt ${how === 'all' || !dep ? 'on' : ''}`} onClick={() => setHow('all')}><small>전액 결제</small><b>{won(total)}</b><span>픽업 때 바로 받아가요</span></button>
+          {dep > 0 && dep < 100 && <button className={`payopt ${how === 'dep' ? 'on' : ''}`} onClick={() => setHow('dep')}><small>예약금 {dep}%</small><b>{won(depAmt)}</b><span>잔금 {won(total - depAmt)}은 픽업 때</span></button>}
+          <button className={`payopt ${how === 'all' || !dep || dep >= 100 ? 'on' : ''}`} onClick={() => setHow('all')}><small>{dep >= 100 ? '성수기 · 전액 결제' : '전액 결제'}</small><b>{won(total)}</b><span>픽업 때 바로 받아가요</span></button>
         </div>
         <div className="flbl">결제 수단</div>
         <div className="g2">{PAY_METHODS.map(([id, nm, ic]) => <button key={id} className={`payopt row ${m === id ? 'on' : ''}`} onClick={() => setM(id)}><i className={`pm ${id}`}>{ic}</i><b>{nm}</b></button>)}</div>
@@ -300,7 +302,7 @@ function PayPrompt({ order }) {
 }
 // ───────── 손님 화면 ─────────
 const C_QUICK = ['당일 픽업 되나요?', '사진 보낼게요', '문구 바꿀 수 있어요?'];
-export function CustomerOrder({ params }) {
+export function CustomerOrder({ params, path }) {
   const st = useApp();
   const order = st.orders.find((x) => x.id === params.id);
   const [open, setOpen] = useState(false);
@@ -311,12 +313,17 @@ export function CustomerOrder({ params }) {
   const sc = useRef(null);
   const n = order?.ev?.length || 0;
   useEffect(() => { if (order) { markSeen(order.id, 'c'); readLink('c', `/c/order/${order.id}`); } sc.current?.scrollTo({ top: 1e6, behavior: 'smooth' }); }, [n]); // eslint-disable-line react-hooks/exhaustive-deps
+  // 톡방으로 바로 (주문·대화 목록의 '사장님과 톡방' · 확정 카드)
+  const goTalk = () => { sc.current?.scrollTo({ top: 1e6, behavior: 'smooth' }); setTimeout(() => document.getElementById('talk-inp')?.focus(), 350); };
+  useEffect(() => { if (queryOf(path || '').get('chat')) { const t = setTimeout(goTalk, 450); return () => clearTimeout(t); } return undefined; }, []); // eslint-disable-line react-hooks/exhaustive-deps
   if (!order) return <div className="screen"><Header title="주문" fallback="/c/orders" /><Empty>주문을 찾을 수 없어요.</Empty></div>;
   const store = getStores(st).find((s) => s.id === order.storeId);
   const s = order.status;
   const lastChange = [...order.ev].reverse().find((e) => e.t === 'change');
-  const dep = store?.ops?.deposit && order.finalPrice != null ? Math.round((order.finalPrice * store.ops.deposit) / 100 / 100) * 100 : 0;
-  const canRevise = ['requested', 'change', 'confirmed', 'proof'].includes(s);
+  const depPct = depositOf(store, order.o.date);
+  const dep = depPct && order.finalPrice != null ? Math.round((order.finalPrice * depPct) / 100 / 100) * 100 : 0;
+  const peak = isPeak(store, order.o.date);
+  const canRevise = ['requested', 'change', 'confirmed', 'proof'].includes(s) && !peak;
   return (
     <div className="screen">
       <Header title={order.storeName} fallback="/c/orders" right={<span style={{ marginRight: 10 }}><StatusTag status={s} paid={order.paid} /></span>} />
@@ -335,7 +342,8 @@ export function CustomerOrder({ params }) {
           <div className="card pad todo">
             <div className="b">사장님이 수정 제안을 보냈어요</div>
             <div className="small" style={{ margin: '4px 0 8px' }}>{lastChange?.msg}</div>
-            {order.proposedPrice != null && <div className="kv"><span>제안 금액</span><b className="pink">{won(order.proposedPrice)}</b></div>}
+            {lastChange?.changes?.length > 0 && <div className="note pink" style={{ marginBottom: 8 }}>바뀌는 점: <b>{lastChange.changes.map((c) => `${c.k} ${c.from} → ${c.to}`).join(', ')}</b></div>}
+            {order.proposedPrice != null && <div className="kv"><span>사장님이 정한 최종 금액</span><b className="pink">{won(order.proposedPrice)}</b></div>}
             <div className="btns" style={{ marginTop: 10 }}><button className="btn line sm" onClick={() => setRevise(true)}>다르게 요청</button><button className="btn pri sm" style={{ flex: 2 }} onClick={() => { act(order.id, 'c', 'accept'); toast('제안을 수락했어요. 주문이 확정됐어요!'); }}>이대로 확정하기</button></div>
           </div>
         )}
@@ -348,7 +356,15 @@ export function CustomerOrder({ params }) {
         )}
         {s === 'requested' && <div className="note" style={{ marginTop: 10 }}>사장님이 확인하고 있어요. 확정되면 알림으로 알려 드려요.</div>}
         {needsPay(order, store) && <PayPrompt order={order} />}
-        {['confirmed', 'making', 'ready'].includes(s) && dep > 0 && !order.paid && !canOrderInApp(store) && <div className="note pink" style={{ marginTop: 10 }}>예약금 {store.ops.deposit}% <b>{won(dep)}</b>{store.ops.account ? <> → <b>{store.ops.account}</b></> : ''} 입금하면 제작을 시작해요. 사장님이 확인하면 알려 드려요.</div>}
+        {['confirmed', 'proof', 'making', 'ready'].includes(s) && (
+          <button className="talkgo" onClick={goTalk}>
+            <span className="ic"><Icon n="chat" /></span>
+            <span className="grow"><b>주문이 확정됐어요! 사장님과 톡방</b><small>시안 · 픽업 이야기는 여기서 바로 해요</small></span>
+            <span className="go">톡방으로 →</span>
+          </button>
+        )}
+        {peak && ['requested', 'change', 'confirmed', 'proof'].includes(s) && <div className="note pink" style={{ marginTop: 10 }}>성수기 날짜 주문이라 <b>주문 변경이 어려워요</b>. 꼭 필요하면 사장님께 메시지로 물어봐 주세요.</div>}
+        {['confirmed', 'making', 'ready'].includes(s) && dep > 0 && !order.paid && !canOrderInApp(store) && <div className="note pink" style={{ marginTop: 10 }}>예약금 {depPct}% <b>{won(dep)}</b>{store.ops.account ? <> → <b>{store.ops.account}</b></> : ''} 입금하면 제작을 시작해요. 사장님이 확인하면 알려 드려요.</div>}
         {s === 'ready' && <div className="note ok" style={{ marginTop: 10 }}>케이크가 준비됐어요! {fmtDate(order.o.date)} {order.o.time}에 픽업해 주세요.</div>}
         <Thread order={order} role="c" />
         {s === 'done' && !order.review && (
@@ -378,16 +394,100 @@ export function CustomerOrder({ params }) {
 }
 
 // ───────── 사장님 화면 ─────────
+// 가격 산정 도우미: 이 가게의 비슷한 지난 주문(같은 사이즈·같은 디자인) 3건 + 누르면 더하고 빼는 추가금 칩
+const addsOf = (o) => [...decoList(o), o.plateText ? '판 문구' : null].filter(Boolean);
+function PriceHelper({ order, orders, shop, price, setPrice }) {
+  const x = order.o;
+  const [on, setOn] = useState([]);
+  const past = orders.filter((p) => p.id !== order.id && p.storeId === order.storeId && p.finalPrice != null && p.o && !['declined', 'canceled'].includes(p.status));
+  const sameKind = (p) => (x.pickId && p.o.pickId === x.pickId) || p.o.design === x.design;
+  let sim = past.filter((p) => p.o.size === x.size && sameKind(p));
+  let label = '같은 사이즈 · 같은 디자인';
+  if (sim.length < 3) { const more = past.filter((p) => p.o.size === x.size && !sim.includes(p)); if (more.length) { sim = [...sim, ...more]; label = '같은 사이즈'; } }
+  sim = sim.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')).slice(0, 3);
+  const m = shop?.menu || {};
+  const ADD = [['디자인비', m.designs?.[x.design] || 5000], ['판 문구', m.extras?.plate ?? 1000], ['생과일', m.toppings?.strawberry ?? 5000], ['생화', m.toppings?.freshflower ?? 10000], ['토퍼', m.extras?.topper ?? 4000], ['긴 문구', m.longText ?? 2000], ['그림 난이도', 5000], ['보냉백', m.extras?.icebag ?? 3000]].filter(([, v]) => v > 0);
+  const toggle = (k, v) => { if (on.includes(k)) { setOn(on.filter((i) => i !== k)); setPrice(Math.max(0, (price || 0) - v)); } else { setOn([...on, k]); setPrice((price || 0) + v); } };
+  return (
+    <div className="phelp">
+      <div className="ph-t"><Icon n="wand" size="sm" />가격 산정 도우미</div>
+      {sim.length ? (
+        <div className="ph-sim">
+          <small>{label} 지난 주문 · 누르면 그 금액으로</small>
+          {sim.map((p) => (
+            <button key={p.id} className="ph-row" onClick={() => setPrice(p.finalPrice)}>
+              <span className="grow"><b>{fmtDate(p.o.date)} · {sizeOf(p.o.size).name} {p.o.pickName || designOf(p.o.design).name}</b><em>{addsOf(p.o).join(' · ') || '추가 없음'}</em></span>
+              <strong>{won(p.finalPrice)}</strong>
+            </button>
+          ))}
+        </div>
+      ) : <div className="xs muted">아직 비슷한 지난 주문이 없어요. 주문이 쌓이면 여기에 보여요.</div>}
+      <small className="ph-l">추가금 (눌러서 더하기 · 빼기)</small>
+      <div className="chips wrap">{ADD.map(([k, v]) => <button key={k} className={`chip sm ${on.includes(k) ? 'on' : ''}`} onClick={() => toggle(k, v)}>{on.includes(k) ? '−' : '+'} {k} {won(v)}</button>)}</div>
+    </div>
+  );
+}
+// 사장님 '수정': 금액·문구·판 문구·픽업·크기를 고쳐서 손님에게 제안 → 손님이 받으면 그대로 확정
+function OwnerChangeSheet({ open, onClose, order, shop, price0 }) {
+  const x = order.o;
+  const [p, setP] = useState({});
+  const [price, setPrice] = useState(price0);
+  const [msg, setMsg] = useState('');
+  useEffect(() => { if (open) { setP({}); setPrice(price0); setMsg(''); } }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  const cur = { ...x, ...p };
+  const changes = changeList(x, p);
+  const sizes = SIZES.filter((z) => shop?.menu?.sizes?.[z.id] != null);
+  const send = () => {
+    act(order.id, 'o', 'change', { price, patch: p, changes, msg: msg.trim() || '이렇게 바꾸면 만들 수 있어요. 괜찮으시면 확정해 주세요!' });
+    onClose();
+    toast('손님에게 수정 제안을 보냈어요. 손님이 받으면 바로 확정돼요');
+  };
+  return (
+    <Sheet open={open} onClose={onClose} title="주문 수정해서 보내기" footer={<button className="btn ok block" onClick={send}>손님에게 수정 제안 보내기 · {won(price || 0)}</button>}>
+      <div className="small muted">바꿀 곳만 고치면 손님에게 ‘바뀌는 점’이 그대로 가요. 손님이 받으면 주문이 확정돼요.</div>
+      <div className="lbl">최종 금액</div>
+      <div className="pricerow" style={{ border: 0, padding: 0 }}><PriceInput value={price} onChange={(v) => setPrice(v ?? 0)} /></div>
+      <div className="lbl">문구</div>
+      <input className="inp" value={cur.noText ? '' : cur.text || ''} onChange={(e) => setP({ ...p, text: e.target.value, noText: !e.target.value })} placeholder="문구 없음" maxLength={40} />
+      <div className="lbl">판 문구</div>
+      <input className="inp" value={cur.plateText || ''} onChange={(e) => setP({ ...p, plateText: e.target.value })} placeholder="없음" maxLength={24} />
+      <div className="lbl">픽업 날짜 · 시간</div>
+      <div className="row"><input type="date" className="inp grow" value={cur.date || ''} onChange={(e) => setP({ ...p, date: e.target.value })} /><input type="time" className="inp" style={{ width: 130 }} value={cur.time || ''} onChange={(e) => setP({ ...p, time: e.target.value })} /></div>
+      {sizes.length > 0 && <><div className="lbl">크기</div><div className="chips wrap">{sizes.map((z) => <button key={z.id} className={`chip sm ${cur.size === z.id ? 'on' : ''}`} onClick={() => setP({ ...p, size: z.id })}>{z.name}</button>)}</div></>}
+      <div className="lbl">손님께 한마디</div>
+      <textarea className="inp" value={msg} onChange={(e) => setMsg(e.target.value)} maxLength={200} placeholder="예) 캐릭터는 저작권 때문에 비슷한 느낌으로 그려 드려요" />
+      {changes.length > 0 && <div className="note pink" style={{ marginTop: 8 }}>바뀌는 점: <b>{changes.map((c) => `${c.k} ${c.from} → ${c.to}`).join(', ')}</b></div>}
+    </Sheet>
+  );
+}
+// 주문서 크게 보기: 모든 칸 + 문구 한 글자씩 + 금액 내역 · 글씨 크게/작게
+function PaperZoom({ order, onClose }) {
+  const [z, setZ] = useState(1.2);
+  return (
+    <div className="pzoom fadeup" role="dialog" aria-label="주문서 크게 보기">
+      <div className="pzbar">
+        <b className="grow">주문서 크게 보기</b>
+        <button onClick={() => setZ(Math.max(1, +(z - 0.15).toFixed(2)))} aria-label="작게">가−</button>
+        <button onClick={() => setZ(Math.min(1.8, +(z + 0.15).toFixed(2)))} aria-label="크게">가+</button>
+        <button className="x" onClick={onClose} aria-label="닫기"><Icon n="close" /></button>
+      </div>
+      <div className="pzbody"><div style={{ zoom: z }}><OrderPaper order={order} zoom /></div></div>
+    </div>
+  );
+}
 const TEMPLATES = ['주문 잘 받았어요! 미리보기 그대로 만들어 드릴게요 :)', '문구 위치는 가운데로 해 드릴게요.', '캐릭터는 저작권 때문에 비슷한 느낌으로 그려 드려요.', '그날은 주문이 많아 다른 시간은 어떠세요?', '요청하신 장식 때문에 금액이 조금 추가돼요.'];
 // 새 요청일 때 빠른 답장 (수정은 버튼 대신 채팅으로)
 const REQ_QUICK = ['주문서 확인했어요! 곧 확정해 드릴게요', '문구 위치는 가운데로 해 드릴게요', '그날은 어려워서 다른 시간은 어떠세요?'];
-export function OwnerOrderDetail({ params }) {
+export function OwnerOrderDetail({ params, path }) {
   const st = useApp();
   const o = st.orders.find((x) => x.id === params.id);
   const [open, setOpen] = useState(false);
   const [price, setPrice] = useState(null);
   const [msg, setMsg] = useState('');
   const [stepSel, setStepSel] = useState(null); // 눌러서 다시 보는 단계 (0~4)
+  const [zoom, setZoom] = useState(false); // 주문서 크게 보기
+  const [chg, setChg] = useState(false); // 수정해서 보내기
+  useEffect(() => { if (queryOf(path || '').get('edit')) setChg(true); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const sc = useRef(null);
   const n = o?.ev?.length || 0;
   // 새 요청이면 종이 주문서가 먼저 보이게 맨 위, 그 뒤로는 대화 맨 아래로
@@ -401,7 +501,8 @@ export function OwnerOrderDetail({ params }) {
   const s = o.status;
   const lastRevise = [...o.ev].reverse().find((e) => e.t === 'revise');
   const lastFix = [...o.ev].reverse().find((e) => e.t === 'prooffix');
-  const dep = st.shop?.ops?.deposit && o.finalPrice != null ? Math.round((o.finalPrice * st.shop.ops.deposit) / 100 / 100) * 100 : 0;
+  const depPct = st.shop ? depositOf(store, x.date) : 0;
+  const dep = depPct && o.finalPrice != null ? Math.round((o.finalPrice * depPct) / 100 / 100) * 100 : 0;
   const sendProof = async (file) => {
     try {
       let key = null;
@@ -410,35 +511,40 @@ export function OwnerOrderDetail({ params }) {
       setMsg(''); toast('시안을 보냈어요. 손님이 확정하면 알려 드려요');
     } catch { toast('사진을 읽지 못했어요'); }
   };
-  const confirmText = () => [`[${st.shop?.name || o.storeName}] ${o.customer?.name || ''}님, 케이크 주문이 확정됐어요!`, `· 픽업: ${fmtDate(x.date)} ${x.time}`, `· 케이크: ${sizeOf(x.size).name} ${designOf(x.design).name} / “${x.noText ? '문구 없음' : x.text}”`, `· 확정 금액: ${won(o.finalPrice)}`, dep && !o.paid ? `· 예약금 ${st.shop.ops.deposit}%: ${won(dep)}${st.shop.ops.account ? ` → ${st.shop.ops.account}` : ''} (입금 후 제작 시작)` : null, o.paid ? '· 예약금 입금 확인 완료' : null, st.shop?.addr ? `· 주소: ${st.shop.addr}` : null].filter(Boolean).join('\n');
+  const confirmText = () => [`[${st.shop?.name || o.storeName}] ${o.customer?.name || ''}님, 케이크 주문이 확정됐어요!`, `· 픽업: ${fmtDate(x.date)} ${x.time}`, `· 케이크: ${sizeOf(x.size).name} ${designOf(x.design).name} / “${x.noText ? '문구 없음' : x.text}”`, `· 확정 금액: ${won(o.finalPrice)}`, dep && !o.paid ? `· 예약금 ${depPct}%: ${won(dep)}${st.shop.ops.account ? ` → ${st.shop.ops.account}` : ''} (입금 후 제작 시작)` : null, o.paid ? '· 예약금 입금 확인 완료' : null, st.shop?.addr ? `· 주소: ${st.shop.addr}` : null].filter(Boolean).join('\n');
   return (
     <div className="screen">
       <Header title={`${maskName(o.customer?.name)}님 주문`} fallback="/o/orders" right={<span style={{ marginRight: 10 }}><StatusTag status={s} owner /></span>} />
       <div className="scroll pad room" ref={sc}>
-        {s === 'requested' ? (<>
-          {/* 첫 단계: 손님 주문서를 종이 한 장처럼 · 고칠 게 있으면 아래 채팅으로 바로 */}
+        {/* 위: 5단계(눌러서 지난 단계 보기) · 가운데: 종이 주문서를 크게 (크게 보기 버튼) */}
+        <div className="card ownsteps"><Steps status={s} onPick={setStepSel} sel={stepSel} /></div>
+        {stepSel != null && <StepDetail order={o} i={stepSel} onClose={() => setStepSel(null)} />}
+        <div className="paperwrap">
           <OrderPaper order={o} />
+          <button className="zoombtn" onClick={() => setZoom(true)}><Icon n="search" size="sm" />주문서 크게 보기</button>
+        </div>
+        {s === 'requested' && (
           <div className="card pad todo newreq">
             {lastRevise?.summary && <div className="note pink" style={{ marginBottom: 8 }}>손님이 주문을 고쳤어요 · <b>{lastRevise.summary}</b></div>}
             {!v.ok && <ul className="rules" style={{ marginBottom: 8 }}>{checks.filter((c) => !c.ok).map((c, i) => <li key={i} className="w"><i>!</i><span>{c.t}</span></li>)}</ul>}
-            <div className="row"><span className="grow b">받을 금액</span><div className="pricerow" style={{ border: 0, padding: 0 }}><PriceInput value={price} onChange={(vv) => setPrice(vv ?? 0)} /></div></div>
+            {isPeak(store, x.date) && <div className="note pink" style={{ marginBottom: 8 }}>성수기 날짜 주문이에요 · 예약금 100% · 손님은 주문을 바꿀 수 없어요</div>}
+            <div className="row"><span className="grow"><b>최종 금액</b><div className="xs muted">손님에게는 예상가 {range(o.est?.lo, o.est?.hi, true)}로 보였어요</div></span><div className="pricerow" style={{ border: 0, padding: 0 }}><PriceInput value={price} onChange={(vv) => setPrice(vv ?? 0)} /></div></div>
+            <PriceHelper order={o} orders={st.orders} shop={st.shop} price={price} setPrice={setPrice} />
             <div className="btns" style={{ marginTop: 10 }}>
               <button className="btn ghost" onClick={() => { if (confirm('이 주문을 거절할까요?')) { act(o.id, 'o', 'decline'); toast('주문을 거절했어요'); } }}>거절</button>
-              <button className="btn ok" style={{ flex: 2.2 }} onClick={() => { act(o.id, 'o', 'approve', { price }); toast(`주문을 받았어요 · 손님에게 '주문되었습니다'를 보냈어요`); }}>주문 받기 · {won(price)}</button>
+              <button className="btn line" onClick={() => setChg(true)}><Icon n="edit" size="sm" />수정</button>
+              <button className="btn ok" style={{ flex: 2.2 }} onClick={() => { act(o.id, 'o', 'approve', { price }); toast(`주문을 받았어요 · 손님에게 '주문되었습니다'를 보냈어요`); }}>주문 받기 · {man(price || 0)}</button>
             </div>
             <div className="xs muted" style={{ marginTop: 8 }}>고칠 게 있으면 아래 채팅으로 손님께 바로 말해 주세요. 예) “문구는 가운데로 할게요”</div>
           </div>
-        </>) : (<>
-          <Summary order={o} role="o" open={open} setOpen={setOpen} stepSel={stepSel} onStep={setStepSel} />
-          {stepSel != null && <StepDetail order={o} i={stepSel} onClose={() => setStepSel(null)} />}
-        </>)}
+        )}
         {s === 'change' && <div className="note warn" style={{ marginTop: 10 }}>손님에게 수정 제안({won(o.proposedPrice)})을 보냈어요. 손님이 수락하면 확정돼요.</div>}
         {s === 'confirmed' && (
           <div className="card pad todo">
             <div className="row"><span className="grow b">{o.needProof ? '손님이 시안 수정을 요청했어요' : '확정된 주문이에요'}</span>{dep > 0 && <button className={`deptog ${o.paid ? 'on' : ''}`} onClick={() => { act(o.id, 'o', 'paid', { paid: !o.paid }); toast(o.paid ? '입금 확인을 취소했어요' : '입금 확인! 손님에게 알렸어요'); }}>{o.paid ? '입금 확인 ✓' : '입금 대기'}</button>}</div>
             {o.needProof && lastFix && <div className="note pink" style={{ marginTop: 6 }}>{evText(lastFix, o)}</div>}
             <div className="row" style={{ marginTop: 8 }}><span className="grow small muted">확정 금액</span><b className="pink" style={{ fontSize: 18 }}>{won(o.finalPrice)}</b></div>
-            {dep > 0 && <div className="small" style={{ marginTop: 6, fontWeight: 600 }}>예약금 {st.shop.ops.deposit}% · <b>{won(dep)}</b></div>}
+            {dep > 0 && <div className="small" style={{ marginTop: 6, fontWeight: 600 }}>예약금 {depPct}%{isPeak(store, x.date) ? ' (성수기)' : ''} · <b>{won(dep)}</b></div>}
             <input className="inp" style={{ marginTop: 8 }} value={msg} onChange={(e) => setMsg(e.target.value)} placeholder="시안과 함께 보낼 말 (선택)" maxLength={200} />
             <div className="btns" style={{ marginTop: 8 }}>
               <PhotoPick className="btn line sm" onPick={sendProof}><Icon n="image" size="sm" />시안 사진 보내기</PhotoPick>
@@ -459,11 +565,14 @@ export function OwnerOrderDetail({ params }) {
         {['done', 'ready', 'making'].includes(s) && st.shop && (st.shop.portfolio.some((p) => p.fromOrder === o.id)
           ? <div className="note ok" style={{ marginTop: 12 }}>이 케이크는 가게 작품에 들어가 있어요</div>
           : <button className="btn sec block sm" style={{ marginTop: 12 }} onClick={() => { const { date, time, request, allergy, ...d } = x; patchShop((sh) => ({ portfolio: [{ id: 'p' + Date.now(), fromOrder: o.id, design: d, caption: `${sizeOf(x.size).name} ${designOf(x.design).name}`, src: (o.proofImg && o.imgs?.[o.proofImg]) || undefined }, ...sh.portfolio].slice(0, 12) })); toast('가게 작품에 추가했어요'); }}><Icon n="image" size="sm" /> 이 케이크를 가게 작품에 추가</button>)}
+        {['confirmed', 'proof', 'making', 'ready'].includes(s) && <button className="btn line block sm" style={{ marginTop: 12 }} onClick={async () => { const ok = await copyText(pickupNotice(o, st.shop)); toast(ok ? '픽업 전 안내를 복사했어요. 손님 카톡에 붙여 넣어 주세요' : '복사하지 못했어요'); }}><Icon n="copy" size="sm" />픽업 전 안내 복사 (시간 · 위치 · 보관법 · 초)</button>}
         <Thread order={o} role="o" />
         {o.customer?.phone && !o.sample && <div className="row" style={{ marginTop: 12 }}><a className="btn xs line" href={`tel:${o.customer.phone}`}><Icon n="phone" size="sm" />전화</a><a className="btn xs line" href={`sms:${o.customer.phone}`}><Icon n="chat" size="sm" />문자</a></div>}
         <div style={{ height: 12 }} />
       </div>
       {!['declined', 'canceled'].includes(s) && <Composer order={o} role="o" quick={s === 'requested' ? REQ_QUICK : TEMPLATES.slice(0, 3)} />}
+      {zoom && <PaperZoom order={o} onClose={() => setZoom(false)} />}
+      <OwnerChangeSheet open={chg} onClose={() => setChg(false)} order={o} shop={st.shop} price0={price ?? o.est?.lo ?? 0} />
     </div>
   );
 }

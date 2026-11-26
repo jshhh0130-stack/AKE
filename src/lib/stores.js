@@ -17,7 +17,7 @@ export function shopToStore(shop, kind = 'partner') {
 }
 export const SEED_STORES = seed.stores.map((s) => ({ ...s, kind: 'public' }));
 
-// ── 팀이 고른 77곳(data/picks.js)과 직접 조사한 가게 짝 맞추기 ──
+// ── 팀이 고른 가게(data/picks.js)와 직접 조사한 가게 짝 맞추기 ──
 // 같은 구 안에서만 짝을 맞춘다 (구가 다르면 다른 지점이라 조사 정보가 맞지 않음. 예: 제이델링 장안 ≠ 영통 수원점)
 const sq = (x) => String(x || '').toLowerCase().replace(/\(.*?\)|[\s·.,'’\-_&]/g, '');
 const core = (x) => sq(x).replace(/케이크|케익|cake|수원점|본점|인계점|\d*호점/g, '');
@@ -37,7 +37,7 @@ export const PICK_SEED = (() => {
   });
 })();
 const PICKED = new Set(PICK_SEED.filter(Boolean));
-// 77곳에 없는 조사 가게는 지도·목록에서 숨긴다 (주문 링크·찜으로 열면 그대로 보임)
+// 고른 목록에 없는 조사 가게는 지도·목록에서 숨긴다 (주문 링크·찜으로 열면 그대로 보임)
 const SEED = SEED_STORES.map((s) => (PICKED.has(s.id) ? s : { ...s, hidden: true }));
 export const SEED_UPDATED = seed.updated;
 
@@ -93,13 +93,18 @@ export function dayStatus(s, dateStr, orders = []) {
     const now = new Date(); const [h, m] = s.ops.cutoff.split(':').map(Number);
     if (now.getHours() * 60 + now.getMinutes() > h * 60 + m) return { ok: false, reason: `오늘 주문은 ${s.ops.cutoff}까지예요`, code: 'cutoff' };
   }
-  if (s.ops?.dailyMax) {
+  const peak = isPeak(s, dateStr);
+  const max = peak ? s.ops.peakMax || s.ops.dailyMax : s.ops?.dailyMax;
+  if (max) {
     const n = orders.filter((o) => o.storeId === s.id && o.o?.date === dateStr && !['declined', 'canceled'].includes(o.status)).length;
-    if (n >= s.ops.dailyMax) return { ok: false, reason: '이 날은 주문이 꽉 찼어요', code: 'full' };
-    return { ok: true, left: s.ops.dailyMax - n, code: 'ok' };
+    if (n >= max) return { ok: false, reason: '이 날은 주문이 꽉 찼어요', code: 'full', peak };
+    return { ok: true, left: max - n, code: 'ok', peak };
   }
-  return { ok: true, code: 'ok' };
+  return { ok: true, code: 'ok', peak };
 }
+// 성수기 날짜 (사장님 설정): 예약금 100% · 주문 변경 불가 · 하루 최대 주문 수 따로
+export const isPeak = (s, dateStr) => !!dateStr && !!s?.ops?.peakDates?.includes(dateStr);
+export const depositOf = (s, dateStr) => (isPeak(s, dateStr) ? 100 : s?.ops?.deposit || 0);
 export function nextOpenDay(s, orders = []) {
   for (let i = 0; i < 21; i++) {
     const d = new Date(today()); d.setDate(d.getDate() + i);

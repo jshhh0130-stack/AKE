@@ -7,7 +7,8 @@ import { FONTS, fontOf } from '../data/catalog.js';
 import { shade } from '../lib/util.js';
 
 const COLORS = ['#C2185B', '#E53935', '#F4A2A8', '#FFFFFF', '#3D2A2A', '#5B3726', '#FBE7A6', '#C6EBD9', '#CBDFF6', '#DECFF4', '#2F4B7C', '#B8892B'];
-const WIDTHS = { s: 0.012, m: 0.022, l: 0.04 }; // 사진 너비 대비 굵기
+// 펜 굵기 1~10 단계 (사진 너비 대비) — 슬라이더로 조절
+const widthOf = (n) => 0.006 + n * 0.0035;
 const TOOLS = [['pen', '펜', 'pen'], ['cream', '크림', 'piping'], ['eraser', '지우개', 'eraser'], ['text', '글자', 'text']];
 const fontCss = (id) => fontOf(id).css;
 const weightOf = (id) => (id === 'gaegu' || id === 'script' ? '700 ' : '');
@@ -59,7 +60,7 @@ export default function Sketch({ src, title = '그림판', texts: initTexts = []
   const [view, setView] = useState({ w: 0, h: 0 });
   const [tool, setTool] = useState('pen');
   const [color, setColor] = useState('#C2185B');
-  const [wid, setWid] = useState('m');
+  const [wid, setWid] = useState(4);
   const [strokes, setStrokes] = useState([]);
   const [texts, setTexts] = useState([]);
   const [hist, setHist] = useState([]);
@@ -132,7 +133,7 @@ export default function Sketch({ src, title = '그림판', texts: initTexts = []
       return;
     }
     setSel(null);
-    cur.current = { tool, color, w: WIDTHS[wid], pts: [p] };
+    cur.current = { tool, color, w: widthOf(wid), pts: [p] };
   };
   const move = (e) => {
     const p = pos(e);
@@ -201,8 +202,11 @@ export default function Sketch({ src, title = '그림판', texts: initTexts = []
         ) : (
           <div className="sk-opts">
             {tool !== 'eraser' && COLORS.map((c) => <button key={c} className={`sk-col ${color === c ? 'on' : ''}`} style={{ background: c }} onClick={() => setColor(c)} aria-label="색" />)}
-            <span className="sk-sep" />
-            {Object.keys(WIDTHS).map((k) => <button key={k} className={`sk-w ${wid === k ? 'on' : ''}`} onClick={() => setWid(k)} aria-label="굵기"><i style={{ width: 4 + Object.keys(WIDTHS).indexOf(k) * 5, height: 4 + Object.keys(WIDTHS).indexOf(k) * 5 }} /></button>)}
+            <div className="sk-wid">
+              <span>굵기</span>
+              <input type="range" min="1" max="10" step="1" value={wid} onChange={(e) => setWid(+e.target.value)} aria-label="펜 굵기" />
+              <i style={{ width: 4 + wid * 2.4, height: 4 + wid * 2.4, background: tool === 'eraser' ? '#fff' : color }} />
+            </div>
           </div>
         )}
         <div className="sk-tools">

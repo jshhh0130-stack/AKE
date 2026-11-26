@@ -23,3 +23,19 @@ export function orderText(order, link) {
     link ? `· 시안 보기: ${link}` : null,
   ].filter(Boolean).join('\n');
 }
+
+// 픽업 전 안내 (사장님이 복사해서 카톡으로 보낸다 — 자동 발송은 하지 않는다)
+export const candleText = (o) => o.candles || (o.extras?.includes('numcandle') ? '숫자 초' : o.extras?.includes('candle') ? '기본 초' : '없음');
+export function pickupNotice(order, shop) {
+  const o = order.o;
+  return [
+    `[${shop?.name || order.storeName}] ${order.customer?.name ? `${order.customer.name}님, ` : ''}케이크 픽업 안내예요 🎂`,
+    `· 픽업: ${fmtDate(o.date)} ${o.time || ''}`,
+    shop?.addr ? `· 장소: ${shop.addr}` : null,
+    `· 케이크: ${sizeOf(o.size).name} ${flavorName(o)}${o.noText ? '' : ` / “${o.text}”`}`,
+    `· 초: ${candleText(o)}`,
+    '· 보관: 받으시면 바로 냉장 보관해 주세요. 드시기 20~30분 전에 꺼내 두면 더 맛있어요.',
+    '· 30분 넘게 이동하시면 보냉백을 챙겨 주세요.',
+    '늦으시면 미리 연락 부탁드려요!',
+  ].filter(Boolean).join('\n');
+}

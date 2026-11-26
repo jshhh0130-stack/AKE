@@ -1,6 +1,6 @@
 // 카카오 지도·장소 연결
 // - 키: 설정에 넣은 카카오 JavaScript 키, 없으면 빌드할 때 kakaomap_key.txt 에서 읽은 기본 키 (vite.config.js)
-// - 팀이 고른 수원 가게 77곳(data/picks.js)을 카카오 장소 검색으로 하나씩 찾아 카카오맵 정보(정확한 위치·주소·전화·분류·카카오맵 링크)를 받는다.
+// - 팀이 고른 수원 가게(data/picks.js — 11/26 100곳 + 예전 목록)를 카카오 장소 검색으로 하나씩 찾아 카카오맵 정보(정확한 위치·주소·전화·분류·카카오맵 링크)를 받는다.
 //   브라우저에서 찾고 이 기기에 3일 저장한다. 직접 조사한 정보(data/stores.json)가 있는 가게는 그 위에 겹쳐 쓴다.
 // 사진·후기는 카카오 공식 API에 없어서 가져오지 않는다(무단 수집 금지·작성자 저작권). 대신 카카오맵의 사진·후기 화면으로 바로 이어 준다.
 import { setKakaoOverlay, SEED_STORES, PICK_SEED, sameName } from './stores.js';
@@ -24,7 +24,7 @@ export function loadKakao(key) {
   return kakaoP;
 }
 
-const CACHE_KEY = 'dearcake:kakao-picks-v2';
+const CACHE_KEY = 'dearcake:kakao-picks-v3'; // 11/26 가게 100곳으로 바뀌어 새로 찾는다
 const TTL = 3 * 864e5;
 let found = []; // PICKS 순서대로 카카오 장소(가공 전) 또는 null
 let status = { state: 'idle', at: 0, n: 0, msg: '', missing: [] }; // idle | loading | done | error
@@ -65,8 +65,9 @@ function buildOverlay() {
     seen.add(p.id);
     extra.push({
       id: 'kakao-' + p.id, kind: 'kakao', level: 'kakao', name: k.name, lat: k.lat, lng: k.lng, geo: 'exact',
-      gu: k.gu || pick.gu, dong: k.dong, addr: k.road || k.addr, styles: stylesOf(k.name, k.cat),
-      note: k.cat ? `카카오맵 분류: ${k.cat}` : null, src: [k.url], k, pick: true,
+      gu: k.gu || pick.gu, dong: k.dong, addr: k.road || k.addr || pick.addr, styles: pick.styles?.length ? pick.styles : stylesOf(k.name, k.cat),
+      ...(pick.sameDay ? { sameDay: true } : {}), no: pick.no,
+      note: pick.tags ? `잘하는 케이크: ${pick.tags}` : k.cat ? `카카오맵 분류: ${k.cat}` : null, src: [k.url], k, pick: true,
     });
   });
   return { by, extra };
@@ -87,10 +88,13 @@ function readCache() {
 readCache();
 
 // 검색 결과 중 이 가게로 볼 곳 고르기: 수원시 · 이름이 같음 · 음식점 분류 · 같은 구 우선 · 조사한 위치와 가까운 곳 우선
+const roadKey = (a) => (String(a || '').match(/([가-힣0-9]+(?:로|길))\s*(\d+(?:-\d+)?)/) || []).slice(1, 3).join(' ');
 function choose(list, pick, seedStore) {
-  const ok = list.filter((p) => /수원시/.test(p.address_name || '') && sameName(p.place_name, pick.name) && FOOD_CAT.test(p.category_name || ''));
+  const rk = roadKey(pick.addr);
+  const ok = list.filter((p) => /수원시/.test(p.address_name || '') && (sameName(p.place_name, pick.name) || (rk && roadKey(p.road_address_name) === rk)) && FOOD_CAT.test(p.category_name || ''));
   const score = (p) => {
     let s = 0;
+    if (rk && roadKey(p.road_address_name) === rk) s += 5; // 주소(도로명·번호)가 같으면 거의 확실
     if ((p.address_name || '').includes(pick.gu)) s += 3;
     if (/케이크|제과|디저트/.test(p.category_name || '')) s += 1;
     if (seedStore?.lat) { const d = Math.hypot((+p.y - seedStore.lat) * 111, (+p.x - seedStore.lng) * 88); s += Math.max(0, 3 - d); }
@@ -99,7 +103,7 @@ function choose(list, pick, seedStore) {
   return ok.sort((a, b) => score(b) - score(a))[0] || null;
 }
 
-/** 77곳을 카카오에서 찾는다. force=false면 3일 안에 찾은 게 있으면 그대로 쓴다. */
+/** 고른 가게들을 카카오에서 찾는다. force=false면 3일 안에 찾은 게 있으면 그대로 쓴다. */
 export async function sweepSuwon(key, { force = false } = {}) {
   if (!key || status.state === 'loading') return found;
   if (!force && status.state === 'done' && Date.now() - status.at < TTL) return found;
@@ -110,6 +114,8 @@ export async function sweepSuwon(key, { force = false } = {}) {
     const ps = new k.maps.services.Places();
     const OK = k.maps.services.Status.OK, ERR = k.maps.services.Status.ERROR;
     let errs = 0, calls = 0;
+    const geo = new k.maps.services.Geocoder();
+    const addrOf = (addr) => { const a = String(addr).replace(/\(.*?\)/g, ' ').match(/^(.*?(?:로|길)\s*\d+(?:-\d+)?|.*?동\s*\d+(?:-\d+)?)/); return a ? new Promise((res) => geo.addressSearch(a[1].trim(), (d, s2) => res(s2 === OK && d[0] ? d[0] : null))) : Promise.resolve(null); };
     const ask = (q, c) => new Promise((res) => ps.keywordSearch(q, (data, st) => { calls++; if (st === ERR) errs++; res(st === OK ? data : []); }, { location: new k.maps.LatLng(c.lat, c.lng), radius: 20000, size: 15 }));
     const out = new Array(PICKS.length).fill(null);
     let next = 0;
@@ -122,6 +128,8 @@ export async function sweepSuwon(key, { force = false } = {}) {
         let p = choose(await ask(pick.name, c), pick, seedStore);
         if (!p) p = choose(await ask(`수원 ${pick.name}`, c), pick, seedStore);
         if (!p && seedStore && seedStore.name !== pick.name) p = choose(await ask(seedStore.name, c), pick, seedStore);
+        // 이름으로 못 찾으면 팀이 적은 주소로 위치만이라도
+        if (!p && pick.addr) { const a = await addrOf(pick.addr); if (a) p = { id: 'addr' + (pick.no || i), place_name: pick.name, x: a.x, y: a.y, address_name: a.address_name, road_address_name: a.road_address?.address_name || '', phone: '', category_name: '', place_url: `https://map.kakao.com/?q=${encodeURIComponent(`수원 ${pick.name}`)}` }; }
         if (p) out[i] = { id: p.id, place_name: p.place_name, x: p.x, y: p.y, address_name: p.address_name, road_address_name: p.road_address_name, phone: p.phone, category_name: p.category_name, place_url: p.place_url };
       }
     };

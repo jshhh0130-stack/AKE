@@ -131,6 +131,9 @@ export function OpsEditor({ shop, set }) {
   const setO = (p) => set({ ops: { ...o, ...p } });
   const hours = Array.from({ length: 16 }, (_, i) => `${String(7 + i).padStart(2, '0')}:00`);
   const [hd, setHd] = useState('');
+  const [pk, setPk] = useState('');
+  const peaks = o.peakDates || [];
+  const addPeak = (days) => { const add = days.filter((d) => d && !peaks.includes(d)); if (add.length) { setO({ peakDates: [...peaks, ...add].sort() }); setPk(''); toast(`성수기 ${add.length}일을 넣었어요`); } };
   return (
     <div>
       <div className="lbl">쉬는 요일</div>
@@ -159,14 +162,27 @@ export function OpsEditor({ shop, set }) {
       <div className="lbl">예약금</div>
       <Seg value={o.deposit} onChange={(v) => setO({ deposit: v })} items={[[0, '없음'], [30, '30%'], [50, '50%'], [100, '전액']]} />
       {o.deposit > 0 && <input className="inp" style={{ marginTop: 8 }} value={o.account || ''} onChange={(e) => setO({ account: e.target.value })} placeholder="입금 계좌 (예: 국민 000-00-0000 홍길동) — 확정 안내 메시지에 들어가요" maxLength={60} />}
-      <div className="lbl">자동 확정</div>
+      <div className="lbl">성수기 날짜 <span className="tag pink" style={{ marginLeft: 4 }}>노쇼 막기</span></div>
       <div className="card pad">
-        <div className="row"><span className="grow b small">규칙 안 주문은 자동 확정</span><Toggle on={o.autoConfirm} onChange={(v) => setO({ autoConfirm: v })} /></div>
-        <div className="xs muted" style={{ marginTop: 6 }}>가격표에 있는 옵션만 고르고, 날짜·문구 길이가 규칙 안이며, 요청사항이 없는 주문은 사장님이 누르지 않아도 바로 확정돼요. 나머지는 ‘승인 / 수정 요청’ 두 버튼으로 처리해요.</div>
+        <div className="xs muted">고른 날은 <b>예약금 100%</b> · <b>주문 변경 불가</b> · 아래 주문 수만 받아요. 손님 주문서에 ‘성수기’ 표시가 나와요.</div>
+        <div className="row" style={{ marginTop: 8 }}><input type="date" className="inp grow" value={pk} onChange={(e) => setPk(e.target.value)} /><button className="btn dark sm" style={{ minHeight: 48 }} onClick={() => addPeak([pk])}>추가</button></div>
+        <div className="chips wrap" style={{ marginTop: 6 }}>
+          {PEAK_PRESETS.map(([name, days]) => <button key={name} className="chip sm" onClick={() => addPeak(days())}><Icon n="plus" />{name}</button>)}
+        </div>
+        {peaks.length > 0 && <div className="chips wrap" style={{ marginTop: 6 }}>{peaks.map((h) => <button key={h} className="chip sm soft on" onClick={() => setO({ peakDates: peaks.filter((x) => x !== h) })}>{h} <Icon n="close" /></button>)}</div>}
+        <div className="row" style={{ marginTop: 10 }}><span className="grow small">성수기 하루 최대 주문</span><Stepper value={o.peakMax || o.dailyMax} min={1} max={60} onChange={(v) => setO({ peakMax: v })} fmt={(v) => `${v}건`} /></div>
+      </div>
+      <div className="lbl">자동 확정 (선택)</div>
+      <div className="card pad">
+        <div className="row"><span className="grow b small">가격표 안 주문은 자동 확정</span><Toggle on={!!o.autoConfirm} onChange={(v) => setO({ autoConfirm: v })} /></div>
+        <div className="xs muted" style={{ marginTop: 6 }}>기본은 꺼져 있어요. 손님에게는 ‘예상가’만 보이고, <b>최종 금액은 사장님이 주문을 받을 때 정해요.</b> 켜 두면 가격표에 있는 옵션만 고르고 날짜·문구 길이가 규칙 안이며 요청사항이 없는 주문은 바로 확정돼요.</div>
       </div>
     </div>
   );
 }
+// 성수기 빠른 추가 (올해 기준, 지난 날이면 내년)
+const md = (m, d) => { const t = new Date(); let y = t.getFullYear(); if (new Date(y, m - 1, d) < new Date(t.getFullYear(), t.getMonth(), t.getDate())) y++; return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`; };
+const PEAK_PRESETS = [['크리스마스 12/23~25', () => [md(12, 23), md(12, 24), md(12, 25)]], ['연말 12/30~31', () => [md(12, 30), md(12, 31)]], ['밸런타인 2/13~14', () => [md(2, 13), md(2, 14)]], ['어버이날 5/7~8', () => [md(5, 7), md(5, 8)]], ['스승의 날 5/14~15', () => [md(5, 14), md(5, 15)]]];
 
 export function LookEditor({ shop, set }) {
   const st = useApp();
@@ -273,7 +289,6 @@ export function readiness(shop) {
     ['info', '기본 정보', !!(shop.name && shop.addr)],
     ['menu', '가격표', Object.values(shop.menu.sizes).some((v) => v != null && v > 0)],
     ['ops', '운영·마감', !!shop.ops],
-    ['look', '꾸미기·소개', !!shop.intro],
     ['notice', '안내사항', shop.notices.length > 0],
     ['portfolio', '작품 사진', shop.portfolio.length >= 3],
   ];
