@@ -377,7 +377,7 @@ export default function CustomerHome() {
               </div>))}
               <div className="card cream pad" style={{ marginTop: 12 }}>
                 <div className="b">다른 지역도 찾을 수 있어요</div>
-                <div className="small muted" style={{ margin: '4px 0 12px' }}>수원은 팀이 고른 커스텀 케이크 가게 {stores.filter((s) => !s.hidden && (s.kind === 'public' || s.kind === 'partner' || s.pick)).length}곳이 들어 있어요. 다른 지역은 {kKey ? '카카오 장소 검색' : gKey ? '구글 지도 검색' : '공개 지도 데이터'}로 찾아요.</div>
+                <div className="small muted" style={{ margin: '4px 0 12px' }}>수원은 팀이 고른 커스텀 케이크 가게 {stores.filter((s) => !s.hidden && (s.kind === 'public' || s.kind === 'partner' || s.pick)).length}곳이 들어 있어요. 다른 지역은 {kKey ? '카카오 장소 검색으로' : gKey ? '구글 지도 검색으로' : '공개 지도 데이터로'} 찾아요.</div>
                 <button className="btn line block sm" onClick={findMore} disabled={finding}>{finding ? '찾는 중…' : <><Icon n="search" size="sm" /> 이 근처 케이크 가게 더 찾기</>}</button>
               </div>
             </div>
