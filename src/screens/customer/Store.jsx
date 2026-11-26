@@ -73,7 +73,7 @@ export default function StoreDetail({ params, path }) {
   const hero = s.hero || gallery[0]?.design || storeLook(s);
   const toggleFav = () => { setState((x) => ({ ...x, favs: fav ? x.favs.filter((i) => i !== s.id) : [...x.favs, s.id] })); if (!fav) toast('찜한 가게에 담았어요'); };
   const unsure = s.kind === 'public' && !s.verified;
-  const kindTag = inApp ? <span className="tag pink">앱 주문</span> : s.verified ? <span className="tag ok"><Icon n="check" />영업 확인</span> : s.kind === 'public' ? <span className="tag mute">영업 확인 필요</span> : <span className="tag blue">{s.kind === 'kakao' ? '카카오맵 등록 가게' : '지도 검색 결과'}</span>;
+  const kindTag = inApp ? <span className="tag pink">앱 주문</span> : s.verified ? <span className="tag ok"><Icon n="check" />영업 확인</span> : s.kind === 'public' ? null : <span className="tag blue">{s.kind === 'kakao' ? '카카오맵 등록 가게' : '지도 검색 결과'}</span>;
   const kKey = kakaoKeyOf(st.settings);
   const kl = s.k ? kakaoLinks(s.k) : null;
   const hrs = hoursOf(s);

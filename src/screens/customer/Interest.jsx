@@ -233,7 +233,6 @@ function ShopFeed() {
       return { ...g, s, gu: s?.gu || PICKS.find((p) => p.no === g.no)?.gu || '', d: s?.lat != null ? distKm(st.loc, s) : 999 };
     }).filter((g) => (gu === '전체' || g.gu === gu) && (!qq || norm(g.name).includes(qq))).sort((a, b) => a.d - b.d);
   }, [stores.length, gu, q, st.loc.lat, st.loc.lng]); // eslint-disable-line react-hooks/exhaustive-deps
-  const total = groups.reduce((a, g) => a + g.photos.length, 0);
   return (
     <div className="scroll with-tab">
       <div className="feedtop">
@@ -244,7 +243,6 @@ function ShopFeed() {
         </div>
         <div className="chips">{GU4.map((g) => <button key={g} className={`chip sm ${gu === g ? 'on' : ''}`} onClick={() => { setGu(g); setN(8); }}>{g}</button>)}</div>
       </div>
-      <div className="feedinfo note2"><Icon n="info" />수원 가게 {groups.length}곳의 실제 케이크 사진 {total}장이에요. 가까운 가게부터 보여 주고, 사진을 누르면 크게 보고 바로 주문서를 쓸 수 있어요.</div>
       {groups.length === 0 && <Empty icon="search">찾는 가게 사진이 없어요.</Empty>}
       {groups.slice(0, n).map((g) => (
         <div key={g.no} className="shopgrp">

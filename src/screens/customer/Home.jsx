@@ -9,7 +9,6 @@ import { Sheet, CakeView, toast, PhotoPick, Loading, useBackClose } from '../../
 import { NotiBell } from '../../components/Noti.jsx';
 import { useApp, setState, getState } from '../../lib/state.js';
 import { nav, navAfterSheet } from '../../lib/router.js';
-import { PICKS } from '../../data/picks.js';
 import { mainPhoto } from '../../lib/shopPhotos.js';
 import { getStores, rankStores, FILTERS, GUS, BUDGETS, findCount, parseFindText, fmtKm, headlinePrice, pinPrice, canOrderInApp, nextOpenDay, searchStores, strengths, SORTS, keywordsOf } from '../../lib/stores.js';
 import { storeLook, cakeSVG } from '../../lib/cake.js';
@@ -45,12 +44,10 @@ export function StoreCard({ r, sel, onClick, fav, onFav, picked, className = '' 
   const open = inApp ? nextOpenDay(s, getState().orders) : null;
   const rv = getState().orders.filter((o) => o.storeId === s.id && o.review);
   const rating = s.g?.rating ? [s.g.rating, s.g.n] : rv.length ? [rv.reduce((a, o) => a + o.review.stars, 0) / rv.length, rv.length] : null;
-  const unsure = s.kind === 'public' && !s.verified && !s.price;
   // 칩 2개: [잘하는 케이크(베이지)] [앱 주문·당일 픽업(분홍) 또는 정보 확인 필요(회색)]
   const chips = strengths(s).slice(0, 1).map((t) => <span key={t} className="tag">{t}</span>);
   if (s.sameDay && inApp) chips.push(<span key="sd" className="tag pink">당일 픽업</span>);
   else if (inApp) chips.push(<span key="app" className="tag pink">앱 주문</span>);
-  else if (unsure) chips.push(<span key="un" className="tag mute">정보 확인 필요</span>);
   else if (s.kind === 'kakao' || s.k) chips.push(<span key="ext" className="tag mute">카카오맵 정보</span>);
   else if (s.kind !== 'public') chips.push(<span key="ext" className="tag mute">지도 검색</span>);
   return (
@@ -82,8 +79,7 @@ export function StoreTile({ r, sel, onClick, fav, onFav, picked }) {
   const { s, d } = r;
   const hp = headlinePrice(s);
   const inApp = canOrderInApp(s);
-  const unsure = !inApp && !s.verified;
-  const tag = s.sameDay ? ['당일 픽업', ''] : inApp ? ['앱 주문', ''] : unsure ? ['정보 확인 필요', 'mute'] : null;
+  const tag = s.sameDay ? ['당일 픽업', ''] : inApp ? ['앱 주문', ''] : null;
   return (
     <button className={`gcard ${sel ? 'sel' : ''}`} onClick={onClick}>
       <div className="gth">
@@ -379,15 +375,6 @@ export default function CustomerHome() {
                 {r === firstPartial && <div className="sec-t" style={{ margin: '16px 0 4px' }}><h3 style={{ fontSize: 15 }}>{exactN ? '조건과 조금 다른 가게' : '딱 맞는 곳은 없어요 · 비슷한 가게'}</h3><span className="more">{ranked.length - exactN}곳</span></div>}
                 {card(r, { picked: cmpMode ? cmp.includes(r.s.id) : undefined })}
               </div>))}
-              {kAny && (
-                <div className="kstat">
-                  <span className="ki">K</span>
-                  <span className="grow">{ks.state === 'loading' ? <b>카카오맵에서 수원 케이크 가게 {PICKS.length}곳을 찾는 중…</b>
-                    : ks.state === 'error' ? <><b>카카오맵 가게 정보를 못 불러왔어요</b><small>{ks.msg}</small></>
-                    : <><b>수원 케이크 가게 {stores.filter((s) => !s.hidden && (s.kind === 'public' || s.pick)).length}곳 · 카카오맵 정보 {stores.filter((s) => s.k && !s.hidden).length}곳</b><small>{ks.missing?.length ? `카카오맵에서 못 찾은 곳: ${ks.missing.join(', ')}` : '고른 가게를 모두 카카오맵에서 찾았어요'}</small></>}</span>
-                  {ks.state !== 'loading' && <button className="btn xs ghost" onClick={() => sweepSuwon(kAny, { force: true })}><Icon n="refresh" size="sm" />새로</button>}
-                </div>
-              )}
               <div className="card cream pad" style={{ marginTop: 12 }}>
                 <div className="b">다른 지역도 찾을 수 있어요</div>
                 <div className="small muted" style={{ margin: '4px 0 12px' }}>수원은 팀이 고른 커스텀 케이크 가게 {stores.filter((s) => !s.hidden && (s.kind === 'public' || s.kind === 'partner' || s.pick)).length}곳이 들어 있어요. 다른 지역은 {kKey ? '카카오 장소 검색' : gKey ? '구글 지도 검색' : '공개 지도 데이터'}로 찾아요.</div>
