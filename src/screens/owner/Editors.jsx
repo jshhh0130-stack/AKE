@@ -91,9 +91,9 @@ export function MenuEditor({ shop, set, compact = false }) {
   };
   return (
     <div>
-      <div className="row" style={{ marginBottom: 12 }}>
-        <PhotoPick onPick={readPhoto} className="btn sec sm grow"><Icon n="camera" size="sm" />{busy ? '읽는 중…' : '가격표 사진으로 채우기'}{!st.settings.claudeKey && <span className="tag mute">AI</span>}</PhotoPick>
-        <button className="btn line sm grow" onClick={fillAvg}><Icon n="wand" size="sm" />평균 가격으로 채우기</button>
+      <div className="fill2">
+        <PhotoPick onPick={readPhoto} className="btn sec sm"><Icon n="camera" size="sm" /><span>{busy ? '읽는 중…' : '가격표 사진으로 채우기'}</span></PhotoPick>
+        <button className="btn line sm" onClick={fillAvg}><Icon n="wand" size="sm" /><span>평균 가격으로 채우기</span></button>
       </div>
       <div className="note pink" style={{ marginBottom: 10 }}>한 번만 정해 두면 모든 주문에 자동으로 적용돼요. 손님은 고를 때마다 정확한 가격을 보게 돼요.</div>
       <div className="lbl">사이즈별 기본가 <span className="xs muted">흰 바탕 기본 레터링 기준</span></div>

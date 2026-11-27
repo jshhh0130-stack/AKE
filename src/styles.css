@@ -1877,3 +1877,9 @@ button:focus:not(:focus-visible), [role=button]:focus:not(:focus-visible) { outl
 .placepics img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 14px; display: block; background: var(--cream); }
 .placepics span { display: block; font-size: 12px; margin-top: 4px; }
 .hero a.hcap { text-decoration: none; color: inherit; }
+/* 가격표 채우기 버튼 2개: 같은 크기 · 아이콘 바로 */
+.fill2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.fill2 .btn { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 46px; padding: 0 8px; white-space: nowrap; font-size: 13.5px; }
+.fill2 .btn .ico, .fill2 .btn svg { flex: none; width: 17px; height: 17px; transform: none; vertical-align: middle; }
+.fill2 .btn span { overflow: hidden; text-overflow: ellipsis; }
+.pickscroll { max-height: 340px; overflow-y: auto; margin-top: 6px; }
