@@ -23,12 +23,13 @@ export default function Setup() {
   const [q, setQ] = useState('');
   const [sample, setSample] = useState(false);
   const [tick, setTick] = useState(0);
+  const [more, setMore] = useState(false); // 가게 목록 펼치기
   const set = (p) => setDraft((d) => ({ ...d, ...(typeof p === 'function' ? p(d) : p) }));
   // 지도를 아직 안 열었으면 카카오에서 가게 정보를 받아 온다 (저장된 게 있으면 바로)
   useEffect(() => { const k = kakaoKeyOf(st.settings); if (k) sweepSuwon(k); const off = onKakao(() => setTick((x) => x + 1)); return off; }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // 팀이 정리한 수원 가게 100곳 (카카오에서 받은 위치·주소 + 조사한 가격·휴무가 있으면 함께)
   const pool = useMemo(() => getStores(st).filter((s) => !s.hidden && s.no != null && s.kind !== 'partner').sort((a, b) => a.no - b.no), [st.found, st.partners, tick]); // eslint-disable-line react-hooks/exhaustive-deps
-  const found = useMemo(() => { const qq = q.replace(/\s/g, ''); return (qq ? pool.filter((s) => (s.name + (s.dong || '') + (s.gu || '')).replace(/\s/g, '').includes(qq)) : pool).slice(0, qq ? 12 : 100); }, [q, pool]);
+  const found = useMemo(() => { const qq = q.replace(/\s/g, ''); return qq ? pool.filter((s) => (s.name + (s.dong || '') + (s.gu || '')).replace(/\s/g, '').includes(qq)).slice(0, 12) : pool.slice(0, more ? 100 : 3); }, [q, pool, more]);
   const finish = () => {
     setState((s) => ({ ...s, role: 'owner', shop: { ...draft, updatedAt: new Date().toISOString() }, shopKeys: null }));
     if (sample) addSampleOrders();
@@ -47,11 +48,12 @@ export default function Setup() {
             <div className="row"><Icon n="search" /><b className="grow">우리 가게 찾아서 시작</b><span className="tag ok">추천</span></div>
             <div className="small muted" style={{ margin: '4px 0 10px' }}>수원 가게 {pool.length}곳 중에서 골라요. 주소·가격·휴무를 미리 채워 드려요. 틀린 부분만 고치면 돼요.</div>
             <input className="inp" value={q} onChange={(e) => setQ(e.target.value)} placeholder="가게 이름 검색 (예: 미도리, 홀리데이)" />
-            <div className={q ? '' : 'pickscroll'}>{found.map((s) => (
+            <div className={!q && more ? 'pickscroll' : ''}>{found.map((s) => (
               <button key={s.id} className="list-row" onClick={() => { setDraft(fromSeed(s)); setStep(1); toast('공개 정보로 미리 채웠어요. 확인해 주세요'); }}>
                 <Icon n="store" /><div className="grow"><div className="t">{s.name}</div><div className="s">{s.gu} {s.dong} · {(s.styles || []).map(styleName).join(', ')}</div></div><Icon n="right" size="sm" />
               </button>
             ))}</div>
+            {!q && pool.length > 3 && <button className="btn line block sm" style={{ marginTop: 8 }} onClick={() => setMore(!more)}>{more ? '접기' : `가게 ${pool.length}곳 자세히 보기`}</button>}
             {q && !found.length && <div className="small muted" style={{ padding: '10px 2px' }}>목록에 없어요. 아래 ‘새로 등록하기’로 시작해 주세요.</div>}
           </div>
           <button className="setrow" style={{ marginTop: 10 }} onClick={() => { setDraft(NEW_SHOP({ lat: st.loc.lat, lng: st.loc.lng })); setStep(1); }}>
